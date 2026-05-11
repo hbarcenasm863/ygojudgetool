@@ -1,0 +1,2103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>YGO Judge Tool</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── DARK THEME (default) ── */
+:root{
+  --gold:#c9a84c;--gold-l:#e8cc7a;--gold-d:#8a6e2a;
+  --bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a26;--bg4:#22222f;
+  --red:#e53e3e;--yellow:#d4a017;--green:#38a169;--blue:#4299e1;--purple:#805ad5;--orange:#ed8936;
+  --text:#e8e0d0;--muted:#9090a0;
+  --border:rgba(201,168,76,.25);
+  --shadow:0 4px 24px rgba(0,0,0,.6);
+  --header-bg:linear-gradient(180deg,rgba(10,10,15,.98),rgba(10,10,15,.92));
+  --body-pattern:
+    radial-gradient(ellipse at 20% 20%,rgba(201,168,76,.04) 0%,transparent 50%),
+    radial-gradient(ellipse at 80% 80%,rgba(128,90,213,.04) 0%,transparent 50%),
+    repeating-linear-gradient(45deg,transparent,transparent 30px,rgba(201,168,76,.015) 30px,rgba(201,168,76,.015) 31px);
+}
+
+/* ── LIGHT THEME (Opción B: crema/papel) ── */
+body.light{
+  --gold:#7a5c1e;--gold-l:#5a4010;--gold-d:#a07830;
+  --bg:#F5F0E8;--bg2:#FDFAF4;--bg3:#EDE8DE;--bg4:#E2DCCE;
+  --red:#c0392b;--yellow:#a0620a;--green:#1e6b3a;--blue:#1a5276;--purple:#5b2c8d;--orange:#b7470a;
+  --text:#1C1C2E;--muted:#5a5a72;
+  --border:rgba(122,92,30,.2);
+  --shadow:0 4px 24px rgba(0,0,0,.12);
+  --header-bg:linear-gradient(180deg,rgba(245,240,232,.98),rgba(245,240,232,.94));
+  --body-pattern:
+    radial-gradient(ellipse at 20% 20%,rgba(122,92,30,.04) 0%,transparent 50%),
+    radial-gradient(ellipse at 80% 80%,rgba(91,44,141,.03) 0%,transparent 50%),
+    repeating-linear-gradient(45deg,transparent,transparent 30px,rgba(122,92,30,.04) 30px,rgba(122,92,30,.04) 31px);
+}
+
+/* ── Light overrides for hardcoded dark colors ── */
+body.light input,
+body.light select,
+body.light textarea{
+  color:var(--text);
+  background:var(--bg3);
+  border-color:rgba(122,92,30,.25);
+}
+body.light input::placeholder,
+body.light textarea::placeholder{ color:var(--muted); }
+body.light select option{ background:var(--bg2); color:var(--text); }
+
+body.light .rec-hdr{ background:var(--bg3); }
+body.light .chain-step{ background:var(--bg4); }
+body.light .chain-box{ background:var(--bg3); }
+body.light .pk-box{ background:var(--bg3); }
+body.light .appeals-wrap td input,
+body.light .appeals-wrap td select{ color:var(--text); }
+body.light .appeals-wrap td input:focus,
+body.light .appeals-wrap td select:focus{ background:rgba(122,92,30,.08); }
+body.light .add-row-btn{ color:var(--gold-d); border-color:rgba(122,92,30,.3); background:rgba(122,92,30,.06); }
+body.light .modal{ background:var(--bg2); }
+body.light .toast{ background:var(--bg2); color:var(--gold); border-color:var(--gold); }
+body.light .setup-banner{ background:linear-gradient(135deg,rgba(122,92,30,.1),rgba(122,92,30,.05)); }
+body.light .round-bar{ background:var(--bg2); }
+body.light .sum-card{ background:var(--bg2); }
+body.light .break-table{ background:var(--bg2); }
+body.light .ref-card{ background:var(--bg2); }
+body.light .form-card{ background:var(--bg2); }
+body.light .rec-card{ background:var(--bg2); }
+body.light .sheet-bar{ background:rgba(30,107,58,.06); }
+body.light .inf-btn{ background:var(--bg3); }
+body.light .inf-btn.selected{ background:var(--bg4); }
+body.light #sel-box{ background:var(--bg3); }
+
+/* ── Theme toggle button ── */
+.theme-toggle{
+  width:34px;height:34px;border-radius:50%;
+  border:1px solid var(--border);
+  background:var(--bg3);
+  color:var(--text);
+  font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;flex-shrink:0;
+}
+.theme-toggle:active{ transform:scale(.9); }
+
+/* ── Global transitions for theme switch ── */
+*{ transition:background-color .2s, border-color .2s, color .15s, box-shadow .2s; }
+/* But NOT transform/opacity transitions (interferes with animations) */
+.inf-btn,.btn-primary,.round-btn,.theme-toggle{ transition:background-color .2s,border-color .2s,color .15s,transform .15s,opacity .15s; }
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:var(--body-pattern);pointer-events:none;z-index:0}
+header{position:sticky;top:0;z-index:100;background:var(--header-bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between}
+.header-title{font-family:'Cinzel',serif;font-size:14px;font-weight:700;letter-spacing:.1em;color:var(--gold);text-transform:uppercase;line-height:1.2}
+.header-title span{display:block;font-size:10px;font-weight:400;color:var(--muted);letter-spacing:.2em}
+.hdr-right{display:flex;gap:8px;align-items:center}
+.stat-pill{background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--gold-l);display:flex;align-items:center;gap:4px}
+.stat-pill .num{font-family:'Cinzel',serif;font-size:13px}
+/* Sync indicator */
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s}
+.sync-dot.syncing{background:var(--yellow);animation:pulse .8s infinite}
+.sync-dot.ok{background:var(--green)}
+.sync-dot.err{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* SETUP BANNER */
+.setup-banner{background:linear-gradient(135deg,rgba(201,168,76,.12),rgba(201,168,76,.06));border:1px solid rgba(201,168,76,.4);border-radius:12px;padding:14px;margin:14px;position:relative;z-index:1}
+.setup-banner h3{font-family:'Cinzel',serif;font-size:12px;font-weight:700;color:var(--gold);margin-bottom:8px;letter-spacing:.1em}
+.setup-banner p{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px}
+.setup-input-row{display:flex;gap:8px}
+.setup-input-row input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:13px;padding:9px 12px;outline:none}
+.setup-input-row input:focus{border-color:var(--gold)}
+.top-nav{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:57px;z-index:99;overflow-x:auto;scrollbar-width:none}
+.top-nav::-webkit-scrollbar{display:none}
+.tnav-btn{flex:0 0 auto;padding:11px 14px;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all .2s;white-space:nowrap}
+.tnav-btn.active{color:var(--gold);border-bottom-color:var(--gold);background:rgba(201,168,76,.05)}
+.sub-nav{display:flex;background:var(--bg);border-bottom:1px solid rgba(201,168,76,.12);overflow-x:auto;scrollbar-width:none;position:sticky;top:101px;z-index:98}
+.sub-nav::-webkit-scrollbar{display:none}
+.snav-btn{flex:0 0 auto;padding:8px 14px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:all .2s}
+.snav-btn.active{color:var(--gold-l);border-bottom-color:var(--gold-d)}
+.main-view{display:none;position:relative;z-index:1}
+.main-view.active{display:block}
+.sub-view{display:none;padding:14px}
+.sub-view.active{display:block}
+.form-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;box-shadow:var(--shadow)}
+.sec-header{font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:.2em;color:var(--gold-d);text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+label{font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--muted);text-transform:uppercase}
+input,select,textarea{background:var(--bg3);border:1px solid rgba(201,168,76,.2);border-radius:8px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:500;padding:9px 12px;outline:none;transition:border-color .2s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);background:var(--bg4)}
+select option{background:var(--bg3)}
+textarea{resize:none;height:60px;font-size:13px}
+.round-bar{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.ri-label{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.ri-val{font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:var(--gold)}
+.round-controls{display:flex;gap:8px;align-items:center}
+.round-btn{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:var(--bg3);color:var(--gold);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.inf-section{margin-bottom:12px}
+.inf-label{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:7px;display:block}
+.inf-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.inf-btn{position:relative;padding:8px 10px;border-radius:8px;border:1px solid transparent;background:var(--bg3);cursor:pointer;text-align:left;transition:all .15s;overflow:hidden}
+.inf-btn::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--pc,var(--muted))}
+.inf-btn .ic{font-family:'Cinzel',serif;font-size:10px;font-weight:700;color:var(--pc,var(--muted));display:block;margin-bottom:1px}
+.inf-btn .in{font-size:11px;font-weight:600;color:var(--text);display:block;line-height:1.2}
+.inf-btn .ip{font-size:10px;font-weight:500;color:var(--pc,var(--muted));display:block;margin-top:2px}
+.inf-btn:active{transform:scale(.97)}
+.inf-btn.selected{border-color:var(--pc,var(--gold));background:var(--bg4)}
+.p-w{--pc:var(--yellow)}.p-g{--pc:var(--red)}.p-m{--pc:var(--purple)}.p-d{--pc:#fc8181}
+#sel-box{display:none;margin-top:10px;padding:10px 14px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--gold)}
+#sel-box .sb-label{font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--muted);text-transform:uppercase;margin-bottom:3px}
+#sel-box .sb-code{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--gold-l)}
+#sel-box .sb-pen{font-size:12px;color:var(--muted);margin-top:2px}
+.btn-primary{width:100%;padding:13px;background:linear-gradient(135deg,var(--gold-d),var(--gold));border:none;border-radius:10px;font-family:'Cinzel',serif;font-size:13px;font-weight:700;letter-spacing:.1em;color:var(--bg);cursor:pointer;text-transform:uppercase;transition:all .2s;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary:active{transform:scale(.98);opacity:.9}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.btn-secondary{padding:8px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--muted);cursor:pointer;transition:all .15s;text-transform:uppercase}
+.btn-danger{padding:6px 12px;background:rgba(229,62,62,.15);border:1px solid rgba(229,62,62,.3);border-radius:6px;font-size:11px;font-weight:700;color:var(--red);cursor:pointer}
+/* Sheet link bar */
+.sheet-bar{background:rgba(56,161,105,.08);border:1px solid rgba(56,161,105,.25);border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sheet-bar a{font-size:12px;font-weight:600;color:var(--green);text-decoration:none;white-space:nowrap}
+.sheet-bar .sb-status{font-size:11px;color:var(--muted)}
+/* Offline queue pill */
+.queue-pill{background:rgba(246,201,14,.1);border:1px solid rgba(246,201,14,.3);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:var(--yellow);display:none;align-items:center;gap:5px}
+.queue-pill.show{display:flex}
+.records-list{display:flex;flex-direction:column;gap:10px}
+.rec-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);animation:sIn .2s ease}
+@keyframes sIn{from{transform:translateY(-6px);opacity:0}to{transform:translateY(0);opacity:1}}
+.rec-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:var(--bg3);border-bottom:1px solid var(--border)}
+.badge{padding:3px 8px;border-radius:20px;font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.05em}
+.b-r{background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3)}
+.b-t{background:rgba(66,153,225,.15);color:var(--blue);border:1px solid rgba(66,153,225,.3)}
+.sync-badge{padding:2px 7px;border-radius:20px;font-size:9px;font-weight:700}
+.sync-badge.synced{background:rgba(56,161,105,.15);color:var(--green);border:1px solid rgba(56,161,105,.3)}
+.sync-badge.pending{background:rgba(246,201,14,.15);color:var(--yellow);border:1px solid rgba(246,201,14,.3)}
+.rec-body{padding:10px 13px}
+.rec-players{display:flex;gap:6px;align-items:center;margin-bottom:6px;font-size:14px;font-weight:600}
+.rec-players .vs{font-size:10px;font-weight:700;color:var(--muted);padding:0 4px}
+.pen-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px}
+.pen-tag{padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.05em}
+/* ── Warning/yellow tags — ensure legibility both themes ── */
+.pt-w{background:rgba(212,160,23,.15);color:#a07010;border:1px solid rgba(212,160,23,.4)}
+body:not(.light) .pt-w{background:rgba(246,201,14,.15);color:#f6c90e;border:1px solid rgba(246,201,14,.3)}
+
+.pt-g{background:rgba(229,62,62,.15);color:var(--red);border:1px solid rgba(229,62,62,.3)}
+.pt-m{background:rgba(128,90,213,.15);color:var(--purple);border:1px solid rgba(128,90,213,.3)}
+.pt-d{background:rgba(252,129,129,.15);color:#fc8181;border:1px solid rgba(252,129,129,.3)}
+.pt-clean{background:rgba(56,161,105,.15);color:var(--green);border:1px solid rgba(56,161,105,.3)}
+.rec-notes{font-size:12px;color:var(--muted);font-style:italic;margin-bottom:7px}
+.rec-footer{display:flex;justify-content:flex-end}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.sum-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.sum-card .sn{font-family:'Cinzel',serif;font-size:32px;font-weight:900;display:block;line-height:1}
+.sum-card .sl{font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--muted);text-transform:uppercase;display:block;margin-top:4px}
+.sc-w .sn{color:var(--yellow)}.sc-g .sn{color:var(--red)}.sc-m .sn{color:var(--purple)}.sc-d .sn{color:#fc8181}
+.break-table{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.break-table table{width:100%;border-collapse:collapse}
+.break-table th{background:var(--bg3);padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--gold-d);text-transform:uppercase;text-align:left;border-bottom:1px solid var(--border)}
+.break-table td{padding:8px 12px;font-size:12px;border-bottom:1px solid rgba(201,168,76,.08);vertical-align:middle}
+.break-table tr:last-child td{border-bottom:none}
+.export-row{display:flex;gap:8px;margin-top:10px}.export-row button{flex:1}
+.ref-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.ref-card h3{font-family:'Cinzel',serif;font-size:11px;font-weight:700;letter-spacing:.15em;color:var(--gold);text-transform:uppercase;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.ref-p{font-size:13px;font-weight:500;line-height:1.65;color:var(--text);margin-bottom:8px}
+.ref-p:last-child{margin-bottom:0}
+.ref-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;margin-right:4px}
+.rt-c{background:rgba(246,201,14,.18);color:var(--yellow)}
+.rt-a{background:rgba(66,153,225,.18);color:var(--blue)}
+.rt-r{background:rgba(56,161,105,.18);color:var(--green)}
+.conj-table{width:100%;border-collapse:collapse;margin-top:6px}
+.conj-table td{padding:7px 10px;font-size:12px;border-bottom:1px solid rgba(201,168,76,.08);vertical-align:top}
+.conj-table td:first-child{font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold-l);white-space:nowrap;width:130px}
+.conj-table tr:last-child td{border-bottom:none}
+.chain-box{background:var(--bg3);border-radius:10px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.chain-step{background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:7px 20px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold-l);text-align:center;width:100%;max-width:240px}
+.chain-arrow{color:var(--gold-d);font-size:14px}
+.dmg-table{width:100%;border-collapse:collapse;margin-top:6px;font-size:12px}
+.dmg-table th{background:var(--bg3);padding:7px 10px;font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--gold-d);text-transform:uppercase;text-align:left;border-bottom:1px solid var(--border)}
+.dmg-table td{padding:8px 10px;border-bottom:1px solid rgba(201,168,76,.08);vertical-align:top;line-height:1.5}
+.dmg-table td:first-child{font-family:'Cinzel',serif;font-size:10px;font-weight:700;color:var(--gold);white-space:nowrap;width:115px}
+.mem-table{width:100%;border-collapse:collapse;font-size:12px}
+.mem-table th{background:var(--bg3);padding:7px 8px;font-size:10px;font-weight:700;letter-spacing:.05em;color:var(--gold-d);text-transform:uppercase;text-align:center;border-bottom:1px solid var(--border)}
+.mem-table th:first-child{text-align:left}
+.mem-table td{padding:6px 8px;border-bottom:1px solid rgba(201,168,76,.08);font-size:11px;text-align:center}
+.mem-table td:first-child{text-align:left;font-weight:600;font-size:12px}
+.mem-table tr:last-child td{border-bottom:none}
+.mem-r{color:var(--green);font-weight:700}.mem-f{color:var(--red)}.mem-tbd{color:var(--yellow)}
+.bd-list{list-style:none;padding:0}
+.bd-list li{padding:6px 0;border-bottom:1px solid rgba(201,168,76,.08);font-size:12px;display:flex;gap:8px}
+.bd-list li:last-child{border-bottom:none}
+.bd-num{font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold);flex-shrink:0;width:22px}
+.pk-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pk-box{background:var(--bg3);border-radius:10px;padding:12px}
+.pk-box h4{font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.pk-box h4.pub{color:var(--green)}.pk-box h4.priv{color:var(--red)}
+.pk-box ul{list-style:none;padding:0}
+.pk-box ul li{font-size:11px;line-height:1.5;padding:3px 0;border-bottom:1px solid rgba(201,168,76,.06);color:var(--muted)}
+.pk-box ul li:last-child{border-bottom:none}
+.qref-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+.qref-table th{background:var(--bg3);padding:7px 10px;font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--gold-d);text-transform:uppercase;border-bottom:1px solid var(--border);text-align:left}
+.qref-table td{padding:7px 10px;border-bottom:1px solid rgba(201,168,76,.08);vertical-align:middle}
+.qref-table tr:last-child td{border-bottom:none}
+.qref-table td:first-child{font-family:'Cinzel',serif;font-size:10px;font-weight:700}
+.appeals-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px}
+.appeals-wrap table{width:100%;border-collapse:collapse}
+.appeals-wrap th{background:var(--bg3);padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--gold-d);text-transform:uppercase;text-align:left;border-bottom:1px solid var(--border)}
+.appeals-wrap td{padding:0;border-bottom:1px solid rgba(201,168,76,.1)}
+.appeals-wrap td input,.appeals-wrap td select{background:transparent;border:none;border-radius:0;padding:9px 10px;font-size:13px;width:100%}
+.appeals-wrap td input:focus,.appeals-wrap td select:focus{background:rgba(201,168,76,.05)}
+.appeals-wrap tr:last-child td{border-bottom:none}
+.add-row-btn{width:100%;padding:10px;background:rgba(201,168,76,.07);border:1px dashed rgba(201,168,76,.3);border-radius:0 0 12px 12px;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:var(--gold-d);cursor:pointer;letter-spacing:.08em;text-transform:uppercase}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;padding:20px;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.8)}
+.modal-title{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:var(--gold);margin-bottom:12px;text-align:center}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+.modal-actions button{flex:1}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg4);border:1px solid var(--gold);border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;color:var(--gold-l);z-index:999;pointer-events:none;opacity:0;transition:opacity .2s;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+.toast.show{opacity:1}
+.empty-state{text-align:center;padding:40px 24px;color:var(--muted)}
+.empty-state .icon{font-size:40px;margin-bottom:10px;opacity:.5}
+.empty-state p{font-size:13px;line-height:1.6}
+/* ── Multi-Timer alarm states ── */
+@keyframes alarmPulse{
+  0%,100%{border-color:rgba(229,62,62,.3);box-shadow:0 0 0 0 rgba(229,62,62,0)}
+  50%{border-color:rgba(229,62,62,1);box-shadow:0 0 0 8px rgba(229,62,62,.15)}
+}
+@keyframes alarmBg{
+  0%,100%{background:var(--bg2)}
+  50%{background:rgba(229,62,62,.12)}
+}
+@keyframes dispShake{
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-4px)}
+  40%{transform:translateX(4px)}
+  60%{transform:translateX(-3px)}
+  80%{transform:translateX(3px)}
+}
+.mt-card-alarm{
+  animation:alarmPulse 1s ease-in-out infinite, alarmBg 1s ease-in-out infinite !important;
+}
+.mt-disp-alarm{
+  color:var(--red) !important;
+  animation:dispShake .5s ease-in-out infinite !important;
+}
+/* Warning zone — last 60s */
+.mt-disp-warn{ color:var(--yellow) !important; }
+/* Critical zone — last 10s */
+.mt-disp-critical{ color:var(--red) !important; font-size:60px !important; }
+/* Time preset buttons */
+.time-preset{
+  padding:7px 0;
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:7px;
+  font-family:'Cinzel',serif;
+  font-size:11px;font-weight:700;
+  color:var(--gold);
+  cursor:pointer;
+  transition:all .15s;
+  text-align:center;
+}
+.time-preset:active{background:var(--bg4);}
+.time-preset.selected{background:rgba(201,168,76,.15);border-color:var(--gold);}
+body.light .time-preset{background:var(--bg3);color:var(--gold);}
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">⚖️ YGO Judge Tool<span>KDE-US v2.5 / Penalties v2.3</span></div>
+  <div class="hdr-right">
+    <div class="queue-pill" id="queue-pill">⏳ <span id="queue-count">0</span> pendiente(s)</div>
+    <div class="stat-pill">📋 <span class="num" id="hdr-total">0</span></div>
+    <div class="stat-pill" style="color:var(--red)">🔴 <span class="num" id="hdr-severe">0</span></div>
+    <button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="Cambiar tema"></button>
+    <div class="sync-dot" id="sync-dot" title="Estado de sincronización"></div>
+  </div>
+</header>
+
+<nav class="top-nav">
+  <button class="tnav-btn active" onclick="showMain('dc',this)">⚖️ Deck Check</button>
+  <button class="tnav-btn" onclick="showMain('inf',this)">📋 Infracciones</button>
+  <button class="tnav-btn" onclick="showMain('timers',this)">⏱ Multi-Timer</button>
+  <button class="tnav-btn" onclick="showMain('psct',this)">🃏 PSCT</button>
+  <button class="tnav-btn" onclick="showMain('dmg',this)">⚔️ Damage Step</button>
+  <button class="tnav-btn" onclick="showMain('mem',this)">🧠 Memoria</button>
+  <button class="tnav-btn" onclick="showMain('know',this)">👁 Conocimiento</button>
+  <button class="tnav-btn" onclick="showMain('app',this)">📝 Apelaciones</button>
+</nav>
+
+<!-- ═══════════════════ DECK CHECK ═══════════════════ -->
+<div id="main-dc" class="main-view active">
+  <nav class="sub-nav">
+    <button class="snav-btn active" onclick="showSub('dc','nuevo',this)">+ Nuevo</button>
+    <button class="snav-btn" onclick="showSub('dc','registros',this)">Registros</button>
+    <button class="snav-btn" onclick="showSub('dc','resumen',this)">Resumen</button>
+    <button class="snav-btn" onclick="showSub('dc','config',this)">⚙️ Config</button>
+  </nav>
+
+  <!-- NUEVO -->
+  <div id="dc-nuevo" class="sub-view active">
+    <div class="round-bar">
+      <div><div class="ri-label">Ronda</div><div class="ri-val" id="round-display">1</div></div>
+      <div class="round-controls">
+        <button class="round-btn" onclick="changeRound(-1)">−</button>
+        <button class="round-btn" onclick="changeRound(1)">+</button>
+      </div>
+    </div>
+    <div class="form-card">
+      <div class="sec-header">Datos de la Mesa</div>
+      <div class="form-row">
+        <div class="form-group"><label>Ronda</label><input type="number" id="f-ronda" min="1" max="20" value="1"></div>
+        <div class="form-group"><label>Mesa #</label><input type="number" id="f-mesa" min="1" placeholder="Ej: 42"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Jugador 1</label><input type="text" id="f-j1" placeholder="Nombre completo" autocomplete="off"></div>
+        <div class="form-group"><label>Jugador 2</label><input type="text" id="f-j2" placeholder="Nombre completo" autocomplete="off"></div>
+      </div>
+      <div class="form-group"><label>Infractor</label>
+        <select id="f-infractor" onchange="toggleInfractionBlock(this.value)">
+          <option value="">— Con infracción: seleccionar —</option>
+          <option value="CLEAN">✅ Check limpio — sin infracción</option>
+          <option value="J1">Jugador 1</option>
+          <option value="J2">Jugador 2</option>
+          <option value="Ambos">Ambos</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- CLEAN CHECK BANNER -->
+    <div id="clean-check-banner" style="display:none;background:linear-gradient(135deg,rgba(56,161,105,.2),rgba(56,161,105,.08));border:2px solid rgba(56,161,105,.5);border-radius:12px;padding:16px;margin-bottom:14px;text-align:center">
+      <div style="font-size:28px;margin-bottom:6px">✅</div>
+      <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:900;color:var(--green);letter-spacing:.08em">Check Limpio</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Deck y Deck List correctos — sin infracciones</div>
+    </div>
+
+    <div id="infraction-block" class="form-card">
+      <div class="sec-header">Infraction</div>
+
+      <!-- PE -->
+      <div class="inf-section"><span class="inf-label">🎲 Procedural Error (PE)</span>
+        <div class="inf-grid">
+          <button class="inf-btn p-w" onclick="selInf(this,'PE-Minor','Warning')">
+            <span class="ic">PE-Minor</span>
+            <span class="in">Easily corrected · reparable game state</span>
+            <span class="ip">Warning</span>
+          </button>
+          <button class="inf-btn p-g" onclick="selInf(this,'PE-Major','Game Loss')">
+            <span class="ic">PE-Major</span>
+            <span class="in">Irreparable game state</span>
+            <span class="ip">Game Loss</span>
+          </button>
+          <button class="inf-btn p-m" onclick="selInf(this,'PE-Strict','Match Loss')">
+            <span class="ic">PE-Strict</span>
+            <span class="in">Cannot finish current match</span>
+            <span class="ip">Match Loss</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- DE -->
+      <div class="inf-section"><span class="inf-label">📦 Deck / Deck List Error (DE)</span>
+        <div class="inf-grid">
+          <button class="inf-btn p-w" onclick="selInf(this,'DE-Minor','Warning')">
+            <span class="ic">DE-Minor</span>
+            <span class="in">Player self-reports BEFORE presenting · illegible list · no translation · replaceable counterfeit · incorrect Sealed registration (unintentional)</span>
+            <span class="ip">Warning</span>
+          </button>
+          <button class="inf-btn p-g" onclick="selInf(this,'DE-Major','Game Loss')">
+            <span class="ic">DE-Major</span>
+            <span class="in">Illegal deck list (incl. registered Forbidden card by wrong name) · deck ≠ list · failed to de-side after presenting · judge discovers error</span>
+            <span class="ip">Game Loss</span>
+          </button>
+        </div>
+        <p style="font-size:10px;color:var(--muted);margin-top:5px;padding-left:2px">⚠️ DE-Minor only if player self-reports BEFORE presenting. If judge finds it after presenting → DE-Major.</p>
+      </div>
+
+      <!-- MC -->
+      <div class="inf-section"><span class="inf-label">🃏 Marked Cards (MC)</span>
+        <div class="inf-grid">
+          <button class="inf-btn p-w" onclick="selInf(this,'MC-Minor','Warning')">
+            <span class="ic">MC-Minor</span>
+            <span class="in">Few cards marked · no significant pattern</span>
+            <span class="ip">Warning</span>
+          </button>
+          <button class="inf-btn p-g" onclick="selInf(this,'MC-Major','Game Loss')">
+            <span class="ic">MC-Major</span>
+            <span class="in">Many cards marked · no significant pattern · altered cards unrecognizable at first glance · HJ must verify NOT intentional</span>
+            <span class="ip">Game Loss</span>
+          </button>
+          <button class="inf-btn p-m" onclick="selInf(this,'MC-Strict','Match Loss')">
+            <span class="ic">MC-Strict</span>
+            <span class="in">Significant pattern (unintentional) · HJ must verify NOT intentional</span>
+            <span class="ip">Match Loss</span>
+          </button>
+        </div>
+        <p style="font-size:10px;color:var(--muted);margin-top:5px;padding-left:2px">⚠️ If HJ determines markings ARE intentional (at MC-Major or MC-Strict level) → UC-Cheating (DQ), not MC-Strict.</p>
+      </div>
+
+      <!-- DC -->
+      <div class="inf-section"><span class="inf-label">🤚 Drawing Extra Cards (DC)</span>
+        <div class="inf-grid">
+          <button class="inf-btn p-w" onclick="selInf(this,'DC-Minor','Warning')">
+            <span class="ic">DC-Minor</span>
+            <span class="in">Card drawn but identifiable by both players or judge · accidentally revealed cards</span>
+            <span class="ip">Warning</span>
+          </button>
+          <button class="inf-btn p-g" onclick="selInf(this,'DC-Major','Game Loss')">
+            <span class="ic">DC-Major</span>
+            <span class="in">Card added to hand · cannot be identified by either player or judge</span>
+            <span class="ip">Game Loss</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- T -->
+      <div class="inf-section"><span class="inf-label">⏱ Tardiness (T)</span>
+        <div class="inf-grid">
+          <button class="inf-btn p-g" onclick="selInf(this,'T-Major','Game Loss')">
+            <span class="ic">T-Major</span>
+            <span class="in">Not ready after 3 min · wrong table caught before 10 min · failed to build/register deck in time (Sealed)</span>
+            <span class="ip">Game Loss</span>
+          </button>
+          <button class="inf-btn p-m" onclick="selInf(this,'T-Strict','Match Loss')">
+            <span class="ic">T-Strict</span>
+            <span class="in">Not ready after 10 min · wrong table caught after 10 min · MC-Minor but cannot replace cards before 10 min mark</span>
+            <span class="ip">Match Loss</span>
+          </button>
+        </div>
+        <p style="font-size:10px;color:var(--muted);margin-top:5px;padding-left:2px">⚠️ Tardiness is NEVER upgraded on repeat infractions.</p>
+      </div>
+
+      <!-- SP -->
+      <div class="inf-section"><span class="inf-label">🐢 Slow Play (SP)</span>
+        <div class="inf-grid">
+          <button class="inf-btn p-w" onclick="selInf(this,'SP-Minor','Warning +3 min')">
+            <span class="ic">SP-Minor</span>
+            <span class="in">Unintentionally slow · excessive searching, note-taking, side decking</span>
+            <span class="ip">Warning + 3 min extension</span>
+          </button>
+          <button class="inf-btn p-g" onclick="selInf(this,'SP-Major','Game Loss')">
+            <span class="ic">SP-Major</span>
+            <span class="in">Repeat SP infraction same event · upgrade only</span>
+            <span class="ip">Game Loss (upgrade)</span>
+          </button>
+          <button class="inf-btn p-m" onclick="selInf(this,'SP-Strict','Match Loss')">
+            <span class="ic">SP-Strict</span>
+            <span class="in">Third SP infraction same event · upgrade only</span>
+            <span class="ip">Match Loss (upgrade)</span>
+          </button>
+        </div>
+        <p style="font-size:10px;color:var(--muted);margin-top:5px;padding-left:2px">⚠️ SP-Major and SP-Strict only exist through upgrade. Intentional slow play = UC-Cheating (Stalling).</p>
+      </div>
+
+      <!-- UC -->
+      <div class="inf-section"><span class="inf-label">🚨 Unsporting Conduct (UC)</span>
+        <div class="inf-grid">
+          <button class="inf-btn p-w" onclick="selInf(this,'UC-Minor','Warning')">
+            <span class="ic">UC-Minor</span>
+            <span class="in">Trash · swearing · insults · rule-sharking · eating/drinking at table · unauthorized device · unfair trade · appealing before judge finishes · demands specific judge</span>
+            <span class="ip">Warning</span>
+          </button>
+          <button class="inf-btn p-g" onclick="selInf(this,'UC-Major','Game Loss')">
+            <span class="ic">UC-Major</span>
+            <span class="in">Profanity directed at person · racial/sexual slur · refuses to sign slip · throws objects/chair</span>
+            <span class="ip">Game Loss</span>
+          </button>
+          <button class="inf-btn p-d" onclick="selInf(this,'UC-Severe','Disqualification')">
+            <span class="ic">UC-Severe</span>
+            <span class="in">Assault · vandalism · threats · theft · severe harassment · intoxicated · prohibited items · intentional misgendering · fraudulent vaccine proof · inappropriate on livestream</span>
+            <span class="ip">Disqualification</span>
+          </button>
+          <button class="inf-btn p-d" onclick="selInf(this,'UC-Cheating','Disqualification')">
+            <span class="ic">UC-Cheating</span>
+            <span class="in">Misrepresent game state · lying to officials · bribery · collusion · stalling · tournament fraud · intentionally marked cards · spectator signals to duelist</span>
+            <span class="ip">Disqualification</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="sel-box"><div class="sb-label">Selected</div><div class="sb-code" id="sb-code"></div><div class="sb-pen" id="sb-pen"></div></div>
+    </div>
+    <div class="form-card">
+      <div class="sec-header">Observaciones</div>
+      <div class="form-group"><label>Notas</label><textarea id="f-notas" placeholder="Situación, cartas involucradas, acciones tomadas..."></textarea></div>
+
+      <!-- TIMER + EXTENSIÓN -->
+      <div style="margin-top:12px;background:var(--bg3);border-radius:10px;padding:12px;border:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--muted);text-transform:uppercase">⏱ Cronómetro del Judge Call</span>
+          <div id="no-ext-badge" style="display:none;background:rgba(229,62,62,.15);border:1px solid rgba(229,62,62,.3);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700;color:var(--red)">Sin extensión — GL/ML</div>
+        </div>
+
+        <!-- Timer display -->
+        <div style="text-align:center;margin-bottom:10px">
+          <div id="timer-display" style="font-family:'Cinzel',serif;font-size:42px;font-weight:900;color:var(--gold);letter-spacing:.05em;line-height:1">00:00</div>
+          <div id="timer-note" style="font-size:11px;color:var(--muted);margin-top:4px">Inicia cuando el juez llega a la mesa</div>
+        </div>
+
+        <!-- Timer controls -->
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button id="btn-timer-start" onclick="timerStart()" style="flex:1;padding:10px;background:rgba(56,161,105,.15);border:1px solid rgba(56,161,105,.3);border-radius:8px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--green);cursor:pointer;letter-spacing:.05em">▶ Iniciar</button>
+          <button id="btn-timer-stop" onclick="timerStop()" style="flex:1;padding:10px;background:rgba(229,62,62,.1);border:1px solid rgba(229,62,62,.2);border-radius:8px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--red);cursor:pointer;letter-spacing:.05em" disabled>⏹ Detener</button>
+          <button onclick="timerReset()" style="padding:10px 14px;background:var(--bg4);border:1px solid var(--border);border-radius:8px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer">↺</button>
+        </div>
+
+        <!-- Extension result -->
+        <div id="ext-result-box" style="display:none;background:var(--bg4);border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border)">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Extensión a otorgar</div>
+          <div id="ext-result-val" style="font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:var(--gold)">— min</div>
+          <div id="ext-result-note" style="font-size:11px;color:var(--muted);margin-top:3px"></div>
+        </div>
+
+        <!-- Manual override -->
+        <div style="margin-top:10px" id="ext-manual-wrap">
+          <label style="font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--muted);text-transform:uppercase">Extensión manual (min)</label>
+          <input type="number" id="f-ext" min="0" max="60" value="0" style="margin-top:4px">
+        </div>
+      </div>
+    </div>
+    <button class="btn-primary" id="btn-guardar" onclick="guardar()">⚖️ Registrar Infracción</button>
+  </div>
+
+  <!-- REGISTROS -->
+  <div id="dc-registros" class="sub-view">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="sec-header" style="margin:0;border:none">Historial</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-secondary" onclick="syncFromSheet()" title="Recargar desde Sheets">↻</button>
+        <button class="btn-secondary" onclick="showClearModal()">Limpiar</button>
+      </div>
+    </div>
+    <div id="sheet-bar-wrap"></div>
+    <div style="margin-bottom:12px"><input type="number" id="filtro-ronda" placeholder="Filtrar por ronda..." min="1" oninput="renderRecords()" style="width:100%"></div>
+    <div id="records-container" class="records-list"></div>
+  </div>
+
+  <!-- RESUMEN -->
+  <div id="dc-resumen" class="sub-view">
+    <div class="sec-header">Estadísticas</div>
+    <div class="sum-grid">
+      <div class="sum-card sc-w"><span class="sn" id="cnt-w">0</span><span class="sl">Warnings</span></div>
+      <div class="sum-card sc-g"><span class="sn" id="cnt-g">0</span><span class="sl">Game Loss</span></div>
+      <div class="sum-card sc-m"><span class="sn" id="cnt-m">0</span><span class="sl">Match Loss</span></div>
+      <div class="sum-card sc-d"><span class="sn" id="cnt-d">0</span><span class="sl">Descalif.</span></div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid rgba(56,161,105,.3);border-radius:10px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--green);text-transform:uppercase">✅ Checks Limpios</span>
+      <span class="sn" id="cnt-clean" style="font-family:'Cinzel',serif;font-size:28px;font-weight:900;color:var(--green)">0</span>
+    </div>
+    <div class="sec-header">Por Tipo</div>
+    <div class="break-table" id="break-table"></div>
+    <div class="export-row">
+      <button class="btn-secondary" onclick="exportTXT()">📄 TXT</button>
+      <button class="btn-secondary" onclick="exportCSV()">📊 CSV</button>
+    </div>
+  </div>
+
+  <!-- CONFIG -->
+  <div id="dc-config" class="sub-view">
+    <div class="ref-card">
+      <h3>⚙️ Configuración — Google Sheets</h3>
+
+      <!-- Connected badge -->
+      <div style="background:rgba(56,161,105,.1);border:1px solid rgba(56,161,105,.3);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">✅</span>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--green)">Apps Script configurado</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;word-break:break-all">script.google.com/macros/s/AKfycbx…/exec</div>
+        </div>
+      </div>
+
+      <p class="ref-p" style="font-size:12px;color:var(--muted)">
+        La app guarda automáticamente en Google Sheets. Sin conexión → guarda local con badge "⏳ Local" y sube al reconectar.
+      </p>
+    </div>
+
+    <div class="form-card" id="cfg-sync-panel">
+      <div class="sec-header">Sincronización</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn-secondary" onclick="syncPendingQueue()" style="width:100%">⬆️ Subir pendientes a Sheets</button>
+        <button class="btn-secondary" onclick="syncFromSheet()" style="width:100%">⬇️ Recargar desde Sheets</button>
+      </div>
+      <div id="cfg-sheet-url" style="margin-top:10px;text-align:center"></div>
+    </div>
+
+    <div class="form-card">
+      <div class="sec-header">Estado de conexión</div>
+      <button class="btn-primary" onclick="testConnection()">🔌 Probar conexión</button>
+      <div id="cfg-status" style="margin-top:10px;font-size:12px;color:var(--muted);text-align:center"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ INFRACCIONES ═══════════════════ -->
+<div id="main-inf" class="main-view">
+  <div style="padding:14px">
+
+    <!-- SLIP REFERENCE -->
+    <div class="ref-card">
+      <h3>📋 Cómo llenar el Match Result Slip</h3>
+
+      <!-- Formula strip -->
+      <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:12px;border-left:3px solid var(--gold)">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Fórmula — reverso del slip</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+          <span style="background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);border-radius:6px;padding:5px 10px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold-l)">Nombre del jugador</span>
+          <span style="color:var(--muted);font-size:14px;font-weight:700">·</span>
+          <span style="background:rgba(66,153,225,.15);border:1px solid rgba(66,153,225,.3);border-radius:6px;padding:5px 10px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--blue)">Infracción</span>
+          <span style="color:var(--muted);font-size:14px;font-weight:700">·</span>
+          <span style="background:rgba(229,62,62,.15);border:1px solid rgba(229,62,62,.3);border-radius:6px;padding:5px 10px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--red)">Penalidad</span>
+          <span style="color:var(--muted);font-size:14px;font-weight:700">·</span>
+          <span style="background:rgba(56,161,105,.15);border:1px solid rgba(56,161,105,.3);border-radius:6px;padding:5px 10px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--green)">Descripción breve</span>
+          <span style="color:var(--muted);font-size:14px;font-weight:700">·</span>
+          <span style="background:rgba(128,90,213,.15);border:1px solid rgba(128,90,213,.3);border-radius:6px;padding:5px 10px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--purple)">Nombre del juez</span>
+        </div>
+      </div>
+
+      <!-- Example -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Ejemplo</div>
+      <div style="background:var(--bg4);border-radius:8px;padding:11px 13px;font-size:13px;font-weight:500;line-height:1.7;color:var(--text);border:1px solid rgba(201,168,76,.1)">
+        <span style="color:var(--gold-l);font-weight:700">Juan Pérez</span>
+        <span style="color:var(--muted)"> – </span>
+        <span style="color:var(--blue);font-weight:700">DE-Major</span>
+        <span style="color:var(--muted)"> – </span>
+        <span style="color:var(--red);font-weight:700">Game Loss</span>
+        <span style="color:var(--muted)"> – </span>
+        <span style="color:var(--green)">Deck no coincide con Deck List: falta 1 Ash Blossom, hay 1 Effect Veiler extra</span>
+        <span style="color:var(--muted)"> – </span>
+        <span style="color:var(--purple)">H. Barcenas</span>
+      </div>
+
+      <!-- Rules -->
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:7px">
+        <div style="font-size:12px;display:flex;gap:8px;align-items:flex-start">
+          <span style="color:var(--gold);flex-shrink:0">▸</span>
+          <span>Se escribe en el <strong>reverso del Match Result Slip</strong>, en el espacio de penalidades.</span>
+        </div>
+        <div style="font-size:12px;display:flex;gap:8px;align-items:flex-start">
+          <span style="color:var(--gold);flex-shrink:0">▸</span>
+          <span>Si hay <strong>extensión de tiempo</strong>, anótala en la esquina inferior izquierda del frente del slip.</span>
+        </div>
+        <div style="font-size:12px;display:flex;gap:8px;align-items:flex-start">
+          <span style="color:var(--gold);flex-shrink:0">▸</span>
+          <span>Si ambos jugadores reciben penalidad (ej. PE-Minor por estado compartido), se escriben <strong>dos líneas separadas</strong>.</span>
+        </div>
+        <div style="font-size:12px;display:flex;gap:8px;align-items:flex-start">
+          <span style="color:var(--gold);flex-shrink:0">▸</span>
+          <span>La descripción debe ser <strong>breve y factual</strong> — qué pasó, no interpretaciones.</span>
+        </div>
+        <div style="font-size:12px;display:flex;gap:8px;align-items:flex-start">
+          <span style="color:var(--gold);flex-shrink:0">▸</span>
+          <span>El slip va al <strong>Scorekeeper</strong> para registrar la penalidad en el sistema.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ref-card">
+      <h3>Tabla Rápida de Infracciones</h3>
+      <p class="ref-p" style="font-size:11px;color:var(--muted);margin-bottom:10px">Referencia rápida para identificar código y penalidad antes de escribir en el slip.</p>
+      <table class="qref-table">
+        <thead><tr><th>Code</th><th>Situation</th><th>Penalty</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--yellow)">PE-Minor</td><td>Easily corrected · reparable game state</td><td><span class="pen-tag pt-w">Warning</span></td></tr>
+          <tr><td style="color:var(--red)">PE-Major</td><td>Irreparable game state</td><td><span class="pen-tag pt-g">Game Loss</span></td></tr>
+          <tr><td style="color:var(--purple)">PE-Strict</td><td>Cannot finish match (e.g. deck destroyed)</td><td><span class="pen-tag pt-m">Match Loss</span></td></tr>
+          <tr><td style="color:var(--yellow)">DE-Minor</td><td>Player self-reports BEFORE presenting · illegible list · no translation · replaceable counterfeit</td><td><span class="pen-tag pt-w">Warning</span></td></tr>
+          <tr><td style="color:var(--red)">DE-Major</td><td>Illegal list (incl. Forbidden card by wrong name) · deck ≠ list · failed to de-side after presenting · judge finds error</td><td><span class="pen-tag pt-g">Game Loss</span></td></tr>
+          <tr><td style="color:var(--yellow)">DC-Minor</td><td>Extra card drawn · identifiable · accidentally revealed cards</td><td><span class="pen-tag pt-w">Warning</span></td></tr>
+          <tr><td style="color:var(--red)">DC-Major</td><td>Card added to hand · cannot be identified by either player or judge</td><td><span class="pen-tag pt-g">Game Loss</span></td></tr>
+          <tr><td style="color:var(--yellow)">MC-Minor</td><td>Few cards marked · no significant pattern</td><td><span class="pen-tag pt-w">Warning</span></td></tr>
+          <tr><td style="color:var(--red)">MC-Major</td><td>Many cards marked · no sig. pattern · altered unrecognizable · HJ must verify NOT intentional</td><td><span class="pen-tag pt-g">Game Loss</span></td></tr>
+          <tr><td style="color:var(--purple)">MC-Strict</td><td>Significant pattern · HJ must verify NOT intentional → if intentional: UC-Cheating (DQ)</td><td><span class="pen-tag pt-m">Match Loss</span></td></tr>
+          <tr><td style="color:var(--yellow)">SP-Minor</td><td>Unintentional slow play → always +3 min extension</td><td><span class="pen-tag pt-w">Warning</span></td></tr>
+          <tr><td style="color:var(--red)">SP-Major</td><td>Repeat SP infraction · upgrade only · never issued directly</td><td><span class="pen-tag pt-g">Game Loss</span></td></tr>
+          <tr><td style="color:var(--purple)">SP-Strict</td><td>Third SP infraction · upgrade only · never issued directly</td><td><span class="pen-tag pt-m">Match Loss</span></td></tr>
+          <tr><td style="color:var(--yellow)">UC-Minor</td><td>Trash · swearing · insults · rule-sharking · eating at table · unauthorized device · unfair trade · demands specific judge</td><td><span class="pen-tag pt-w">Warning</span></td></tr>
+          <tr><td style="color:var(--red)">UC-Major</td><td>Profanity at person · racial/sexual slur · refuses to sign · throws objects</td><td><span class="pen-tag pt-g">Game Loss</span></td></tr>
+          <tr><td style="color:#fc8181">UC-Severe</td><td>Assault · vandalism · threats · theft · severe harassment · intoxicated · prohibited items · intentional misgendering</td><td><span class="pen-tag pt-d">DQ</span></td></tr>
+          <tr><td style="color:#fc8181">UC-Cheating</td><td>Misrepresent game state · lying to officials · bribery · collusion · stalling · tournament fraud · spectator signals to duelist</td><td><span class="pen-tag pt-d">DQ</span></td></tr>
+          <tr><td style="color:var(--red)">T-Major</td><td>Not ready after 3 min · wrong table before 10 min · failed to build deck (Sealed)</td><td><span class="pen-tag pt-g">Game Loss</span></td></tr>
+          <tr><td style="color:var(--purple)">T-Strict</td><td>Not ready after 10 min · wrong table after 10 min · MC-Minor cards unreplaced at 10 min</td><td><span class="pen-tag pt-m">Match Loss</span></td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5">⚠️ Tardiness is NEVER upgraded. SP-Major and SP-Strict only exist as upgrades. All DQ infractions require Head Judge.</p>
+    </div>
+    <div class="ref-card"><h3>⏰ Fin de Ronda</h3>
+      <p class="ref-p">Si el match no termina en <strong>50 minutos → Double Loss</strong>. Al anunciarse tiempo, el match termina inmediatamente.</p>
+      <p class="ref-p">Match terminado = un duelista gana o pierde 2 duelos. 3 duelos sin ganador con tiempo → 4° duelo. Top Cut = sin límite.</p>
+    </div>
+
+    <!-- DE-MAJOR CORRECTION TREE -->
+    <div class="ref-card">
+      <h3>🌳 Árbol de Corrección — DE-Major</h3>
+      <p class="ref-p" style="font-size:11px;color:var(--muted);margin-bottom:12px">La Deck List siempre tiene prioridad sobre el Deck físico.</p>
+
+      <div style="display:flex;flex-direction:column;gap:6px">
+
+        <div style="background:rgba(66,153,225,.1);border:1px solid rgba(66,153,225,.3);border-radius:8px;padding:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--blue);margin-bottom:5px">✅ Deck List LEGAL · Deck NO coincide</div>
+          <div style="font-size:12px;color:var(--text)">Ajustar el Deck para que coincida con la Lista. El jugador consigue las cartas faltantes.</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Si tarda +10 min → T-Strict adicional. Si no tiene las cartas y no hay Side Deck → <strong style="color:var(--red)">se retira del torneo</strong>.</div>
+        </div>
+
+        <div style="background:rgba(237,137,54,.1);border:1px solid rgba(237,137,54,.3);border-radius:8px;padding:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--orange);margin-bottom:5px">⚠️ Deck List ILEGAL · Deck LEGAL</div>
+          <div style="font-size:12px;color:var(--text)">Ajustar la Lista para que coincida con el Deck. No se toca el Deck.</div>
+        </div>
+
+        <div style="background:rgba(229,62,62,.1);border:1px solid rgba(229,62,62,.3);border-radius:8px;padding:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:5px">❌ Ambos ILEGALES</div>
+          <div style="font-size:12px;color:var(--text);line-height:1.6">
+            1. Limpiar el Deck primero: retirar cartas prohibidas, copias extra de limitadas, OCG cards.<br>
+            2. Si el Deck sigue siendo legal (≥40) → corregir la Lista. No se pueden agregar cartas.<br>
+            3. Si quedó ilegal (menos de 40) → agregar cartas del Side Deck para llegar al mínimo, corregir Lista.<br>
+            4. Sin Side Deck y no puede completarlo → <strong style="color:var(--red)">se retira del torneo</strong>.
+          </div>
+        </div>
+
+        <div style="background:rgba(128,90,213,.1);border:1px solid rgba(128,90,213,.3);border-radius:8px;padding:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--purple);margin-bottom:5px">🔍 Si ya hubo Deck Check verificado</div>
+          <div style="font-size:12px;color:var(--text)">La Lista no puede modificarse más. Si el Deck no coincide → ajustar Deck a Lista. Si no tiene las cartas → <strong style="color:var(--red)">se retira</strong>.</div>
+        </div>
+
+        <div style="background:rgba(56,161,105,.1);border:1px solid rgba(56,161,105,.3);border-radius:8px;padding:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:5px">⏱ Antes de Round 1 (sin penalidad)</div>
+          <div style="font-size:12px;color:var(--text)">Si el error se detecta ANTES de que inicie la Ronda 1 → el HJ puede corregir sin aplicar Game Loss.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="ref-card"><h3>🔺 Upgrades</h3>
+      <p class="ref-p">Solo Head Judge. Solo por la <strong>misma infracción repetida</strong>. Días 1 y 2 se consideran el mismo evento.</p>
+      <p class="ref-p"><strong>Escalera:</strong> Advertencia → Game Loss → Match Loss → Descalif.</p>
+      <p class="ref-p"><strong>Tardanza NUNCA se hace upgrade.</strong></p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PSCT ═══════════════════ -->
+<div id="main-psct" class="main-view">
+  <div style="padding:14px">
+    <div class="ref-card"><h3>Problem-Solving Card Text</h3>
+      <p class="ref-p" style="text-align:center;font-size:14px"><span class="ref-tag rt-c">CONDICIÓN</span> : <span class="ref-tag rt-a">ACTIVACIÓN</span> ; <span class="ref-tag rt-r">RESOLUCIÓN</span></p>
+      <p class="ref-p" style="margin-top:10px"><span class="ref-tag rt-c">CONDICIÓN</span> Cuándo o con qué frecuencia activa.</p>
+      <p class="ref-p"><span class="ref-tag rt-a">ACTIVACIÓN</span> Qué haces al activar (objetivo, costos).</p>
+      <p class="ref-p"><span class="ref-tag rt-r">RESOLUCIÓN</span> Efectos al resolver.</p>
+    </div>
+    <div class="ref-card"><h3>Reglas de Cadena</h3>
+      <p class="ref-p">Efectos de monstruo <strong>con (:)</strong> → inician cadena. Mágica/Trampa → <strong>siempre inicia cadena</strong>. Sin (:) → NO inician cadena.</p>
+      <p class="ref-p"><strong>"ese objetivo"</strong> → debe ser el mismo al activar y resolver. <strong>"él/ellos"</strong> → no necesita ser el mismo. <strong>"ambos"</strong> → todos o no resuelve.</p>
+    </div>
+    <div class="ref-card"><h3>Conjuntivas</h3>
+      <table class="conj-table">
+        <tr><td>THEN</td><td>B después de A. Secuencial. Sin A no hay B.</td></tr>
+        <tr><td>ALSO</td><td>A y B simultáneo. Aplica todo lo posible.</td></tr>
+        <tr><td>AND IF YOU DO</td><td>A requerida para B. Simultáneo.</td></tr>
+        <tr><td>AND</td><td>A y B requeridos. Si uno falla, no resuelve.</td></tr>
+        <tr><td>ALSO, AFTER THAT</td><td>B después de A. Secuencial. Aplica todo lo posible.</td></tr>
+      </table>
+    </div>
+    <div class="ref-card"><h3>SEGOC</h3>
+      <div class="chain-box">
+        <div class="chain-step">1. Mandatorios del Jugador en Turno</div><div class="chain-arrow">↓</div>
+        <div class="chain-step">2. Mandatorios del Oponente</div><div class="chain-arrow">↓</div>
+        <div class="chain-step">3. Opcionales del Jugador en Turno</div><div class="chain-arrow">↓</div>
+        <div class="chain-step">4. Opcionales del Oponente</div><div class="chain-arrow">↓</div>
+        <div class="chain-step">5. Construir cadena normalmente</div>
+      </div>
+      <p class="ref-p" style="margin-top:10px;font-size:12px;color:var(--muted)">Fast Effects: empieza el jugador que NO activó la cadena más reciente.</p>
+    </div>
+
+    <!-- CHAIN FLOW DIAGRAM -->
+    <div class="ref-card">
+      <h3>🔗 Flujo de Cadena — After Chain Resolves</h3>
+      <p class="ref-p" style="font-size:11px;color:var(--muted);margin-bottom:14px">Diagrama completo de cómo fluye el turno según la acción del Turn Player.</p>
+
+      <!-- NODE A -->
+      <div style="background:linear-gradient(135deg,rgba(56,161,105,.25),rgba(56,161,105,.1));border:2px solid var(--green);border-radius:10px;padding:12px;text-align:center;margin-bottom:10px">
+        <div style="font-family:'Cinzel',serif;font-size:13px;font-weight:900;color:var(--green);margin-bottom:4px">A — Game State Abierto</div>
+        <div style="font-size:11px;color:var(--text);line-height:1.5">El Turn Player puede realizar cualquier acción apropiada.<br><span style="color:var(--muted)">(Cada Phase y Step comienza aquí)</span></div>
+      </div>
+
+      <!-- 3 PATHS -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px">
+        <div style="background:rgba(66,153,225,.12);border:1px solid rgba(66,153,225,.4);border-radius:8px;padding:9px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--blue);margin-bottom:4px">ACCIÓN SIN CADENA</div>
+          <div style="font-size:10px;color:var(--muted);line-height:1.4">Normal Summon, Set, Special Summon sin cadena, declarar ataque, cambiar posición…</div>
+        </div>
+        <div style="background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.4);border-radius:8px;padding:9px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--gold);margin-bottom:4px">ACTIVA CARTA/EFECTO</div>
+          <div style="font-size:10px;color:var(--muted);line-height:1.4">Mágicas, Trampas, efectos de Mágica/Trampa o efectos de monstruo — cualquier Spell Speed</div>
+        </div>
+        <div style="background:rgba(128,90,213,.12);border:1px solid rgba(128,90,213,.4);border-radius:8px;padding:9px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--purple);margin-bottom:4px">PASA</div>
+          <div style="font-size:10px;color:var(--muted);line-height:1.4">Turn Player no hace nada más</div>
+        </div>
+      </div>
+
+      <!-- PATH LEFT: acción sin cadena -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div>
+          <div style="text-align:center;font-size:10px;color:var(--muted);margin-bottom:6px">↓ ¿Activa un Trigger Effect?</div>
+          <div style="display:flex;gap:6px">
+            <div style="flex:1;background:rgba(229,62,62,.1);border:1px solid rgba(229,62,62,.25);border-radius:8px;padding:8px;text-align:center">
+              <div style="font-size:9px;font-weight:700;color:var(--red);margin-bottom:4px">NO ↓</div>
+              <!-- NODE B -->
+              <div style="background:rgba(237,137,54,.15);border:1px solid rgba(237,137,54,.4);border-radius:6px;padding:7px">
+                <div style="font-family:'Cinzel',serif;font-size:10px;font-weight:700;color:var(--orange)">B</div>
+                <div style="font-size:10px;color:var(--text);margin-top:2px">Turn Player puede activar Fast Effect</div>
+              </div>
+              <div style="font-size:9px;color:var(--muted);margin:4px 0">PASS ↓</div>
+              <!-- NODE C -->
+              <div style="background:rgba(237,137,54,.1);border:1px solid rgba(237,137,54,.3);border-radius:6px;padding:7px">
+                <div style="font-family:'Cinzel',serif;font-size:10px;font-weight:700;color:var(--orange)">C</div>
+                <div style="font-size:10px;color:var(--text);margin-top:2px">Oponente puede activar Fast Effect</div>
+              </div>
+            </div>
+            <div style="flex:1;background:rgba(56,161,105,.1);border:1px solid rgba(56,161,105,.25);border-radius:8px;padding:8px;text-align:center">
+              <div style="font-size:9px;font-weight:700;color:var(--green);margin-bottom:4px">SÍ →</div>
+              <div style="font-size:10px;color:var(--muted)">Va a D (Chain Rules)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PATH CENTER/RIGHT: pasa -->
+        <div>
+          <div style="text-align:center;font-size:10px;color:var(--muted);margin-bottom:6px">↓ Turn Player pasa</div>
+          <!-- NODE E -->
+          <div style="background:rgba(237,137,54,.15);border:1px solid rgba(237,137,54,.4);border-radius:8px;padding:9px;text-align:center;margin-bottom:6px">
+            <div style="font-family:'Cinzel',serif;font-size:10px;font-weight:700;color:var(--orange)">E</div>
+            <div style="font-size:10px;color:var(--text);margin-top:2px">Oponente puede activar Fast Effects</div>
+          </div>
+          <div style="font-size:9px;color:var(--muted);text-align:center;margin-bottom:6px">PASS ↓</div>
+          <div style="background:rgba(66,153,225,.1);border:1px solid rgba(66,153,225,.3);border-radius:8px;padding:9px;text-align:center">
+            <div style="font-size:10px;font-weight:700;color:var(--blue);margin-bottom:3px">¿Ambos pasan?</div>
+            <div style="font-size:9px;color:var(--green)">SÍ → End of Phase/Step</div>
+            <div style="font-size:9px;color:var(--red);margin-top:2px">NO → vuelve a E</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NODE D -->
+      <div style="background:linear-gradient(135deg,rgba(229,62,62,.2),rgba(229,62,62,.08));border:2px solid rgba(229,62,62,.5);border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-family:'Cinzel',serif;font-size:12px;font-weight:900;color:var(--red);text-align:center;margin-bottom:6px">D — Chain Rules: Build, then Resolve</div>
+        <ul style="list-style:none;padding:0;font-size:11px;color:var(--text);display:flex;flex-direction:column;gap:4px">
+          <li style="display:flex;gap:6px"><span style="color:var(--gold);flex-shrink:0">▸</span>La carta que inició la cadena va al fondo (Chain Link 1).</li>
+          <li style="display:flex;gap:6px"><span style="color:var(--gold);flex-shrink:0">▸</span>Se construye desde ahí. Empieza el jugador que NO activó el Chain Link más reciente.</li>
+          <li style="display:flex;gap:6px"><span style="color:var(--gold);flex-shrink:0">▸</span>Ambos jugadores pueden agregar Fast Effects o pasar.</li>
+          <li style="display:flex;gap:6px"><span style="color:var(--gold);flex-shrink:0">▸</span>Si ambos pasan seguidos → se resuelve la cadena en orden inverso (último → primero).</li>
+          <li style="display:flex;gap:6px"><span style="color:var(--gold);flex-shrink:0">▸</span>Al terminar de resolver → vuelve a <strong style="color:var(--green)">A</strong>.</li>
+        </ul>
+      </div>
+
+      <!-- End state -->
+      <div style="background:rgba(56,161,105,.1);border:1px solid rgba(56,161,105,.3);border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:10px;font-weight:700;color:var(--green);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px">End of Phase / Step</div>
+        <div style="font-size:11px;color:var(--muted)">Si la End Phase acaba de terminar → turno del oponente, comenzando con Draw Phase.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════ DAMAGE STEP ═══════════════════ -->
+<div id="main-dmg" class="main-view">
+  <div style="padding:14px">
+    <div class="ref-card"><h3>Secuencia del Damage Step</h3>
+      <table class="dmg-table">
+        <thead><tr><th>Momento</th><th>Qué sucede</th></tr></thead>
+        <tbody>
+          <tr><td>Inicio</td><td>Declaras que entras al Damage Step.</td></tr>
+          <tr><td>Antes del cálculo</td><td>Monstruo boca abajo se voltea. Efectos que modifiquen ATK/DEF pueden activarse. Trigger de volteo aún no.</td></tr>
+          <tr><td>Cálculo de daño</td><td>Efectos "during damage calculation". Se compara ATK/DEF, se aplica daño. Se determina destrucción, pero aún NO va al GY.</td></tr>
+          <tr><td>Después del cálculo</td><td>Efectos resultado de la batalla. Trigger de volteo. El destruido sigue sin ir al GY.</td></tr>
+          <tr><td>Fin del Damage Step</td><td>Destruido va al GY. Efectos de destrucción por batalla. Efectos "until end of DS" desaparecen. Retorno al Battle Step.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="ref-card"><h3>¿Qué puede usarse?</h3>
+      <ul style="list-style:none;padding:0">
+        <li style="padding:5px 0;border-bottom:1px solid rgba(201,168,76,.08);font-size:12px">✅ Cartas que lo indiquen explícitamente</li>
+        <li style="padding:5px 0;border-bottom:1px solid rgba(201,168,76,.08);font-size:12px">✅ Efectos Mandatorios · Counter Traps</li>
+        <li style="padding:5px 0;border-bottom:1px solid rgba(201,168,76,.08);font-size:12px">✅ Fast Effects que alteren ATK/DEF <em>(solo inicio y antes del cálculo)</em></li>
+        <li style="padding:5px 0;border-bottom:1px solid rgba(201,168,76,.08);font-size:12px">✅ Fast Effects que nieguen activaciones</li>
+        <li style="padding:5px 0;font-size:12px">✅ Trigger activados por la propia carta moviéndose (Flip, cambios posición)</li>
+      </ul>
+    </div>
+    <div class="ref-card"><h3>Orden de Daño de Batalla</h3>
+      <ol class="bd-list">
+        <li><span class="bd-num">01</span>Doble daño de batalla.</li>
+        <li><span class="bd-num">02</span>Ambos jugadores reciben el daño.</li>
+        <li><span class="bd-num">03</span>Daño también al oponente / oponente lo recibe en tu lugar.</li>
+        <li><span class="bd-num">04</span>Daño de batalla → daño de efecto.</li>
+        <li><span class="bd-num">05</span>Ganas LP en lugar de recibir daño.</li>
+        <li><span class="bd-num">06</span>Daño → 0. <em>(Efectos restantes no se aplican.)</em></li>
+        <li><span class="bd-num">07</span>Daño se reduce a la mitad.</li>
+        <li><span class="bd-num">08</span>Daño se duplica.</li>
+        <li><span class="bd-num">09</span>Daño → X.</li>
+        <li><span class="bd-num">10</span>No recibes daño si es mayor/menor que X.</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MEMORIA ═══════════════════ -->
+<div id="main-mem" class="main-view">
+  <div style="padding:14px">
+    <div class="ref-card"><h3>¿Qué recuerda un monstruo?</h3>
+      <table class="mem-table">
+        <thead><tr><th>Situación</th><th>Boca ↓</th><th>Banished temp.</th></tr></thead>
+        <tbody>
+          <tr><td>Cambió posición este turno</td><td class="mem-r">✓</td><td class="mem-f">✗</td></tr>
+          <tr><td>Declaró ataque este turno</td><td class="mem-r">✓</td><td class="mem-tbd">TBD</td></tr>
+          <tr><td>Usó efecto OPT este turno</td><td class="mem-f">✗*</td><td class="mem-f">✗</td></tr>
+          <tr><td>Control debe devolverse</td><td class="mem-r">✓</td><td class="mem-r">✓</td></tr>
+          <tr><td>Modificaciones de stats</td><td class="mem-f">✗</td><td class="mem-f">✗</td></tr>
+          <tr><td>Efectos previamente aplicados</td><td class="mem-f">✗</td><td class="mem-f">✗</td></tr>
+          <tr><td>Tipo de invocación</td><td class="mem-r">✓</td><td class="mem-r">✓</td></tr>
+          <tr><td>Desde dónde fue invocado</td><td class="mem-f">✗</td><td class="mem-r">✓</td></tr>
+          <tr><td>Info de materiales</td><td class="mem-f">✗*</td><td class="mem-f">✗*</td></tr>
+        </tbody>
+      </table>
+      <p class="ref-p" style="margin-top:10px;font-size:11px;color:var(--muted)">* OPT: si el monstruo se voltea él mismo, solo puede hacerlo una vez/turno. * Materiales: nombres olvidados, pero cuáles cartas no (De-Fusion/De-Synchro funcionan). TBD = ruling Ninjitsu Art pendiente.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CONOCIMIENTO ═══════════════════ -->
+<div id="main-know" class="main-view">
+  <div style="padding:14px">
+
+    <!-- OFFICIAL DOCS -->
+    <div class="ref-card">
+      <h3>📎 Links Útiles — Judge Reference</h3>
+
+      <!-- CATEGORY: KDE-US Policy -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--gold-d);text-transform:uppercase;margin-bottom:7px;margin-top:2px">📋 Políticas Oficiales KDE-US</div>
+      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+
+        <a href="https://bit.ly/YGOpolicy2_5" target="_blank" style="display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 13px;text-decoration:none">
+          <span style="font-size:20px;flex-shrink:0">📋</span>
+          <div style="flex:1">
+            <div style="font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold)">Tournament Policy v2.5</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px">North & Latin America · Sept 5, 2025</div>
+            <div style="font-size:10px;color:var(--blue)">bit.ly/YGOpolicy2_5</div>
+          </div>
+          <span style="color:var(--muted);font-size:16px;flex-shrink:0">↗</span>
+        </a>
+
+        <a href="https://bit.ly/YGOpenalty2_3" target="_blank" style="display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 13px;text-decoration:none">
+          <span style="font-size:20px;flex-shrink:0">⚖️</span>
+          <div style="flex:1">
+            <div style="font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold)">Infractions & Penalties v2.3</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px">North & Latin America · Sept 5, 2025</div>
+            <div style="font-size:10px;color:var(--blue)">bit.ly/YGOpenalty2_3</div>
+          </div>
+          <span style="color:var(--muted);font-size:16px;flex-shrink:0">↗</span>
+        </a>
+
+        <a href="https://bit.ly/YGOcv19add" target="_blank" style="display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 13px;text-decoration:none">
+          <span style="font-size:20px;flex-shrink:0">🦠</span>
+          <div style="flex:1">
+            <div style="font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold)">COVID-19 Addendum</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px">Updated Feb 25, 2022</div>
+            <div style="font-size:10px;color:var(--blue)">bit.ly/YGOcv19add</div>
+          </div>
+          <span style="color:var(--muted);font-size:16px;flex-shrink:0">↗</span>
+        </a>
+
+        <a href="https://bit.ly/YGOspeedadd" target="_blank" style="display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 13px;text-decoration:none">
+          <span style="font-size:20px;flex-shrink:0">⚡</span>
+          <div style="flex:1">
+            <div style="font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold)">Speed Duel Addendum</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px">Updated Mar 11, 2022</div>
+            <div style="font-size:10px;color:var(--blue)">bit.ly/YGOspeedadd</div>
+          </div>
+          <span style="color:var(--muted);font-size:16px;flex-shrink:0">↗</span>
+        </a>
+
+      </div>
+
+      <!-- CATEGORY: Card Rules & Database -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--gold-d);text-transform:uppercase;margin-bottom:7px">🃏 Reglas y Base de Datos</div>
+      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+
+        <a href="https://www.yugioh-card.com/en/rulebook/index.html" target="_blank" style="display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 13px;text-decoration:none">
+          <span style="font-size:20px;flex-shrink:0">📖</span>
+          <div style="flex:1">
+            <div style="font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold)">Official Rulebook (EN)</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px">Reglamento oficial actualizado</div>
+            <div style="font-size:10px;color:var(--blue)">yugioh-card.com/en/rulebook</div>
+          </div>
+          <span style="color:var(--muted);font-size:16px;flex-shrink:0">↗</span>
+        </a>
+
+        <a href="https://www.db.yugioh-card.com/yugiohdb/" target="_blank" style="display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 13px;text-decoration:none">
+          <span style="font-size:20px;flex-shrink:0">🗂️</span>
+          <div style="flex:1">
+            <div style="font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold)">Official Card Database (TCG)</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px">Texto oficial, erratas, Camera Search</div>
+            <div style="font-size:10px;color:var(--blue)">db.yugioh-card.com/yugiohdb</div>
+          </div>
+          <span style="color:var(--muted);font-size:16px;flex-shrink:0">↗</span>
+        </a>
+
+        <!-- YGO RESOURCES — highlighted as community rulings -->
+        <a href="https://db.ygoresources.com/" target="_blank" style="display:flex;align-items:center;gap:12px;background:rgba(66,153,225,.08);border:1px solid rgba(66,153,225,.35);border-radius:10px;padding:10px 13px;text-decoration:none">
+          <span style="font-size:20px;flex-shrink:0">🔍</span>
+          <div style="flex:1">
+            <div style="font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--blue)">YGO Resources — Card DB</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px">Rulings OCG · Q&A oficial Konami JP · búsqueda avanzada</div>
+            <div style="font-size:10px;color:var(--blue)">db.ygoresources.com</div>
+          </div>
+          <span style="color:var(--blue);font-size:16px;flex-shrink:0">↗</span>
+        </a>
+        <div style="font-size:10px;color:var(--muted);padding:4px 8px;background:rgba(66,153,225,.05);border-radius:6px;line-height:1.5">
+          ⚠️ <strong style="color:var(--text)">OCG rulings</strong> son de referencia — no son vinculantes en TCG hasta que Konami TCG los confirme oficialmente. Úsalos como guía cuando no hay ruling TCG disponible, pero siempre consulta con el Head Judge antes de aplicarlos.
+        </div>
+
+      </div>
+
+      <!-- CATEGORY: Lists & Tools -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--gold-d);text-transform:uppercase;margin-bottom:7px">🛠️ Listas y Herramientas</div>
+      <div style="display:flex;flex-direction:column;gap:7px">
+
+        <a href="https://www.yugioh-card.com/en/limited/index.html" target="_blank" style="display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 13px;text-decoration:none">
+          <span style="font-size:20px;flex-shrink:0">🚫</span>
+          <div style="flex:1">
+            <div style="font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold)">Forbidden & Limited List (NA)</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px">Advanced Format — North America</div>
+            <div style="font-size:10px;color:var(--blue)">yugioh-card.com/en/limited</div>
+          </div>
+          <span style="color:var(--muted);font-size:16px;flex-shrink:0">↗</span>
+        </a>
+
+        <a href="https://www.yugioh-card.com/lat-am/limited/index.html" target="_blank" style="display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 13px;text-decoration:none">
+          <span style="font-size:20px;flex-shrink:0">🌎</span>
+          <div style="flex:1">
+            <div style="font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold)">Forbidden & Limited List (Lat-Am)</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px">Advanced Format — Latin America & Caribbean</div>
+            <div style="font-size:10px;color:var(--blue)">yugioh-card.com/lat-am/limited</div>
+          </div>
+          <span style="color:var(--muted);font-size:16px;flex-shrink:0">↗</span>
+        </a>
+
+        <a href="https://cardgame-network.konami.net/" target="_blank" style="display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 13px;text-decoration:none">
+          <span style="font-size:20px;flex-shrink:0">🆔</span>
+          <div style="flex:1">
+            <div style="font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold)">KCGN — Card Game Network</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px">CARD GAME IDs · rankings · torneos sancionados</div>
+            <div style="font-size:10px;color:var(--blue)">cardgame-network.konami.net</div>
+          </div>
+          <span style="color:var(--muted);font-size:16px;flex-shrink:0">↗</span>
+        </a>
+
+        <a href="https://www.yugioh-card.com/en/events/organizedplay/" target="_blank" style="display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 13px;text-decoration:none">
+          <span style="font-size:20px;flex-shrink:0">🏆</span>
+          <div style="flex:1">
+            <div style="font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold)">Organized Play Hub (NA)</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px">Policy docs · Suspended Persons List · event info</div>
+            <div style="font-size:10px;color:var(--blue)">yugioh-card.com/en/events/organizedplay</div>
+          </div>
+          <span style="color:var(--muted);font-size:16px;flex-shrink:0">↗</span>
+        </a>
+
+        <a href="https://www.yugioh-card.com/en/about/code-of-conduct/" target="_blank" style="display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 13px;text-decoration:none">
+          <span style="font-size:20px;flex-shrink:0">📜</span>
+          <div style="flex:1">
+            <div style="font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold)">KONAMI Community Code of Conduct</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px">Referenciado en UC-Minor, UC-Severe y Media</div>
+            <div style="font-size:10px;color:var(--blue)">yugioh-card.com/en/about/code-of-conduct</div>
+          </div>
+          <span style="color:var(--muted);font-size:16px;flex-shrink:0">↗</span>
+        </a>
+
+      </div>
+    </div>
+
+    <div class="ref-card"><h3>Conocimiento Público vs Privado</h3>
+      <div class="pk-col">
+        <div class="pk-box"><h4 class="pub">👁 Público</h4><ul>
+          <li># de cartas en mano</li>
+          <li># en Deck (Main, Extra, Side)</li>
+          <li># y nombre en GY y banidas boca ↑</li>
+          <li>LP actuales de ambos</li>
+          <li>Notas tomadas durante el duelo</li>
+          <li>Cartas buscadas / colocadas / invocadas / destruidas / banidas / activadas / targetadas <strong>este turno</strong></li>
+        </ul></div>
+        <div class="pk-box"><h4 class="priv">🔒 Privado</h4><ul>
+          <li>Cartas en el Deck (Main, Extra, Side)</li>
+          <li>Cartas boca ↓ (aunque antes estuvieran boca ↑)</li>
+          <li>Cartas en la mano</li>
+          <li>Cartas buscadas / etc. en <strong>turnos anteriores</strong></li>
+        </ul></div>
+      </div>
+      <!-- Critical timing note -->
+      <div style="margin-top:10px;background:rgba(246,201,14,.07);border:1px solid rgba(246,201,14,.25);border-radius:8px;padding:10px">
+        <div style="font-size:10px;font-weight:700;color:var(--yellow);letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px">⚠️ Caso crítico — Banished boca abajo</div>
+        <div style="font-size:12px;color:var(--text);line-height:1.6">
+          Una carta banished boca abajo <strong style="color:var(--green)">durante el turno actual</strong> → <strong style="color:var(--green)">Conocimiento Público</strong>. El oponente puede preguntar cuál es.<br>
+          La misma carta banished boca abajo en un <strong style="color:var(--red)">turno anterior</strong> → <strong style="color:var(--red)">Conocimiento Privado</strong>. No se puede revelar.
+        </div>
+      </div>
+      <p class="ref-p" style="margin-top:10px;font-size:12px">Mentir sobre Público → posible <strong style="color:#fc8181">DQ</strong>. Revelar Privado intencionalmente → posible <strong style="color:#fc8181">DQ</strong>.</p>
+    </div>
+
+    <div class="ref-card"><h3>💡 Recordatorios</h3>
+      <ul style="list-style:none;padding:0">
+        <li style="padding:7px 0;border-bottom:1px solid rgba(201,168,76,.08);font-size:13px">⚖️ <strong>¡No juzgues en el vacío!</strong> Consulta con un lead.</li>
+        <li style="padding:7px 0;border-bottom:1px solid rgba(201,168,76,.08);font-size:13px">💧 ¡Mantente hidratado!</li>
+        <li style="padding:7px 0;border-bottom:1px solid rgba(201,168,76,.08);font-size:13px">🕐 Pon ojo al reloj, cerca del fin de ronda.</li>
+        <li style="padding:7px 0;border-bottom:1px solid rgba(201,168,76,.08);font-size:13px">👔 Actúa profesionalmente en el piso.</li>
+        <li style="padding:7px 0;font-size:13px">🎉 ¡Diviértete!</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ APELACIONES ═══════════════════ -->
+<div id="main-app" class="main-view">
+  <div style="padding:14px">
+    <div class="sec-header">Registro de Apelaciones</div>
+    <div class="appeals-wrap">
+      <table><thead><tr>
+        <th style="width:55px">Mesa</th><th style="width:55px">Tiempo</th>
+        <th style="width:80px">Resultado</th><th>Notas</th><th style="width:32px"></th>
+      </tr></thead>
+      <tbody id="appeals-body"></tbody></table>
+      <button class="add-row-btn" onclick="addAppealRow()">+ Agregar fila</button>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-secondary" style="flex:1" onclick="clearAppeals()">Limpiar</button>
+      <button class="btn-secondary" style="flex:1" onclick="exportAppeals()">📄 Exportar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MULTI-TIMER ═══════════════════ -->
+<div id="main-timers" class="main-view">
+  <div style="padding:14px">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="sec-header" style="margin:0;border:none">⏱ Multi-Timer — Side Events</div>
+      <button onclick="addTimer()" style="padding:8px 16px;background:linear-gradient(135deg,var(--gold-d),var(--gold));border:none;border-radius:8px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:#1a1a1a;cursor:pointer;letter-spacing:.05em">+ Mesa</button>
+    </div>
+
+    <!-- Time presets -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:6px">
+      <div class="time-preset" id="preset-20" onclick="setDefaultTime(20)">20 min</div>
+      <div class="time-preset" id="preset-30" onclick="setDefaultTime(30)">30 min</div>
+      <div class="time-preset" id="preset-40" onclick="setDefaultTime(40)">40 min</div>
+      <div class="time-preset selected" id="preset-50" onclick="setDefaultTime(50)">50 min</div>
+      <div class="time-preset" id="preset-0" onclick="setDefaultTime(0)" style="font-size:10px">Custom</div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);text-align:center;margin-bottom:14px">
+      Tiempo para nuevas mesas: <strong id="default-time-label" style="color:var(--gold)">50 min</strong>
+    </div>
+
+    <!-- Hint -->
+    <div id="timers-hint" style="text-align:center;padding:36px 20px;color:var(--muted)">
+      <div style="font-size:36px;margin-bottom:10px;opacity:.4">⏱</div>
+      <p style="font-size:13px;line-height:1.6">Selecciona el tiempo arriba,<br>luego pulsa <strong style="color:var(--gold)">+ Mesa</strong>.<br>La alarma suena al llegar a 0.</p>
+    </div>
+
+    <div id="timers-container" style="display:flex;flex-direction:column;gap:10px"></div>
+
+    <!-- Global controls -->
+    <div id="timers-global" style="display:none;margin-top:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button onclick="pauseAllTimers()" style="padding:11px;background:rgba(212,160,23,.1);border:1px solid rgba(212,160,23,.3);border-radius:8px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--yellow);cursor:pointer">⏸ Pausar todos</button>
+        <button onclick="clearAllTimers()" style="padding:11px;background:rgba(229,62,62,.1);border:1px solid rgba(229,62,62,.25);border-radius:8px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--red);cursor:pointer">🗑 Limpiar todos</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="clear-modal">
+  <div class="modal">
+    <div class="modal-title">⚠️ Limpiar Registros</div>
+    <p style="font-size:13px;color:var(--muted);text-align:center;line-height:1.6">Elimina <strong style="color:var(--text)">todos los registros locales</strong>.<br>Los datos en Google Sheets se mantienen.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="hideModal()">Cancelar</button>
+      <button class="btn-danger" onclick="limpiarTodo()" style="flex:1;padding:10px">Eliminar local</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let records  = JSON.parse(localStorage.getItem('ygojudge_records')  || '[]');
+let appeals  = JSON.parse(localStorage.getItem('ygojudge_appeals')  || '[]');
+let queue    = JSON.parse(localStorage.getItem('ygojudge_queue')    || '[]');
+let currentRound = parseInt(localStorage.getItem('ygojudge_round')  || '1');
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxc6srS17pTvM192ixnwD7tFnDQ18y0E0cNBctbHqL5c5I2WUQdkWYyEBD-rpTzpUFP/exec';
+let scriptURL    = SCRIPT_URL;
+let sheetURL     = localStorage.getItem('ygojudge_sheeturl') || '';
+let selInfCode = null, selPenCode = null;
+let isSyncing  = false;
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  document.getElementById('round-display').textContent = currentRound;
+  document.getElementById('f-ronda').value = currentRound;
+  updateHeaderStats();
+  renderAppeals();
+  updateQueuePill();
+  updateSyncPanel();
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  // Auto-upload pending queue on load
+  if (queue.length > 0) syncPendingQueue();
+});
+
+// ═══════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════
+function showMain(id, btn) {
+  document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tnav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('main-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+function showSub(prefix, id, btn) {
+  const p = btn.closest('.main-view');
+  p.querySelectorAll('.sub-view').forEach(v => v.classList.remove('active'));
+  p.querySelectorAll('.snav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(prefix + '-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'registros') renderRecords();
+  if (id === 'resumen')   renderSummary();
+}
+
+// ═══════════════════════════════════════════
+// ROUND
+// ═══════════════════════════════════════════
+function changeRound(d) {
+  currentRound = Math.max(1, Math.min(20, currentRound + d));
+  document.getElementById('round-display').textContent = currentRound;
+  document.getElementById('f-ronda').value = currentRound;
+  localStorage.setItem('ygojudge_round', currentRound);
+}
+
+// ═══════════════════════════════════════════
+// THEME TOGGLE
+// ═══════════════════════════════════════════
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  localStorage.setItem('ygojudge_theme', isLight ? 'light' : 'dark');
+  updateThemeBtn(isLight);
+}
+
+function updateThemeBtn(isLight) {
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.textContent = isLight ? '🌙' : '☀️';
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('ygojudge_theme') || 'dark';
+  const isLight = saved === 'light';
+  if (isLight) document.body.classList.add('light');
+  updateThemeBtn(isLight);
+}
+
+
+function toggleInfractionBlock(val) {
+  const block  = document.getElementById('infraction-block');
+  const banner = document.getElementById('clean-check-banner');
+  const isClean = val === 'CLEAN';
+  block.style.display  = isClean ? 'none' : 'block';
+  banner.style.display = isClean ? 'block' : 'none';
+  if (isClean) {
+    // Reset any selected infraction
+    selInfCode = null; selPenCode = null;
+    document.querySelectorAll('.inf-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('sel-box').style.display = 'none';
+    document.getElementById('no-ext-badge').style.display = 'none';
+    document.getElementById('ext-result-box').style.display = 'none';
+    document.getElementById('f-ext').value = 0;
+  }
+}
+
+
+function selInf(btn, code, pen) {
+  document.querySelectorAll('.inf-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selInfCode = code; selPenCode = pen;
+  document.getElementById('sel-box').style.display = 'block';
+  document.getElementById('sb-code').textContent = code;
+  document.getElementById('sb-pen').textContent = '⟶ ' + pen;
+  updateExtBadge();
+}
+
+// ═══════════════════════════════════════════
+// GUARDAR REGISTRO
+// ═══════════════════════════════════════════
+async function guardar() {
+  const ronda = parseInt(document.getElementById('f-ronda').value);
+  const mesa  = document.getElementById('f-mesa').value;
+  const j1    = document.getElementById('f-j1').value.trim();
+  const j2    = document.getElementById('f-j2').value.trim();
+  const inf   = document.getElementById('f-infractor').value;
+  const notas = document.getElementById('f-notas').value.trim();
+  const ext   = parseInt(document.getElementById('f-ext').value) || 0;
+  const isClean = inf === 'CLEAN';
+
+  if (!mesa)       { showToast('⚠️ Ingresa el número de mesa'); return; }
+  if (!j1 || !j2) { showToast('⚠️ Ingresa ambos jugadores'); return; }
+  if (!inf)        { showToast('⚠️ Selecciona resultado del check'); return; }
+  if (!isClean && !selInfCode) { showToast('⚠️ Selecciona una infracción'); return; }
+
+  const infractorName = isClean ? '—' : inf === 'J1' ? j1 : inf === 'J2' ? j2 : 'Ambos';
+  const record = {
+    id: Date.now(), ronda, mesa: parseInt(mesa),
+    j1, j2,
+    infractor:  infractorName,
+    infraccion: isClean ? 'CLEAN' : selInfCode,
+    penalidad:  isClean ? 'Sin penalidad' : selPenCode,
+    notas, ext,
+    hora: new Date().toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit'}),
+    synced: false
+  };
+
+  // Guardar localmente
+  records.unshift(record);
+  saveRecords();
+  updateHeaderStats();
+  showToast(isClean ? '✅ Check limpio registrado' : '✅ Registrado localmente');
+
+  // Intentar subir a Sheets
+  if (scriptURL) {
+    setSyncing(true);
+    const ok = await postToSheet('addRecord', { record });
+    if (ok) {
+      record.synced = true;
+      saveRecords();
+      showToast('✅ Guardado en Sheets');
+    } else {
+      // Agregar a cola offline
+      queue.push({ action: 'addRecord', record });
+      saveQueue();
+      updateQueuePill();
+      showToast('⚠️ Sin conexión — guardado localmente');
+    }
+    setSyncing(false);
+  }
+
+  // Reset form
+  resetForm();
+  timerReset();
+}
+
+function resetForm() {
+  selInfCode = null; selPenCode = null;
+  document.querySelectorAll('.inf-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('sel-box').style.display = 'none';
+  document.getElementById('f-infractor').value = '';
+  document.getElementById('f-notas').value = '';
+  document.getElementById('f-ext').value = 0;
+  // Reset clean/infraction toggle
+  document.getElementById('infraction-block').style.display = 'block';
+  document.getElementById('clean-check-banner').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════
+// SHEETS API
+// ═══════════════════════════════════════════
+async function postToSheet(action, data) {
+  if (!scriptURL) return false;
+  try {
+    const res = await fetch(scriptURL, {
+      method: 'POST',
+      body: JSON.stringify({ action, ...data })
+    });
+    const json = await res.json();
+    if (json.sheetUrl && json.sheetUrl !== sheetURL) {
+      sheetURL = json.sheetUrl;
+      localStorage.setItem('ygojudge_sheeturl', sheetURL);
+      updateSyncPanel();
+    }
+    return !json.error;
+  } catch (e) { return false; }
+}
+
+async function getFromSheet(action) {
+  if (!scriptURL) return null;
+  try {
+    const res = await fetch(scriptURL + '?action=' + action);
+    const json = await res.json();
+    if (json.sheetUrl && json.sheetUrl !== sheetURL) {
+      sheetURL = json.sheetUrl;
+      localStorage.setItem('ygojudge_sheeturl', sheetURL);
+      updateSyncPanel();
+    }
+    return json;
+  } catch (e) { return null; }
+}
+
+// ═══════════════════════════════════════════
+// SYNC QUEUE (offline → online)
+// ═══════════════════════════════════════════
+async function syncPendingQueue() {
+  if (!scriptURL || queue.length === 0 || isSyncing) return;
+  setSyncing(true);
+  showToast('⬆️ Subiendo ' + queue.length + ' pendiente(s)...');
+
+  const failed = [];
+  for (const item of queue) {
+    const ok = await postToSheet(item.action, { record: item.record });
+    if (ok) {
+      // Marcar como synced en records
+      const r = records.find(x => x.id === item.record.id);
+      if (r) { r.synced = true; }
+    } else {
+      failed.push(item);
+    }
+  }
+  queue = failed;
+  saveQueue();
+  saveRecords();
+  updateQueuePill();
+  setSyncing(false);
+  if (failed.length === 0) showToast('✅ Todos los pendientes sincronizados');
+  else showToast('⚠️ ' + failed.length + ' sin subir (sin conexión)');
+  renderRecords();
+}
+
+// ═══════════════════════════════════════════
+// SYNC FROM SHEET (descargar todo)
+// ═══════════════════════════════════════════
+async function syncFromSheet() {
+  if (!scriptURL) { showToast('⚠️ Configura el URL primero'); return; }
+  setSyncing(true);
+  showToast('⬇️ Cargando desde Sheets...');
+  const data = await getFromSheet('getRecords');
+  setSyncing(false);
+  if (!data || data.error) { showToast('❌ Error al conectar con Sheets'); setSyncDot('err'); return; }
+  // Merge: Sheets es la fuente de verdad
+  const sheetIds = new Set(data.records.map(r => String(r.id)));
+  // Marcar todos como synced y agregar los que no están localmente
+  data.records.forEach(r => { r.synced = true; });
+  // Mantener locales que aún no subieron (en queue)
+  const pendingLocal = records.filter(r => !r.synced && !sheetIds.has(String(r.id)));
+  records = [...data.records, ...pendingLocal];
+  // Ordenar por id desc
+  records.sort((a, b) => b.id - a.id);
+  saveRecords();
+  updateHeaderStats();
+  renderRecords();
+  setSyncDot('ok');
+  showToast('✅ ' + data.records.length + ' registros cargados');
+}
+
+// ═══════════════════════════════════════════
+// DELETE
+// ═══════════════════════════════════════════
+async function delRecord(id) {
+  // Quitar local
+  records = records.filter(r => r.id !== id);
+  saveRecords();
+  updateHeaderStats();
+  renderRecords();
+
+  // Quitar en Sheets
+  if (scriptURL) {
+    setSyncing(true);
+    await postToSheet('deleteRecord', { id });
+    setSyncing(false);
+  }
+  showToast('🗑 Eliminado');
+}
+
+// ═══════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════
+async function testConnection() {
+  document.getElementById('cfg-status').textContent = '🔄 Probando conexión...';
+  setSyncing(true);
+  const data = await getFromSheet('getRecords');
+  setSyncing(false);
+  if (!data || data.error) {
+    document.getElementById('cfg-status').textContent = '❌ Sin respuesta. Verifica que el Apps Script esté activo.';
+    setSyncDot('err');
+  } else {
+    document.getElementById('cfg-status').textContent = `✅ Conectado — ${data.records.length} registro(s) en Sheets.`;
+    setSyncDot('ok');
+    updateSyncPanel();
+  }
+}
+
+async function saveConfig() {
+  // Kept for backwards compat but URL is now hardcoded
+  await testConnection();
+}
+
+function updateSyncPanel() {
+  const panel = document.getElementById('cfg-sync-panel');
+  if (scriptURL) {
+    panel.style.display = 'block';
+    if (sheetURL) {
+      document.getElementById('cfg-sheet-url').innerHTML =
+        `<a href="${sheetURL}" target="_blank" style="font-size:12px;color:var(--green)">📊 Abrir Google Sheet</a>`;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════
+// RENDER RECORDS
+// ═══════════════════════════════════════════
+function pc(pen) {
+  if (!pen) return 'pt-w';
+  pen = pen.toLowerCase();
+  if (pen === 'sin penalidad') return 'pt-clean';
+  if (pen.includes('game loss')) return 'pt-g';
+  if (pen.includes('match loss')) return 'pt-m';
+  if (pen.includes('descalif') || pen.includes('disqualif')) return 'pt-d';
+  return 'pt-w';
+}
+
+function renderRecords() {
+  const filtro = parseInt(document.getElementById('filtro-ronda').value) || null;
+  const list = filtro ? records.filter(r => r.ronda === filtro) : records;
+  const c = document.getElementById('records-container');
+
+  // Sheet link bar
+  const barWrap = document.getElementById('sheet-bar-wrap');
+  if (sheetURL) {
+    barWrap.innerHTML = `<div class="sheet-bar">
+      <span class="sb-status">📊 Vinculado a Google Sheets</span>
+      <a href="${sheetURL}" target="_blank">Abrir Sheet ↗</a>
+    </div>`;
+  } else { barWrap.innerHTML = ''; }
+
+  if (!list.length) {
+    c.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>Sin registros${filtro ? ' para ronda ' + filtro : ''}.</p></div>`;
+    return;
+  }
+
+  c.innerHTML = list.map(r => {
+    const isClean = r.infraccion === 'CLEAN';
+    return `
+    <div class="rec-card" style="${isClean ? 'border-color:rgba(56,161,105,.4)' : ''}">
+      <div class="rec-hdr" style="${isClean ? 'background:rgba(56,161,105,.08)' : ''}">
+        <div style="display:flex;gap:7px;align-items:center">
+          <span class="badge b-r">R${r.ronda}</span>
+          <span class="badge b-t">Mesa ${r.mesa}</span>
+          ${isClean
+            ? `<span class="badge" style="background:rgba(56,161,105,.2);color:var(--green);border:1px solid rgba(56,161,105,.4)">✅ Limpio</span>`
+            : `<span class="sync-badge ${r.synced ? 'synced' : 'pending'}">${r.synced ? '☁️ Sheets' : '⏳ Local'}</span>`
+          }
+        </div>
+        <span style="font-size:10px;color:var(--muted)">${r.hora}</span>
+      </div>
+      <div class="rec-body">
+        <div class="rec-players"><span>${r.j1}</span><span class="vs">VS</span><span>${r.j2}</span></div>
+        ${isClean
+          ? `<div style="font-size:12px;color:var(--green);margin-bottom:6px">✅ Deck y Deck List correctos — sin infracciones</div>`
+          : `<div style="font-size:11px;color:var(--muted);margin-bottom:6px">🎯 <strong style="color:var(--text)">${r.infractor}</strong></div>
+             <div class="pen-tags">
+               <span class="pen-tag ${pc(r.penalidad)}">${r.infraccion}</span>
+               <span class="pen-tag ${pc(r.penalidad)}">${r.penalidad}</span>
+               ${r.ext > 0 ? `<span class="pen-tag pt-w">+${r.ext} min</span>` : ''}
+             </div>`
+        }
+        ${r.notas ? `<div class="rec-notes">"${r.notas}"</div>` : ''}
+        <div class="rec-footer"><button class="btn-danger" onclick="delRecord(${r.id})">Eliminar</button></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+// SUMMARY
+// ═══════════════════════════════════════════
+function renderSummary() {
+  const clean = records.filter(r => r.infraccion === 'CLEAN').length;
+  const w = records.filter(r => r.penalidad && r.penalidad.toLowerCase().includes('warning') || r.penalidad === 'Advertencia').length;
+  const g = records.filter(r => r.penalidad && r.penalidad.toLowerCase().includes('game loss')).length;
+  const m = records.filter(r => r.penalidad && r.penalidad.toLowerCase().includes('match loss')).length;
+  const d = records.filter(r => r.penalidad && (r.penalidad.toLowerCase().includes('descalif') || r.penalidad.toLowerCase().includes('disqualif'))).length;
+  document.getElementById('cnt-w').textContent = w;
+  document.getElementById('cnt-g').textContent = g;
+  document.getElementById('cnt-m').textContent = m;
+  document.getElementById('cnt-d').textContent = d;
+  document.getElementById('cnt-clean').textContent = clean;
+  const counts = {};
+  records.forEach(r => { if (!counts[r.infraccion]) counts[r.infraccion] = {pen:r.penalidad, total:0}; counts[r.infraccion].total++; });
+  const sorted = Object.entries(counts).sort((a,b) => b[1].total - a[1].total);
+  const bt = document.getElementById('break-table');
+  if (!sorted.length) { bt.innerHTML = '<div class="empty-state"><p>Sin datos.</p></div>'; return; }
+  bt.innerHTML = `<table><thead><tr><th>Infracción</th><th>Penalidad</th><th style="text-align:right">Total</th></tr></thead><tbody>
+    ${sorted.map(([k,v]) => `<tr>
+      <td style="font-family:'Cinzel',serif;font-size:11px;color:var(--gold-l)">${k}</td>
+      <td><span class="pen-tag ${pc(v.pen)}" style="font-size:9px">${v.pen}</span></td>
+      <td style="text-align:right;font-family:'Cinzel',serif;font-weight:700;font-size:15px">${v.total}</td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+
+// ═══════════════════════════════════════════
+// HEADER / STATS
+// ═══════════════════════════════════════════
+function updateHeaderStats() {
+  document.getElementById('hdr-total').textContent = records.length;
+  document.getElementById('hdr-severe').textContent = records.filter(r =>
+    r.penalidad.toLowerCase().includes('game loss') ||
+    r.penalidad.toLowerCase().includes('match loss') ||
+    r.penalidad.toLowerCase().includes('descalif')
+  ).length;
+}
+
+function setSyncing(v) {
+  isSyncing = v;
+  document.getElementById('sync-dot').className = 'sync-dot' + (v ? ' syncing' : ' ok');
+}
+function setSyncDot(state) { document.getElementById('sync-dot').className = 'sync-dot ' + state; }
+
+function updateQueuePill() {
+  const pill = document.getElementById('queue-pill');
+  document.getElementById('queue-count').textContent = queue.length;
+  pill.classList.toggle('show', queue.length > 0);
+}
+
+// ═══════════════════════════════════════════
+// PERSISTENCE
+// ═══════════════════════════════════════════
+function saveRecords() { localStorage.setItem('ygojudge_records', JSON.stringify(records)); }
+function saveQueue()   { localStorage.setItem('ygojudge_queue',   JSON.stringify(queue)); }
+
+// ═══════════════════════════════════════════
+// APPEALS
+// ═══════════════════════════════════════════
+function renderAppeals() {
+  const tbody = document.getElementById('appeals-body');
+  if (!appeals.length) { tbody.innerHTML = '<tr><td colspan="5" style="padding:14px;text-align:center;font-size:12px;color:var(--muted)">Sin apelaciones.</td></tr>'; return; }
+  tbody.innerHTML = appeals.map((a,i) => `<tr>
+    <td><input type="number" min="1" value="${a.mesa||''}" placeholder="—" onchange="updateAppeal(${i},'mesa',this.value)"></td>
+    <td><input type="text" value="${a.tiempo||''}" placeholder="xx:xx" onchange="updateAppeal(${i},'tiempo',this.value)"></td>
+    <td><select onchange="updateAppeal(${i},'resultado',this.value)"><option value="" ${!a.resultado?'selected':''}>—</option><option value="Acept." ${a.resultado==='Acept.'?'selected':''}>✅ Acept.</option><option value="Rechaz." ${a.resultado==='Rechaz.'?'selected':''}>❌ Rechaz.</option><option value="HJ" ${a.resultado==='HJ'?'selected':''}>⚖️ HJ</option></select></td>
+    <td><input type="text" value="${a.notas||''}" placeholder="Situación..." onchange="updateAppeal(${i},'notas',this.value)"></td>
+    <td style="text-align:center;padding:4px"><button class="btn-danger" style="padding:4px 7px;font-size:10px" onclick="delAppeal(${i})">✕</button></td>
+  </tr>`).join('');
+}
+function addAppealRow()      { appeals.push({mesa:'',tiempo:'',resultado:'',notas:''}); saveAppeals(); renderAppeals(); }
+function updateAppeal(i,f,v) { appeals[i][f] = v; saveAppeals(); }
+function delAppeal(i)        { appeals.splice(i,1); saveAppeals(); renderAppeals(); }
+function clearAppeals()      { appeals = []; saveAppeals(); renderAppeals(); showToast('🗑 Tabla limpiada'); }
+function saveAppeals()       { localStorage.setItem('ygojudge_appeals', JSON.stringify(appeals)); }
+function exportAppeals() {
+  if (!appeals.length) { showToast('Sin apelaciones'); return; }
+  let txt = '=== APELACIONES ===\n' + new Date().toLocaleString('es-CO') + '\n\n';
+  appeals.forEach((a,i) => { txt += `[${i+1}] Mesa ${a.mesa||'?'} · ${a.tiempo||'??:??'} · ${a.resultado||'—'}\n`; if(a.notas) txt += `     ${a.notas}\n`; });
+  dl(txt, 'text/plain', `apelaciones_${Date.now()}.txt`);
+  showToast('📄 Exportado');
+}
+
+// ═══════════════════════════════════════════
+// CLEAR / MODAL
+// ═══════════════════════════════════════════
+function showClearModal() { document.getElementById('clear-modal').classList.add('show'); }
+function hideModal()      { document.getElementById('clear-modal').classList.remove('show'); }
+function limpiarTodo() {
+  records = []; queue = [];
+  saveRecords(); saveQueue();
+  updateHeaderStats(); hideModal(); renderRecords(); updateQueuePill();
+  showToast('🗑 Registros locales eliminados');
+}
+
+// ═══════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════
+function exportTXT() {
+  if (!records.length) { showToast('Sin registros'); return; }
+  let txt = '=== YGO JUDGE TOOL — REPORTE ===\n' + new Date().toLocaleString('es-CO') + '\nTotal: ' + records.length + '\n\n';
+  records.slice().reverse().forEach((r,i) => {
+    txt += `[${i+1}] R${r.ronda} · Mesa ${r.mesa} · ${r.hora} ${r.synced?'[Sheets]':'[Local]'}\n  ${r.j1} vs ${r.j2}\n  Infractor: ${r.infractor}\n  ${r.infraccion} → ${r.penalidad}`;
+    if (r.ext > 0) txt += ` (+${r.ext} min)`;
+    if (r.notas) txt += `\n  Notas: ${r.notas}`;
+    txt += '\n\n';
+  });
+  dl(txt, 'text/plain', `judge_report_${Date.now()}.txt`);
+  showToast('📄 TXT exportado');
+}
+function exportCSV() {
+  if (!records.length) { showToast('Sin registros'); return; }
+  const hdr = 'Ronda,Mesa,J1,J2,Infractor,Infraccion,Penalidad,Extension,Hora,Notas,Synced';
+  const rows = records.slice().reverse().map(r =>
+    `${r.ronda},${r.mesa},"${r.j1}","${r.j2}","${r.infractor}","${r.infraccion}","${r.penalidad}",${r.ext},"${r.hora}","${(r.notas||'').replace(/"/g,'""')}",${r.synced?'SI':'NO'}`
+  );
+  dl('\uFEFF' + [hdr, ...rows].join('\n'), 'text/csv', `judge_report_${Date.now()}.csv`);
+  showToast('📊 CSV exportado');
+}
+function dl(content, type, filename) {
+  const blob = new Blob([content], {type: type + ';charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════
+let timerInterval = null;
+let timerSeconds  = 0;
+let timerRunning  = false;
+
+function timerStart() {
+  if (timerRunning) return;
+  timerRunning = true;
+  document.getElementById('btn-timer-start').disabled = true;
+  document.getElementById('btn-timer-stop').disabled  = false;
+  timerInterval = setInterval(() => {
+    timerSeconds++;
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function timerStop() {
+  if (!timerRunning) return;
+  clearInterval(timerInterval);
+  timerRunning = false;
+  document.getElementById('btn-timer-start').disabled = false;
+  document.getElementById('btn-timer-stop').disabled  = true;
+  showExtResult();
+}
+
+function timerReset() {
+  clearInterval(timerInterval);
+  timerRunning  = false;
+  timerSeconds  = 0;
+  document.getElementById('timer-display').textContent = '00:00';
+  document.getElementById('btn-timer-start').disabled  = false;
+  document.getElementById('btn-timer-stop').disabled   = true;
+  document.getElementById('ext-result-box').style.display = 'none';
+  document.getElementById('timer-note').textContent = 'Inicia cuando el juez llega a la mesa';
+}
+
+function updateTimerDisplay() {
+  const m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+  const s = String(timerSeconds % 60).padStart(2, '0');
+  document.getElementById('timer-display').textContent = m + ':' + s;
+  // Color feedback
+  const disp = document.getElementById('timer-display');
+  if (timerSeconds < 60)      disp.style.color = 'var(--gold)';
+  else if (timerSeconds < 180) disp.style.color = 'var(--yellow)';
+  else                         disp.style.color = 'var(--red)';
+}
+
+function showExtResult() {
+  const box    = document.getElementById('ext-result-box');
+  const val    = document.getElementById('ext-result-val');
+  const note   = document.getElementById('ext-result-note');
+  const pen    = (selPenCode || '').toLowerCase();
+  const code   = (selInfCode || '').toLowerCase();
+  const isGLML = pen.includes('game loss') || pen.includes('match loss');
+  const isSP   = code.includes('sp-minor');
+
+  box.style.display = 'block';
+
+  if (isGLML) {
+    val.textContent  = 'Sin extensión';
+    val.style.color  = 'var(--red)';
+    note.textContent = 'Game Loss / Match Loss no generan extensión de tiempo.';
+    document.getElementById('f-ext').value = 0;
+    return;
+  }
+
+  if (isSP) {
+    // SP-Minor: siempre 3 minutos fijos, independiente del tiempo del call
+    val.textContent  = '3 min';
+    val.style.color  = 'var(--yellow)';
+    note.textContent = 'SP-Minor siempre otorga exactamente 3 min de extensión, sin importar la duración del call.';
+    document.getElementById('f-ext').value = 3;
+    return;
+  }
+
+  if (timerSeconds <= 60) {
+    val.textContent  = 'Sin extensión';
+    val.style.color  = 'var(--muted)';
+    note.textContent = 'El judge call duró menos de 1 minuto.';
+    document.getElementById('f-ext').value = 0;
+  } else {
+    const extMin = Math.ceil(timerSeconds / 60);
+    val.textContent  = extMin + ' min';
+    val.style.color  = 'var(--gold)';
+    note.textContent = 'Tiempo del call: ' + Math.floor(timerSeconds/60) + 'm ' + (timerSeconds%60) + 's → anota en esquina inf. izquierda del slip.';
+    document.getElementById('f-ext').value = extMin;
+  }
+}
+
+// Hook extensión badge al seleccionar infracción
+function updateExtBadge() {
+  const pen    = (selPenCode || '').toLowerCase();
+  const isGLML = pen.includes('game loss') || pen.includes('match loss');
+  document.getElementById('no-ext-badge').style.display = isGLML ? 'block' : 'none';
+  // Si ya hay tiempo corriendo y la penalidad es GL/ML, actualizar resultado
+  if (!timerRunning && timerSeconds > 0) showExtResult();
+}
+
+
+
+// ═══════════════════════════════════════════
+// MULTI-TIMER SYSTEM — Cuenta regresiva
+// ═══════════════════════════════════════════
+let mtTimers   = {};
+let mtNextId   = 1;
+let mtDefault  = 50;
+let mtAudioCtx = null;
+
+function mtGetAudio() {
+  if (!mtAudioCtx) mtAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return mtAudioCtx;
+}
+
+function mtPlayAlarm() {
+  try {
+    const ctx = mtGetAudio();
+    const play = (freq, start, dur) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+      gain.gain.setValueAtTime(0.35, ctx.currentTime + start);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + dur);
+    };
+    play(880, 0, 0.18); play(660, 0.22, 0.18); play(440, 0.44, 0.30);
+    setTimeout(() => { try { play(880,0,.18);play(660,.22,.18);play(440,.44,.30); } catch(e){} }, 1100);
+    setTimeout(() => { try { play(880,0,.18);play(660,.22,.18);play(440,.44,.30); } catch(e){} }, 2200);
+  } catch(e) {}
+}
+
+function mtVibrate() {
+  if ('vibrate' in navigator) navigator.vibrate([300, 150, 300, 150, 500]);
+}
+
+function setDefaultTime(min) {
+  mtDefault = min;
+  document.querySelectorAll('.time-preset').forEach(el => el.classList.remove('selected'));
+  const map = {20:'preset-20',30:'preset-30',40:'preset-40',50:'preset-50',0:'preset-0'};
+  const el = document.getElementById(map[min]);
+  if (el) el.classList.add('selected');
+  const label = document.getElementById('default-time-label');
+  if (label) label.textContent = min > 0 ? min + ' min' : 'Custom';
+}
+
+function addTimer() {
+  const id = mtNextId++;
+  const mins = mtDefault > 0 ? mtDefault : 50;
+  const total = mins * 60;
+  mtTimers[id] = { mesa:'', note:'', total, remaining:total, customMin:mins,
+                   running:false, alarming:false, interval:null, alarmInterval:null };
+  renderTimers();
+  setTimeout(() => { const inp = document.getElementById(`mt-mesa-${id}`); if(inp) inp.focus(); }, 60);
+}
+
+function mtStart(id) {
+  const t = mtTimers[id];
+  if (!t || t.running || t.remaining <= 0) return;
+  try { mtGetAudio().resume(); } catch(e) {}
+  t.running = true;
+  t.interval = setInterval(() => {
+    t.remaining--;
+    mtUpdateDisplay(id);
+    if (t.remaining <= 0) mtAlarm(id);
+  }, 1000);
+  mtSetBtnState(id, true);
+  const hdr = document.getElementById(`mt-hdr-${id}`);
+  if (hdr) hdr.innerHTML = `<span style="width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse .8s infinite;display:inline-block"></span>`;
+}
+
+function mtStop(id) {
+  const t = mtTimers[id];
+  if (!t) return;
+  clearInterval(t.interval);
+  clearInterval(t.alarmInterval);
+  t.running = false; t.alarming = false;
+  mtSetBtnState(id, false);
+  const card = document.getElementById(`mt-card-${id}`);
+  if (card) card.classList.remove('mt-card-alarm');
+  const disp = document.getElementById(`mt-disp-${id}`);
+  if (disp) disp.classList.remove('mt-disp-alarm','mt-disp-critical','mt-disp-warn');
+  const hdr = document.getElementById(`mt-hdr-${id}`);
+  if (hdr) hdr.innerHTML = '';
+}
+
+function mtReset(id) {
+  const t = mtTimers[id];
+  if (!t) return;
+  mtStop(id);
+  t.remaining = t.total;
+  mtUpdateDisplay(id);
+}
+
+function mtAlarm(id) {
+  const t = mtTimers[id];
+  if (!t) return;
+  clearInterval(t.interval);
+  t.running = false; t.alarming = true; t.remaining = 0;
+  mtPlayAlarm(); mtVibrate();
+  const card = document.getElementById(`mt-card-${id}`);
+  if (card) card.classList.add('mt-card-alarm');
+  const disp = document.getElementById(`mt-disp-${id}`);
+  if (disp) { disp.classList.add('mt-disp-alarm'); disp.textContent = '00:00'; }
+  mtSetBtnState(id, false);
+  const hdr = document.getElementById(`mt-hdr-${id}`);
+  if (hdr) hdr.innerHTML = `<span style="font-size:10px;font-weight:700;color:var(--red);animation:pulse .6s infinite">⏰ TIEMPO</span>`;
+  t.alarmInterval = setInterval(() => { mtPlayAlarm(); mtVibrate(); }, 8000);
+  const mesa = t.mesa ? `Mesa ${t.mesa}` : 'Una mesa';
+  showToast(`⏰ ${mesa} — ¡TIEMPO!`);
+}
+
+function mtUpdateDisplay(id) {
+  const t = mtTimers[id];
+  if (!t) return;
+  const disp = document.getElementById(`mt-disp-${id}`);
+  const ring = document.getElementById(`mt-ring-${id}`);
+  if (!disp) return;
+  const rem = Math.max(0, t.remaining);
+  disp.textContent = String(Math.floor(rem/60)).padStart(2,'0') + ':' + String(rem%60).padStart(2,'0');
+  disp.classList.remove('mt-disp-warn','mt-disp-critical');
+  if      (rem <= 10) { disp.classList.add('mt-disp-critical'); disp.style.color=''; }
+  else if (rem <= 60) { disp.classList.add('mt-disp-warn');     disp.style.color=''; }
+  else                { disp.style.color = 'var(--gold)'; }
+  if (ring) {
+    const circ = 2 * Math.PI * 54;
+    ring.style.strokeDasharray  = circ;
+    ring.style.strokeDashoffset = circ * (1 - (t.total > 0 ? rem/t.total : 0));
+    ring.style.stroke = rem <= 10 ? 'var(--red)' : rem <= 60 ? 'var(--yellow)' : 'var(--green)';
+  }
+}
+
+function mtSetBtnState(id, running) {
+  const sb = document.getElementById(`mt-start-${id}`);
+  const sp = document.getElementById(`mt-stop-${id}`);
+  if (sb) { sb.disabled = running;  sb.style.opacity = running  ? '.4' : '1'; }
+  if (sp) { sp.disabled = !running; sp.style.opacity = !running ? '.4' : '1'; }
+}
+
+function mtUpdateMesa(id, val) {
+  if (mtTimers[id]) mtTimers[id].mesa = val;
+  const label = document.getElementById(`mt-label-${id}`);
+  if (label) label.textContent = val ? `Mesa ${val}` : 'Mesa —';
+}
+function mtUpdateNote(id, val) { if (mtTimers[id]) mtTimers[id].note = val; }
+function mtUpdateTime(id, val) {
+  const t = mtTimers[id];
+  if (!t || t.running) return;
+  const mins = parseInt(val) || 50;
+  t.customMin = mins; t.total = mins * 60; t.remaining = mins * 60;
+  mtUpdateDisplay(id);
+}
+function mtRemove(id) {
+  if (mtTimers[id]) { clearInterval(mtTimers[id].interval); clearInterval(mtTimers[id].alarmInterval); delete mtTimers[id]; }
+  renderTimers();
+}
+function pauseAllTimers() {
+  Object.keys(mtTimers).forEach(id => { if (mtTimers[id].running) mtStop(parseInt(id)); });
+  showToast('⏸ Todos los timers detenidos');
+}
+function clearAllTimers() {
+  Object.keys(mtTimers).forEach(id => { clearInterval(mtTimers[id].interval); clearInterval(mtTimers[id].alarmInterval); });
+  mtTimers = {}; mtNextId = 1; renderTimers();
+  showToast('🗑 Timers eliminados');
+}
+
+function renderTimers() {
+  const container = document.getElementById('timers-container');
+  const hint      = document.getElementById('timers-hint');
+  const global    = document.getElementById('timers-global');
+  const ids = Object.keys(mtTimers);
+  if (!ids.length) { hint.style.display='block'; global.style.display='none'; container.innerHTML=''; return; }
+  hint.style.display='none'; global.style.display='block';
+  const circ = 2 * Math.PI * 54;
+  container.innerHTML = ids.map(id => {
+    const t   = mtTimers[id];
+    const rem = Math.max(0, t.remaining);
+    const mm  = String(Math.floor(rem/60)).padStart(2,'0');
+    const ss  = String(rem%60).padStart(2,'0');
+    const pct = t.total > 0 ? rem/t.total : 1;
+    const offset = circ * (1 - pct);
+    const ringColor = rem<=10 ? 'var(--red)' : rem<=60 ? 'var(--yellow)' : 'var(--green)';
+    const dispClass = rem<=10 ? 'mt-disp-critical' : rem<=60 ? 'mt-disp-warn' : '';
+    return `
+    <div id="mt-card-${id}" class="${t.alarming?'mt-card-alarm':''}" style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:var(--bg3);border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:7px">
+          <span id="mt-label-${id}" style="font-family:'Cinzel',serif;font-size:12px;font-weight:700;color:var(--gold)">${t.mesa?`Mesa ${t.mesa}`:'Mesa —'}</span>
+          <span id="mt-hdr-${id}">${t.running?`<span style="width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse .8s infinite;display:inline-block"></span>`:t.alarming?`<span style="font-size:10px;font-weight:700;color:var(--red);animation:pulse .6s infinite">⏰ TIEMPO</span>`:''}</span>
+        </div>
+        <button onclick="mtRemove(${id})" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:2px 8px">✕</button>
+      </div>
+      <div style="padding:12px 13px">
+        <div style="display:grid;grid-template-columns:75px 55px 1fr;gap:7px;margin-bottom:12px">
+          <div>
+            <label style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:3px">Mesa #</label>
+            <input type="number" id="mt-mesa-${id}" min="1" placeholder="—" value="${t.mesa}" oninput="mtUpdateMesa(${id},this.value)"
+              style="width:100%;background:var(--bg3);border:1px solid rgba(201,168,76,.2);border-radius:6px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;padding:7px 8px;outline:none">
+          </div>
+          <div>
+            <label style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:3px">Min</label>
+            <input type="number" id="mt-time-${id}" min="1" max="90" value="${t.customMin}" onchange="mtUpdateTime(${id},this.value)"
+              style="width:100%;background:var(--bg3);border:1px solid rgba(201,168,76,.2);border-radius:6px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;padding:7px 8px;outline:none">
+          </div>
+          <div>
+            <label style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:3px">Nota</label>
+            <input type="text" id="mt-note-${id}" placeholder="Open, Draft..." value="${t.note}" oninput="mtUpdateNote(${id},this.value)"
+              style="width:100%;background:var(--bg3);border:1px solid rgba(201,168,76,.2);border-radius:6px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:13px;padding:7px 8px;outline:none">
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;margin-bottom:10px">
+          <div style="position:relative;width:140px;height:140px">
+            <svg width="140" height="140" style="transform:rotate(-90deg)">
+              <circle cx="70" cy="70" r="54" class="timer-ring-bg"/>
+              <circle id="mt-ring-${id}" cx="70" cy="70" r="54" class="timer-ring-progress"
+                style="stroke-dasharray:${circ};stroke-dashoffset:${offset};stroke:${ringColor}"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+              <div id="mt-disp-${id}" class="${dispClass}" style="font-family:'Cinzel',serif;font-size:34px;font-weight:900;letter-spacing:.02em;line-height:1;${!dispClass?'color:var(--gold)':''}">${mm}:${ss}</div>
+              <div style="font-size:9px;color:var(--muted);margin-top:3px">${t.note||'&nbsp;'}</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:7px">
+          <button id="mt-start-${id}" onclick="mtStart(${id})"
+            style="flex:1;padding:10px;background:rgba(56,161,105,.15);border:1px solid rgba(56,161,105,.35);border-radius:8px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--green);cursor:pointer;opacity:${t.running?.4:1}"
+            ${t.running?'disabled':''}>▶ Iniciar</button>
+          <button id="mt-stop-${id}" onclick="mtStop(${id})"
+            style="flex:1;padding:10px;background:rgba(229,62,62,.1);border:1px solid rgba(229,62,62,.25);border-radius:8px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--red);cursor:pointer;opacity:${!t.running?.4:1}"
+            ${!t.running?'disabled':''}>⏹ Detener</button>
+          <button onclick="mtReset(${id})"
+            style="padding:10px 13px;background:var(--bg4);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer">↺</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let toastT;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
