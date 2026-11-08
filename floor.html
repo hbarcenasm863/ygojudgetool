@@ -2,628 +2,653 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#14275e">
 <title>Judge Floor Manager — YGO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;500;600&display=swap');
-
+/* ═══════════════════════════════════════
+   SISTEMA DE DISEÑO
+═══════════════════════════════════════ */
 :root {
-  --bg: #f0f2f5;
+  --bg: #eef2f8;
   --surface: #ffffff;
-  --surface2: #f5f7fa;
-  --surface3: #e8ecf2;
-  --border: #c8cdd8;
-  --border2: #dde1ea;
-  --accent: #1a56a0;
-  --accent2: #2470c8;
-  --text: #111827;
-  --muted: #4b5563;
-  --muted2: #9ca3af;
-  --green: #166534;
-  --yellow: #854d0e;
-  --red: #991b1b;
-  --gray: #6b7280;
-  --blue: #1e40af;
+  --surface-2: #f6f8fc;
+  --surface-3: #e9eef6;
+  --border: #d9e0ec;
+  --border-strong: #b9c4d6;
+  --text: #0f172a;
+  --muted: #55627a;
+  --subtle: #7b879c;
 
-  --j0: #1d4ed8; --j1: #166534; --j2: #991b1b; --j3: #92400e;
-  --j4: #6d28d9; --j5: #c2410c; --j6: #0e7490; --j7: #9d174d;
-  --j8: #3f6212; --j9: #1e3a8a; --j10: #713f12; --j11: #164e63;
+  --primary: #2453d6;
+  --primary-600: #1c43b4;
+  --primary-50: #eaf0ff;
+  --primary-100: #d6e2ff;
+  --navy: #14275e;
+
+  --green: #15803d;  --green-50: #e9f8ef;
+  --yellow: #b45309; --yellow-50: #fff6e5;
+  --red: #b91c1c;    --red-50: #fdeeee;
+  --blue: #1d4ed8;   --blue-50: #e8efff;
+  --gray: #64748b;   --gray-50: #f1f4f8;
+  --ruling: #6d28d9; --ruling-50: #f3edff;
+  --dc: #c2410c;     --dc-50: #fff0e8;
+  --amber: #f59e0b;  --amber-50: #fff8e6;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow-sm: 0 1px 2px rgba(15,23,42,0.06), 0 1px 3px rgba(15,23,42,0.06);
+  --shadow: 0 4px 14px rgba(15,23,42,0.08), 0 1px 3px rgba(15,23,42,0.06);
+  --shadow-lg: 0 18px 50px rgba(15,23,42,0.22);
+  --header-h: 60px;
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* Colores de jueces (también en JS) */
+  --j0: #1d4ed8; --j1: #15803d; --j2: #b91c1c; --j3: #b45309;
+  --j4: #6d28d9; --j5: #c2410c; --j6: #0e7490; --j7: #be185d;
+  --j8: #4d7c0f; --j9: #1e3a8a; --j10: #854d0e; --j11: #155e75;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; overflow: hidden; font-size: 16px; }
-
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
-
-/* ── HEADER ── */
-header {
-  background: var(--accent);
-  border-bottom: 2px solid #0f3460;
-  padding: 10px 16px;
-  display: flex; align-items: center; justify-content: space-between;
-  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  height: 56px;
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text); font-family: var(--font);
+  font-size: 16px; line-height: 1.4; overflow: hidden;
+  -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
 }
-header h1 { font-family: 'Orbitron', monospace; font-size: 1rem; font-weight: 900; color: #ffffff; letter-spacing: 2px; }
-.header-center { font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; color: rgba(255,255,255,0.85); letter-spacing: 1px; }
-.header-right { display: flex; gap: 8px; align-items: center; }
+button { font-family: inherit; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #c3ccda; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #a3afc2; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
-/* ── BUTTONS ── */
+/* ── BOTONES ── */
 .btn {
-  font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 600; padding: 8px 14px;
-  border: 1.5px solid var(--border); border-radius: 6px; cursor: pointer;
-  background: var(--surface); color: var(--text); transition: all 0.15s; white-space: nowrap;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 0.875rem; font-weight: 600; padding: 9px 14px; min-height: 40px;
+  border: 1px solid var(--border); border-radius: 10px; cursor: pointer;
+  background: var(--surface); color: var(--text); white-space: nowrap;
+  box-shadow: var(--shadow-sm); transition: background .15s, border-color .15s, color .15s, transform .08s, box-shadow .15s;
 }
-.btn:hover { border-color: var(--accent); color: var(--accent); background: #e8f0fc; }
-.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; }
-.btn.primary:hover { background: var(--accent2); }
-.btn.sm { padding: 5px 10px; font-size: 0.75rem; }
-.btn.danger { border-color: var(--red); color: var(--red); }
-.btn.danger:hover { background: var(--red); color: #fff; }
-.btn.success { border-color: var(--green); color: var(--green); }
-.btn.success:hover { background: var(--green); color: #fff; }
-.btn.warn { border-color: var(--yellow); color: var(--yellow); }
+.btn:hover { border-color: var(--border-strong); background: var(--surface-2); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible, .judge-card:focus-visible, .seg button:focus-visible, .ext-row:focus-visible, .icon-btn:focus-visible {
+  outline: 3px solid var(--amber); outline-offset: 2px;
+}
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(36,83,214,.28); }
+.btn.primary:hover { background: var(--primary-600); border-color: var(--primary-600); }
+.btn.sm { padding: 6px 10px; min-height: 34px; font-size: 0.8rem; border-radius: 8px; }
+.btn.lg { padding: 13px 22px; min-height: 50px; font-size: 1rem; border-radius: 12px; }
+.btn.block { width: 100%; }
+.btn.ghost { background: transparent; box-shadow: none; border-color: transparent; }
+.btn.ghost:hover { background: var(--surface-3); }
+.btn.danger { color: var(--red); border-color: #f1c4c4; }
+.btn.danger:hover { background: var(--red-50); border-color: var(--red); }
+.btn.success { color: var(--green); border-color: #bfe5cd; }
+.btn.success:hover { background: var(--green-50); border-color: var(--green); }
+.btn.warn { color: var(--yellow); border-color: #f2d9b0; }
+.btn.warn:hover { background: var(--yellow-50); border-color: var(--yellow); }
+.btn.on { background: var(--amber); border-color: #d97706; color: #fff; }
+.icon-btn {
+  width: 40px; height: 40px; border-radius: 10px; border: 1px solid transparent; background: transparent;
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem; color: inherit;
+}
+.icon-btn:hover { background: rgba(255,255,255,.14); }
 
-/* ── SCREENS ── */
-.screen { display: none; }
-#setup-screen { position: fixed; top: 56px; left: 0; right: 0; bottom: 0; overflow-y: auto; }
-body:not(.in-app) .app-only { display: none !important; }
-#setup-screen.active { display: block; }
-#app-screen.active { display: flex; }
-
-/* ══════════════════════════════════
-   SETUP SCREEN
-══════════════════════════════════ */
-#setup-screen { background: #f0f2f5; }
-.setup-wrap { max-width: 740px; margin: 0 auto; padding: 24px 16px 60px; }
-.setup-title { font-family: 'Inter', sans-serif; font-size: 1.3rem; font-weight: 900; color: var(--accent); text-align: center; margin-bottom: 4px; }
-.setup-sub { font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: var(--muted); letter-spacing: 2px; text-align: center; margin-bottom: 24px; }
-
-.card { background: #ffffff; border: 1.5px solid var(--border); border-radius: 8px; padding: 18px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-.card-title { font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 800; color: var(--accent); letter-spacing: 1px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--accent); }
-
-.form-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 10px; }
-.fg { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 110px; }
-.fg label { font-size: 0.65rem; color: var(--muted); letter-spacing: 1px; font-family: 'Share Tech Mono', monospace; }
+/* ── FORMULARIOS ── */
 input, select, textarea {
-  background: #ffffff; border: 1.5px solid var(--border); border-radius: 6px;
-  padding: 8px 10px; color: var(--text); font-family: 'Inter', sans-serif;
-  font-size: 0.85rem; outline: none; transition: border-color 0.15s; width: 100%;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 12px; color: var(--text); font-family: var(--font); font-size: 0.95rem;
+  outline: none; transition: border-color .15s, box-shadow .15s; width: 100%;
 }
-input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(26,86,160,0.15); }
+input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-50); }
+input::placeholder, textarea::placeholder { color: #94a0b4; }
+.fg { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 120px; }
+.fg > label, .label { font-size: 0.78rem; font-weight: 700; color: var(--muted); letter-spacing: .02em; }
+.help { font-size: 0.8rem; color: var(--subtle); }
 
-/* Column builder */
-.col-row {
-  background: #f8fafc; border: 1.5px solid var(--border); border-radius: 6px;
-  padding: 10px; margin-bottom: 8px;
+/* Control segmentado */
+.seg { display: inline-flex; background: var(--surface-3); border-radius: 10px; padding: 3px; gap: 3px; }
+.seg button {
+  border: none; background: transparent; padding: 8px 12px; border-radius: 8px; font-size: 0.82rem;
+  font-weight: 700; color: var(--muted); cursor: pointer; min-height: 36px;
 }
-.col-row-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.col-row-header input { flex: 1; }
-.col-name-input { max-width: 100px; }
-.groups-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.seg button.on { background: var(--surface); color: var(--primary); box-shadow: var(--shadow-sm); }
+
+/* ── ENCABEZADO ── */
+header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200; height: var(--header-h);
+  background: linear-gradient(100deg, #101f4d 0%, #1b3484 60%, #2453d6 130%);
+  color: #fff; display: flex; align-items: center; gap: 14px; padding: 0 14px;
+  box-shadow: 0 2px 12px rgba(16,31,77,.35);
+}
+.brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.brand-mark {
+  width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-size: 1.15rem;
+  background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22);
+}
+.brand h1 { font-size: 1rem; font-weight: 800; letter-spacing: .01em; line-height: 1.1; }
+.brand small { display: block; font-size: 0.7rem; font-weight: 500; opacity: .75; }
+.header-center { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
+#hdr-event { font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .95; }
+.hdr-chip { font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.16); white-space: nowrap; }
+.header-right { display: flex; gap: 6px; align-items: center; }
+.hbtn {
+  display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.1); color: #fff;
+  font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.hbtn:hover { background: rgba(255,255,255,.2); }
+.menu-wrap { position: relative; }
+.dropdown {
+  display: none; position: absolute; right: 0; top: calc(100% + 8px); min-width: 230px; z-index: 260;
+  background: var(--surface); color: var(--text); border-radius: 12px; box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border); padding: 6px;
+}
+.dropdown.open { display: block; animation: pop .14s ease; }
+.dropdown button {
+  width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px 12px; border: none;
+  background: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; color: var(--text);
+}
+.dropdown button:hover { background: var(--surface-2); }
+.dropdown button.danger { color: var(--red); }
+.dropdown hr { border: none; border-top: 1px solid var(--border); margin: 6px 4px; }
+body:not(.in-app) .app-only { display: none !important; }
+@keyframes pop { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
+
+/* ── PANTALLAS ── */
+.screen { display: none; }
+#setup-screen.active { display: block; position: fixed; top: var(--header-h); left: 0; right: 0; bottom: 0; overflow-y: auto; }
+#app-screen.active { display: flex; position: fixed; top: var(--header-h); left: 0; right: 0; bottom: 0; }
+
+/* ═══════════════════════════════════════
+   CONFIGURACIÓN
+═══════════════════════════════════════ */
+.setup-wrap { max-width: 880px; margin: 0 auto; padding: 28px 18px 120px; }
+.setup-hero { text-align: center; margin-bottom: 22px; }
+.setup-hero h2 { font-size: 1.6rem; font-weight: 900; letter-spacing: -.01em; }
+.setup-hero p { color: var(--muted); margin-top: 6px; }
+.notice { font-size: 0.82rem; color: #7c2d12; background: var(--dc-50); border: 1px solid #fcd2bd; border-radius: 10px; padding: 8px 12px; margin: 12px auto 0; display: inline-block; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+.card-title { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.step { width: 30px; height: 30px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 0.9rem; flex-shrink: 0; }
+.card-title h3 { font-size: 1.05rem; font-weight: 800; }
+.card-title p { font-size: 0.82rem; color: var(--muted); }
+.form-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 12px; }
+.info-line { font-size: 0.85rem; color: var(--primary); font-weight: 600; min-height: 20px; }
+.calc-box { background: var(--surface-2); border: 1px dashed var(--border-strong); border-radius: 10px; padding: 10px 12px; font-weight: 600; font-size: 0.9rem; color: var(--primary); }
+
+.col-row { background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+.col-row-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.col-name-input { max-width: 110px; font-weight: 800; }
+.groups-list { display: flex; flex-wrap: wrap; gap: 6px; }
 .group-item {
-  background: #e8ecf4; border: 1px solid var(--border); border-radius: 5px;
-  padding: 5px 8px; font-family: 'Inter', sans-serif; font-size: 0.78rem;
-  color: var(--text); display: flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 5px 6px 5px 10px; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 6px;
 }
-.group-item select { padding: 2px 4px; font-size: 0.62rem; width: auto; background: var(--surface2); }
-.group-item .rm { color: var(--red); cursor: pointer; font-size: 0.8rem; }
+.group-item select { padding: 4px 6px; font-size: 0.78rem; width: auto; border-radius: 7px; }
+.group-item .rm { color: var(--subtle); cursor: pointer; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 6px; }
+.group-item .rm:hover { color: var(--red); background: var(--red-50); }
 
-/* Judge tags */
-.tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.judge-tag {
-  border-radius: 20px; padding: 6px 12px; font-family: 'Inter', sans-serif;
-  font-size: 0.82rem; font-weight: 600; display: flex; align-items: center; gap: 6px;
-  border: 2px solid; background: #ffffff;
+/* Vista previa del venue */
+.venue-preview { margin-top: 14px; background: #e3e9f3; border-radius: 12px; padding: 12px; overflow-x: auto; }
+.venue-preview .vp-title { font-size: 0.75rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+.vp-cols { display: flex; gap: 10px; align-items: flex-start; }
+.vp-col { display: flex; flex-direction: column; gap: 5px; min-width: 64px; }
+.vp-head { background: var(--navy); color: #fff; border-radius: 6px; text-align: center; font-size: 0.75rem; font-weight: 800; padding: 3px; }
+.vp-grp { background: #fff; border: 1px solid var(--border-strong); border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-align: center; padding: 6px 4px; color: var(--text); }
+
+.tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.judge-tag { border-radius: 999px; padding: 5px 6px 5px 5px; font-size: 0.88rem; font-weight: 700; display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); background: var(--surface); }
+.judge-tag .rm { cursor: pointer; color: var(--subtle); width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; }
+.judge-tag .rm:hover { color: var(--red); background: var(--red-50); }
+.avatar { width: 30px; height: 30px; border-radius: 50%; color: #fff; display: grid; place-items: center; font-size: 0.72rem; font-weight: 800; flex-shrink: 0; letter-spacing: .02em; }
+.avatar.xs { width: 20px; height: 20px; font-size: 0.6rem; }
+.empty-hint { font-size: 0.85rem; color: var(--subtle); padding: 6px 0; }
+
+.setup-footer {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 150;
+  background: rgba(255,255,255,.92); backdrop-filter: blur(8px); border-top: 1px solid var(--border);
+  padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
 }
-.judge-tag .dot { width: 7px; height: 7px; border-radius: 50%; }
-.judge-tag .rm { cursor: pointer; color: var(--muted); font-size: 0.9rem; }
-.judge-tag .rm:hover { color: var(--red); }
+.setup-footer-inner { max-width: 880px; margin: 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+#setup-summary { flex: 1; font-size: 0.88rem; color: var(--muted); font-weight: 600; min-width: 180px; }
+body.in-app .setup-footer { display: none; }
 
-/* ══════════════════════════════════
-   APP SCREEN
-══════════════════════════════════ */
-#app-screen { display: none; flex-direction: column; }
+/* ═══════════════════════════════════════
+   APP
+═══════════════════════════════════════ */
+.app-layout { display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden; }
+.app-top { display: flex; flex: 1; min-height: 0; overflow: hidden; }
 
-#app-screen.active { position: fixed; top: 56px; left: 0; right: 0; bottom: 0; }
-.app-layout { display: flex; flex-direction: column; height: 100%; overflow: hidden; width: 100%; }
-
-.app-top { display: flex; flex: 1; overflow: hidden; min-height: 0; }
-
-/* LEFT: judges panel */
-.judges-panel {
-  width: 165px; flex-shrink: 0; background: var(--surface);
-  border-right: 2px solid var(--border); display: flex; flex-direction: column; overflow: hidden;
-}
-.panel-header {
-  padding: 10px 12px; border-bottom: 2px solid var(--accent);
-  font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--accent); letter-spacing: 1px;
-  display: flex; align-items: center; justify-content: space-between;
-  background: #e8f0fc;
-}
-.judges-list { flex: 1; overflow-y: auto; padding: 8px; }
+/* ── PANEL DE JUECES ── */
+.judges-panel { width: 236px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.panel-header { padding: 12px 12px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--border); }
+.panel-header h2 { font-size: 0.95rem; font-weight: 800; }
+#judges-count { font-size: 0.75rem; font-weight: 700; color: var(--muted); background: var(--surface-3); padding: 2px 8px; border-radius: 999px; margin-left: 4px; }
+.panel-add { background: var(--primary); color: #fff; border: none; border-radius: 9px; height: 34px; padding: 0 10px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.panel-add:hover { background: var(--primary-600); }
+#sel-indicator { display: none; }
+.judges-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 
 .judge-card {
-  background: var(--surface); border: 2px solid var(--border); border-radius: 8px;
-  padding: 10px 10px; margin-bottom: 7px; cursor: grab; user-select: none;
-  transition: all 0.15s; position: relative; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 9px 9px 9px 10px; cursor: pointer; user-select: none; position: relative;
+  transition: border-color .15s, box-shadow .15s, background .15s, transform .08s; box-shadow: var(--shadow-sm);
 }
-.judge-card:hover { transform: translateX(2px); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
-.judge-card.dragging { opacity: 0.3; }
-.judge-card.status-side { border-color: #b45309; background: #fffbeb; }
-.judge-card.status-lunch { border-color: #991b1b; background: #fef2f2; }
-.judge-card.status-break { border-color: #1e40af; background: #eff6ff; }
-.judge-card.status-off { border-color: #9ca3af; background: #f9fafb; opacity: 0.6; }
-.judge-card.status-active { border-color: #166534; background: #f0fdf4; }
-.judge-card.selected { box-shadow: 0 0 0 3px var(--accent); border-color: var(--accent) !important; background: #e8f0fc !important; }
+.judge-card:hover { border-color: var(--border-strong); }
+.judge-card:active { transform: scale(.99); }
+.judge-card.dragging { opacity: .35; }
+.judge-card.selected { border-color: var(--primary); background: var(--primary-50); box-shadow: 0 0 0 3px var(--primary-100); }
+.judge-card.selected::after { content: '✓'; position: absolute; top: -7px; left: -7px; width: 20px; height: 20px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 0.7rem; font-weight: 900; display: grid; place-items: center; box-shadow: var(--shadow-sm); }
+.judge-card.status-off { opacity: .6; background: var(--surface-2); cursor: default; }
+.judge-card.status-side, .judge-card.status-lunch, .judge-card.status-break { background: var(--surface-2); cursor: default; }
+.judge-card.overdue { border-color: var(--red) !important; animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(185,28,28,.45); } 50% { box-shadow: 0 0 0 6px rgba(185,28,28,0); } }
+.jc-body { flex: 1; min-width: 0; }
+.judge-name { display: block; font-size: 0.92rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.judge-load { font-size: 0.74rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.judge-load.free { color: var(--yellow); font-weight: 700; }
+.lunch-timer { font-size: 0.78rem; font-weight: 800; color: var(--blue); font-variant-numeric: tabular-nums; }
+.lunch-timer.overdue { color: var(--red); }
+.status-pill {
+  flex-shrink: 0; border: 1px solid; border-radius: 999px; padding: 5px 8px 5px 10px; font-size: 0.7rem; font-weight: 800;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 3px; letter-spacing: .02em; min-height: 30px; background: #fff;
+}
+.status-pill::after { content: '▾'; font-size: 0.65rem; opacity: .7; }
+.st-active { color: var(--green); border-color: #a7dcb9; background: var(--green-50); }
+.st-side   { color: var(--yellow); border-color: #f1d29d; background: var(--yellow-50); }
+.st-lunch  { color: var(--red); border-color: #f0b9b9; background: var(--red-50); }
+.st-break  { color: var(--blue); border-color: #b8cbf7; background: var(--blue-50); }
+.st-off    { color: var(--gray); border-color: #cfd6e1; background: var(--gray-50); }
 
-.judge-card-top { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
-.j-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.judge-name { font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 700; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
-.judge-status-badge {
-  font-family: 'Inter', sans-serif; font-size: 0.68rem; font-weight: 700; padding: 2px 7px;
-  border-radius: 10px; border: 1.5px solid; letter-spacing: 0.5px;
+.status-menu {
+  position: fixed; z-index: 280; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: var(--shadow-lg); padding: 6px; min-width: 210px; animation: pop .12s ease;
 }
-.status-active .judge-status-badge { color: #166534; border-color: #166534; background: #dcfce7; }
-.status-side .judge-status-badge { color: #92400e; border-color: #92400e; background: #fef3c7; }
-.status-lunch .judge-status-badge { color: #991b1b; border-color: #991b1b; background: #fee2e2; }
-.status-break .judge-status-badge { color: #1e40af; border-color: #1e40af; background: #dbeafe; }
-.status-off .judge-status-badge { color: #6b7280; border-color: #9ca3af; background: #f3f4f6; }
+.status-menu .sm-title { font-size: 0.72rem; font-weight: 800; color: var(--subtle); padding: 6px 10px 4px; text-transform: uppercase; letter-spacing: .04em; }
+.status-menu button {
+  width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px; border: none; background: none;
+  border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; text-align: left; color: var(--text);
+}
+.status-menu button:hover { background: var(--surface-2); }
+.status-menu button.cur { background: var(--primary-50); color: var(--primary); }
+.status-menu .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.status-menu hr { border: none; border-top: 1px solid var(--border); margin: 4px; }
+.status-menu .danger { color: var(--red); }
 
-.lunch-timer { font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 800; color: #dc2626; text-align: center; margin-top: 3px; }
-.judge-actions { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 4px; }
-.judge-actions .btn { font-size: 0.68rem; padding: 5px 7px; min-height: 28px; }
+/* ── ÁREA DEL MAPA ── */
+.floor-wrap { flex: 1; min-width: 0; overflow: auto; background: var(--bg); padding: 12px 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.guide-bar {
+  display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 8px 8px 8px 12px; box-shadow: var(--shadow-sm); flex-wrap: wrap;
+}
+.guide-bar.selecting { background: var(--primary-50); border-color: var(--primary-100); }
+.guide-bar.editing { background: var(--amber-50); border-color: #fcd98a; }
+.guide-icon { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--surface-3); flex-shrink: 0; }
+.guide-bar.selecting .guide-icon { background: var(--primary); color: #fff; }
+.guide-bar.editing .guide-icon { background: var(--amber); color: #fff; }
+#guide-text { flex: 1; min-width: 200px; font-size: 0.88rem; color: var(--text); }
+#guide-text b { font-weight: 800; }
 
-/* ── TOP 8 MAP ── */
-.top8-map {
-  display: block;
-  padding: 12px;
-  width: 100%;
-  box-sizing: border-box;
-}
-.top8-mesa {
-  background: #ffffff; border: 2px solid #1a56a0; border-radius: 10px;
-  padding: 14px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  margin-bottom: 14px;
-}
-.top8-mesa-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid #e8f0fc;
-}
-.top8-mesa-num {
-  font-family: 'Inter', sans-serif; font-size: 1.2rem; font-weight: 900;
-  color: #1a56a0; letter-spacing: 1px;
-}
-.top8-mesa-label {
-  font-family: 'Inter', sans-serif; font-size: 0.75rem; font-weight: 600;
-  color: #888; background: #f0f4ff; padding: 3px 10px; border-radius: 10px;
-}
-.top8-judges-zone {
-  display: flex; flex-wrap: wrap; gap: 8px; min-height: 40px;
-  align-items: center; padding: 6px;
-  border: 2px dashed #93c5fd; border-radius: 6px; background: #f8fafc;
-  transition: all 0.15s;
-}
-.top8-judges-zone.drag-over {
-  border-color: #1a56a0; background: #e8f0fc;
-  box-shadow: 0 0 0 3px rgba(26,86,160,0.15);
-}
-.top8-judges-zone:empty::after {
-  content: 'Soltar juez aquí o tocar zona';
-  font-family: 'Inter', sans-serif; font-size: 0.75rem; color: #64748b;
-  font-style: italic; width: 100%; text-align: center;
-}
-.top8-judge-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  border: 2px solid; border-radius: 20px; padding: 5px 12px;
-  font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 700;
-  cursor: pointer; background: #fff;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.12s;
-}
-.top8-judge-chip:hover { opacity: 0.7; transform: scale(0.96); }
-.top8-judge-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
-.top8-count {
-  font-family: 'Inter', sans-serif; font-size: 0.7rem; color: #888;
-  margin-top: 6px; text-align: right;
-}
+.counter-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.stat { display: flex; align-items: baseline; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px; box-shadow: var(--shadow-sm); }
+.stat .v { font-size: 1.05rem; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+.stat .l { font-size: 0.72rem; font-weight: 700; color: var(--muted); }
+.stat.warn { background: var(--amber-50); border-color: #fcd98a; }
+.stat.warn .v { color: var(--yellow); }
+.stat.bad .v { color: var(--red); }
+.counter-spacer { flex: 1; }
+#edit-banner { display: none; background: var(--amber-50); border: 1px solid #fcd98a; color: #78350f; font-weight: 700; font-size: 0.88rem; padding: 10px 14px; border-radius: 12px; }
 
-/* ── PATROL ZONES (integrated into map) ── */
+.floor-outer { display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 0; }
+.pz-sup-row, .pz-inf-row { flex-shrink: 0; min-height: 46px; }
+.pz-middle-row { display: flex; gap: 6px; flex: 1; min-height: 0; }
+.pz-side-col { width: 58px; flex-shrink: 0; }
+.floor-map { flex: 1; display: flex; gap: 12px; overflow-x: auto; align-items: flex-start; min-width: 0; padding: 2px 2px 6px; }
 
-
-/* Patrol zone shared style */
 .pz {
-  display: flex; align-items: center; justify-content: center;
-  flex-direction: column; gap: 4px;
-  background: #eef2ff; border: 2px dashed #818cf8;
-  border-radius: 6px; cursor: pointer;
-  transition: all 0.15s; position: relative; padding: 4px;
+  display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 4px;
+  background: rgba(99,102,241,.06); border: 1.5px dashed #a5b4fc; border-radius: 10px; cursor: pointer;
+  transition: all .15s; padding: 6px; height: 100%;
 }
-.pz:hover, .pz.drag-over {
-  background: #e0e7ff; border-color: #4f46e5;
-  box-shadow: 0 0 0 2px rgba(79,70,229,0.2);
-}
-.pz-label {
-  font-family: 'Inter', sans-serif; font-size: 0.6rem; font-weight: 800;
-  color: #4f46e5; letter-spacing: 0.5px; text-align: center; white-space: nowrap;
-}
-.pz-drop {
-  display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; align-items: center;
-  width: 100%;
-}
-.pz-drop:empty::after {
-  content: '+'; font-size: 1rem; color: #a5b4fc; font-weight: 300;
-}
-/* Positioning — flex-based */
-.pz-sup  { width: 100%; flex-direction: row; flex-wrap: wrap; }
-.pz-inf  { width: 100%; flex-direction: row; flex-wrap: wrap; }
-.pz-izq  { height: 100%; flex-direction: column; }
-.pz-der  { height: 100%; flex-direction: column; }
+.pz:hover, .pz.drag-over { background: rgba(99,102,241,.14); border-color: #4f46e5; }
+.pz-label { font-size: 0.68rem; font-weight: 800; color: #4f46e5; letter-spacing: .04em; white-space: nowrap; }
+.pz-drop { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; align-items: center; width: 100%; }
+.pz-drop:empty::after { content: '+'; font-size: 1.1rem; color: #a5b4fc; font-weight: 400; }
+.pz-sup, .pz-inf { flex-direction: row; flex-wrap: wrap; }
+.pz-izq, .pz-der { flex-direction: column; }
+body.selecting .pz { border-color: #6366f1; background: rgba(99,102,241,.1); }
 
-
-
-/* ── COUNTER BAR ── */
-.counter-bar {
-  display: flex; align-items: center; gap: 14px;
-  font-family: 'Inter', sans-serif; font-size: 0.82rem; flex-wrap: wrap;
-}
-.counter-item { display: flex; align-items: center; gap: 5px; }
-.counter-label { color: #475569; font-weight: 500; }
-.counter-val { color: var(--accent); font-size: 1rem; font-weight: 800; }
-.counter-sep { color: var(--border); }
-
-/* CENTER: floor map */
-.floor-wrap {
-  flex: 1; overflow: auto; background: #e8ecf4;
-  padding: 12px; position: relative;
-  display: flex; flex-direction: column; gap: 4px;
-  align-items: stretch;
-}
-.floor-outer {
-  display: flex; flex-direction: column; gap: 4px; flex: 1; min-height: 0;
-}
-.pz-sup-row, .pz-inf-row {
-  flex-shrink: 0; min-height: 44px;
-}
-.pz-middle-row {
-  display: flex; flex-direction: row; gap: 4px; flex: 1; min-height: 0;
-}
-.pz-side-col {
-  width: 54px; flex-shrink: 0;
-}
-.floor-map {
-  flex: 1; display: flex; flex-direction: row; gap: 10px;
-  overflow-x: auto; align-items: flex-start; min-width: 0;
-}
-
-
-.col-block { display: flex; flex-direction: column; gap: 6px; min-width: 100px; flex-shrink: 0; }
+.col-block { display: flex; flex-direction: column; gap: 8px; min-width: 112px; flex-shrink: 0; }
+.col-block.orient-h { min-width: 210px; }
 .col-header {
-  font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 800; color: #ffffff;
-  letter-spacing: 1px; text-align: center; padding: 7px 6px;
-  border-bottom: 3px solid var(--accent); margin-bottom: 4px; position: sticky; top: 0;
-  background: var(--accent); border-radius: 6px 6px 0 0; z-index: 10;
+  background: var(--navy); color: #fff; border-radius: 10px; text-align: center; padding: 7px 6px;
+  font-size: 0.95rem; font-weight: 800; box-shadow: var(--shadow-sm);
 }
-
-.col-groups-row { display: flex; flex-direction: column; gap: 8px; }
+.col-groups-row { display: flex; flex-direction: column; gap: 10px; }
 
 .table-group {
-  background: #ffffff; border: 2px solid var(--border); border-radius: 8px;
-  padding: 8px; transition: all 0.15s; position: relative; min-width: 90px; width: 100%;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 8px;
+  position: relative; width: 100%; box-shadow: var(--shadow-sm); transition: all .15s;
 }
-.table-group.drag-over { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,86,160,0.2); background: #e8f0fc; }
-.table-group.inactive { opacity: 0.35; }
-
+.table-group.uncovered { border-color: #fbbf24; box-shadow: 0 0 0 3px rgba(251,191,36,.18); }
+.table-group.drag-over { border-color: var(--primary) !important; background: var(--primary-50); box-shadow: 0 0 0 4px var(--primary-100) !important; }
+.table-group.inactive { opacity: .38; filter: grayscale(.6); }
+body.selecting .table-group:not(.inactive) { cursor: copy; }
+body.selecting .table-group:not(.inactive):hover { border-color: var(--primary); background: var(--primary-50); }
 .tables-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
 .table-cell {
-  background: #f8fafc; border: 1.5px solid #94a3b8; border-radius: 5px;
-  padding: 8px 10px; font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 700;
-  color: #1e293b; text-align: center; width: 100%; cursor: pointer;
-  transition: all 0.12s;
+  background: var(--surface-2); border: 1.5px solid #cdd5e2; border-radius: 8px; padding: 8px 6px;
+  font-size: 1.05rem; font-weight: 800; color: #1e293b; text-align: center; width: 100%; cursor: pointer;
+  transition: background .12s, border-color .12s; position: relative; font-variant-numeric: tabular-nums;
 }
-.table-cell:hover { background: #e8f0fc; border-color: var(--accent); }
-.table-cell.t4 { border-color: #1e40af; color: #1e40af; background: #eff6ff; }
-.table-cell.table-off { border-color: #dc2626; color: #dc2626; background: #fef2f2; text-decoration: line-through; opacity: 0.55; }
-
-/* Horizontal table cells */
-.tables-row.horiz { flex-direction: row; gap: 0; margin-bottom: 6px; }
-.tables-row.horiz .table-cell {
-  flex: 1; padding: 10px 6px; font-size: 1rem;
-  border-right: none; border-radius: 0;
-}
-.tables-row.horiz .table-cell:first-child { border-radius: 5px 0 0 5px; }
-.tables-row.horiz .table-cell:last-child { border-right: 1.5px solid #94a3b8; border-radius: 0 5px 5px 0; }
-.table-group.orient-h { min-width: 180px; }
-.table-group.orient-h .drop-zone { min-height: 24px; }
-.col-block.orient-h { min-width: 200px; }
-.col-block.orient-h .col-groups-row { flex-direction: column; gap: 10px; }
-
-.drop-zone {
-  min-height: 32px; border: 2px dashed #94a3b8; border-radius: 6px;
-  display: flex; align-items: center; flex-wrap: wrap; gap: 4px; padding: 4px;
-  transition: all 0.15s; background: #f8fafc;
-}
-.drop-zone:empty::after {
-  content: 'soltar aqui'; font-family: 'Inter', sans-serif; font-size: 0.72rem;
-  color: #64748b; width: 100%; text-align: center; font-weight: 500;
-}
-
-.assigned-chip {
-  display: inline-flex; align-items: center; gap: 5px;
-  border: 1.5px solid; border-radius: 12px; padding: 4px 10px;
-  font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 600;
-  cursor: pointer; transition: all 0.12s; background: #ffffff;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-.assigned-chip:hover { opacity: 0.65; transform: scale(0.97); }
-.assigned-chip .dot { width: 7px; height: 7px; border-radius: 50%; }
-
-/* Group toggle */
+.table-cell:hover { background: #fff; border-color: var(--primary); }
+.table-cell.t4 { background: #f2f6ff; }
+.table-cell.table-off { border-color: #f3b4b4; color: #dc2626; background: var(--red-50); text-decoration: line-through; opacity: .6; }
+.tables-row.horiz { flex-direction: row; gap: 4px; }
+.tables-row.horiz .table-cell { flex: 1; padding: 10px 4px; }
 .group-toggle {
-  position: absolute; top: 5px; right: 5px; width: 18px; height: 18px;
-  border-radius: 50%; border: 1.5px solid #94a3b8; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.65rem; font-weight: 700; color: #64748b; background: #f1f5f9; transition: all 0.15s;
+  display: none; position: absolute; top: -9px; right: -9px; width: 26px; height: 26px; border-radius: 50%;
+  border: 1.5px solid var(--border-strong); background: #fff; font-weight: 900; color: var(--red); cursor: pointer;
+  align-items: center; justify-content: center; z-index: 3; box-shadow: var(--shadow-sm);
 }
-.group-toggle:hover { border-color: #dc2626; color: #dc2626; background: #fef2f2; }
-.table-group.inactive .group-toggle { border-color: #166534; color: #166534; background: #dcfce7; }
-
-/* BOTTOM BAR */
-.bottom-bar {
-  background: #ffffff; border-top: 2px solid var(--border);
-  display: flex; align-items: stretch; gap: 0; flex-shrink: 0; overflow-x: auto;
-  min-height: 90px; max-height: 140px;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
-}
-.bottom-section {
-  padding: 10px 14px; border-right: 1px solid var(--border);
-  display: flex; flex-direction: column; justify-content: center; gap: 6px; flex-shrink: 0;
-}
-.bottom-section:last-child { border-right: none; flex: 1; }
-
-.round-num { font-family: 'Inter', sans-serif; font-size: 1.1rem; font-weight: 900; color: var(--accent); letter-spacing: 1px; }
-.round-timer { font-family: 'Inter', sans-serif; font-size: 1.4rem; font-weight: 800; color: #166534; letter-spacing: 1px; }
-.timer-controls { display: flex; gap: 5px; }
-
-.round-notes-wrap label { font-family: 'Inter', sans-serif; font-size: 0.75rem; font-weight: 600; color: var(--muted); display: block; margin-bottom: 3px; }
-.round-notes-wrap textarea { height: 56px; resize: none; font-size: 0.85rem; min-width: 180px; border-radius: 6px; }
-
-.round-summary { overflow-y: auto; min-width: 150px; }
-.summary-title { font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.5px; }
-.summary-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-family: 'Inter', sans-serif; font-size: 0.78rem; }
-.summary-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.summary-zone { color: var(--muted); font-size: 0.72rem; }
-
-/* ── MODALS ── */
-.modal-backdrop {
-  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-  z-index: 300; backdrop-filter: blur(3px); align-items: center; justify-content: center;
-}
-.modal-backdrop.open { display: flex; }
-.modal {
-  background: #ffffff; border: 2px solid var(--accent); border-radius: 10px;
-  padding: 20px; width: 95%; max-width: 820px; max-height: 85vh; overflow-y: auto;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-}
-.modal-title {
-  font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 800; color: var(--accent);
-  margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;
-}
-.close-x { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; transition: color 0.15s; }
-.close-x:hover { color: var(--red); }
-
-/* History */
-.hist-round { background: #f8fafc; border: 1.5px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
-.hist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border2); }
-.hist-header strong { font-family: 'Orbitron', monospace; font-size: 0.75rem; color: var(--accent); letter-spacing: 2px; }
-.hist-meta { font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: var(--muted); }
-.hist-assignments { font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; line-height: 2; }
-.hist-notes { font-size: 0.7rem; color: var(--muted); font-style: italic; border-top: 1px solid var(--border2); padding-top: 6px; margin-top: 6px; }
-.hist-judge-row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
-.hist-j-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-
-/* Lunch timer modal */
-.lunch-modal { max-width: 340px; }
-.lunch-modal input[type=number] { font-size: 1.4rem; text-align: center; padding: 10px; }
-
-/* Edit venue modal */
-.edit-col-row { background: var(--surface2); border: 1px solid var(--border2); border-radius: 4px; padding: 10px; margin-bottom: 8px; }
-
-/* Alert notify */
-.tap-guard {
-  position: fixed; inset: 0; z-index: 9999;
-  pointer-events: all; background: transparent;
-}
-
-.notify {
-  position: fixed; top: 64px; right: 16px; z-index: 400;
-  background: var(--accent); color: #ffffff; font-family: 'Inter', sans-serif;
-  font-size: 0.9rem; font-weight: 700; padding: 12px 20px; border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.2); animation: slideIn 0.3s ease;
-  display: none; max-width: 320px;
-}
-@keyframes slideIn { from { transform: translateY(-10px); opacity:0; } to { transform: translateY(0); opacity:1; } }
-
-/* Color vars for judges */
-.jc0{color:var(--j0);border-color:var(--j0);} .jc1{color:var(--j1);border-color:var(--j1);}
-.jc2{color:var(--j2);border-color:var(--j2);} .jc3{color:var(--j3);border-color:var(--j3);}
-.jc4{color:var(--j4);border-color:var(--j4);} .jc5{color:var(--j5);border-color:var(--j5);}
-.jc6{color:var(--j6);border-color:var(--j6);} .jc7{color:var(--j7);border-color:var(--j7);}
-.jc8{color:var(--j8);border-color:var(--j8);} .jc9{color:var(--j9);border-color:var(--j9);}
-.jc10{color:var(--j10);border-color:var(--j10);} .jc11{color:var(--j11);border-color:var(--j11);}
-
-.jbg0{background:var(--j0);} .jbg1{background:var(--j1);} .jbg2{background:var(--j2);}
-.jbg3{background:var(--j3);} .jbg4{background:var(--j4);} .jbg5{background:var(--j5);}
-.jbg6{background:var(--j6);} .jbg7{background:var(--j7);} .jbg8{background:var(--j8);}
-.jbg9{background:var(--j9);} .jbg10{background:var(--j10);} .jbg11{background:var(--j11);}
-
-@media(max-width:700px){
-  .judges-panel{width:130px;}
-  .header-center{display:none;}
-  header h1{font-size:0.8rem;letter-spacing:1px;}
-  .header-right .btn{padding:6px 8px;font-size:0.72rem;}
-  .judge-card-top{flex-wrap:wrap;}
-  .judge-name{flex-basis:100%;order:-1;}
-  .counter-bar{gap:4px 10px;font-size:0.72rem;}
-}
-
-/* ── MEJORAS v3 ── */
-.btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.btn:focus-visible, .judge-card:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
-.judge-load { font-size: 0.72rem; font-weight: 600; color: var(--muted); margin: 2px 0 2px 13px; }
-.judge-load.free { color: #b45309; }
-.judge-card.overdue { border-color: #dc2626 !important; animation: pulse 1.2s infinite; }
-@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.5); } 50% { box-shadow: 0 0 0 5px rgba(220,38,38,0); } }
-.lunch-timer.overdue { color: #dc2626; font-size: 0.78rem; }
-.panel-add { background: var(--accent); color: #fff; border: none; border-radius: 50%; width: 26px; height: 26px; font-size: 1rem; font-weight: 800; cursor: pointer; line-height: 1; }
-.table-group.uncovered { border-color: #f59e0b; background: #fffbeb; }
-.table-group.uncovered .drop-zone { border-color: #f59e0b; }
-.group-toggle { display: none; }
+.table-group.inactive .group-toggle { color: var(--green); }
 .floor-wrap.edit-tables .group-toggle { display: flex; }
-.floor-wrap.edit-tables .table-cell { cursor: pointer; box-shadow: inset 0 0 0 1px #f59e0b; }
-.floor-wrap:not(.edit-tables) .table-cell { position: relative; }
-.ext-badge { display: block; margin-top: 3px; font-size: 0.62rem; font-weight: 800; line-height: 1.2; border-radius: 4px; padding: 2px 3px; color: #fff; background: #6d28d9; text-decoration: none; }
-.ext-badge.dc { background: #c2410c; }
-.ext-badge.both { background: linear-gradient(90deg, #6d28d9 50%, #c2410c 50%); }
-.table-cell.has-ext { border-width: 2.5px; border-color: #6d28d9; }
-.table-cell.has-ext.dc { border-color: #c2410c; }
-.table-cell.locate { animation: locate 0.6s ease 4; }
-@keyframes locate { 0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); } 50% { box-shadow: 0 0 0 6px rgba(245,158,11,0.9); background: #fef3c7; } }
-.ext-section { min-width: 190px; max-width: 280px; }
-#ext-panel { overflow-y: auto; max-height: 92px; display: flex; flex-direction: column; gap: 3px; }
-.ext-row { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; cursor: pointer; padding: 3px 6px; border-radius: 5px; border: 1px solid var(--border2); background: #fff; text-align: left; font-family: 'Inter', sans-serif; color: var(--text); }
-.ext-row:hover { border-color: var(--accent); background: #e8f0fc; }
-.ext-row b { min-width: 58px; }
-.ext-tag { font-size: 0.66rem; font-weight: 800; color: #fff; border-radius: 4px; padding: 1px 5px; }
-.ext-tag.r { background: #6d28d9; } .ext-tag.dc { background: #c2410c; }
-.ext-empty { font-size: 0.75rem; color: var(--muted); font-style: italic; }
-.ext-check { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; }
-.ext-check input { width: 22px; height: 22px; flex: none; accent-color: var(--accent); }
-.ext-check:has(input:checked) { border-color: var(--accent); background: #e8f0fc; }
-.ext-quick { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
-.ext-quick .btn { min-width: 48px; }
-.top8-ext-btn { margin-top: 4px; }
-.edit-mode-btn.on { background: #f59e0b; border-color: #b45309; color: #fff; }
-.edit-hint { font-size: 0.75rem; color: #92400e; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 4px 10px; }
-.counter-warn { color: #b45309; }
-#edit-banner { display: none; background: #fef3c7; border: 2px solid #f59e0b; color: #78350f; font-weight: 700; font-size: 0.82rem; padding: 6px 12px; border-radius: 6px; margin-bottom: 6px; }
+.floor-wrap.edit-tables .table-cell { box-shadow: inset 0 0 0 2px rgba(245,158,11,.5); }
+.drop-zone {
+  min-height: 34px; border: 1.5px dashed #cbd3df; border-radius: 9px; display: flex; align-items: center;
+  flex-wrap: wrap; gap: 4px; padding: 4px; background: #fbfcfe;
+}
+.drop-zone:empty::after { content: 'Sin juez'; font-size: 0.72rem; color: var(--subtle); width: 100%; text-align: center; font-weight: 600; }
+.table-group.uncovered .drop-zone { border-color: #fbbf24; background: var(--amber-50); }
+.table-group.uncovered .drop-zone:empty::after { color: var(--yellow); }
+
+.assigned-chip, .top8-judge-chip {
+  display: inline-flex; align-items: center; gap: 5px; border: 1.5px solid; border-radius: 999px;
+  padding: 2px 9px 2px 3px; font-size: 0.78rem; font-weight: 700; cursor: pointer; background: #fff;
+  max-width: 100%; transition: transform .1s, opacity .1s;
+}
+.assigned-chip:hover, .top8-judge-chip:hover { opacity: .7; text-decoration: line-through; }
+.assigned-chip .dot, .top8-judge-chip .dot { width: 18px; height: 18px; border-radius: 50%; color: #fff; font-size: 0.55rem; font-weight: 800; display: grid; place-items: center; flex-shrink: 0; }
+.chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Extensiones en mesas */
+.ext-badge { display: block; margin-top: 3px; font-size: 0.64rem; font-weight: 800; line-height: 1.2; border-radius: 5px; padding: 2px 3px; color: #fff; background: var(--ruling); }
+.ext-badge.dc { background: var(--dc); }
+.ext-badge.both { background: linear-gradient(90deg, var(--ruling) 50%, var(--dc) 50%); }
+.table-cell.has-ext { border-color: var(--ruling); background: var(--ruling-50); }
+.table-cell.has-ext.dc { border-color: var(--dc); background: var(--dc-50); }
+.table-cell.locate { animation: locate .6s ease 4; }
+@keyframes locate { 0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); } 50% { box-shadow: 0 0 0 7px rgba(245,158,11,.85); background: #fef3c7; } }
+
+/* ── TOP 8 ── */
 #top8-container { display: none; flex: 1; overflow-y: auto; }
-.notify { white-space: pre-line; }
-.modal-title .nav-arrow { font-size: 1.2rem; color: var(--accent); background: none; border: none; cursor: pointer; padding: 4px 8px; }
-.modal-title .nav-arrow:hover { color: var(--accent2); }
-.setup-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; padding: 10px 0 30px; }
+.top8-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.top8-mesa { background: var(--surface); border: 1px solid var(--border); border-top: 5px solid #be123c; border-radius: 14px; padding: 16px; box-shadow: var(--shadow); }
+.top8-mesa-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.top8-mesa-num { font-size: 1.3rem; font-weight: 900; color: var(--text); }
+.top8-mesa-label { font-size: 0.75rem; font-weight: 700; color: #be123c; background: #fff1f3; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.top8-judges-zone { display: flex; flex-wrap: wrap; gap: 8px; min-height: 52px; align-items: center; padding: 8px; border: 1.5px dashed #cbd3df; border-radius: 10px; background: var(--surface-2); transition: all .15s; }
+.top8-judges-zone.drag-over { border-color: var(--primary); background: var(--primary-50); }
+.top8-judges-zone:empty::after { content: 'Toca un juez y luego esta zona'; font-size: 0.8rem; color: var(--subtle); width: 100%; text-align: center; }
+.top8-judge-chip { font-size: 0.88rem; padding: 4px 12px 4px 4px; }
+.top8-judge-chip .dot { width: 24px; height: 24px; font-size: 0.62rem; }
+.top8-count { font-size: 0.75rem; color: var(--subtle); margin-top: 8px; text-align: right; font-weight: 600; }
+.top8-ext-btn { margin-top: 8px; }
+
+/* ── BARRA INFERIOR ── */
+.bottom-bar {
+  background: var(--surface); border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: stretch;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); flex-shrink: 0; overflow-x: auto;
+  box-shadow: 0 -4px 16px rgba(15,23,42,.05);
+}
+.bb-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.bb-title { font-size: 0.72rem; font-weight: 800; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.round-card { min-width: 210px; }
+.round-num { font-size: 1.05rem; font-weight: 900; color: var(--primary); line-height: 1.1; }
+#round-sub { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+.timer-row { display: flex; align-items: center; gap: 8px; }
+.round-timer { font-size: 1.9rem; font-weight: 900; color: var(--green); font-variant-numeric: tabular-nums; letter-spacing: -.01em; line-height: 1; min-width: 104px; }
+.timer-controls { display: flex; gap: 4px; }
+.timer-controls .btn { width: 38px; padding: 0; }
+.actions-card { min-width: 220px; }
+.actions-card .row { display: flex; gap: 6px; }
+.actions-card .row .btn { flex: 1; }
+#edit-round-btns { display: none; gap: 6px; flex-direction: column; }
+.ext-section { width: 270px; }
+#ext-panel { overflow-y: auto; max-height: 96px; display: flex; flex-direction: column; gap: 4px; }
+.ext-row { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; cursor: pointer; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--border); background: #fff; text-align: left; color: var(--text); flex-wrap: wrap; }
+.ext-row:hover { border-color: var(--primary); background: var(--primary-50); }
+.ext-row b { min-width: 58px; }
+.ext-tag { font-size: 0.66rem; font-weight: 800; color: #fff; border-radius: 5px; padding: 1px 6px; }
+.ext-tag.r { background: var(--ruling); } .ext-tag.dc { background: var(--dc); }
+.ext-empty { font-size: 0.8rem; color: var(--subtle); }
+.notes-card { flex: 1; min-width: 220px; }
+.notes-card textarea { flex: 1; min-height: 64px; resize: none; font-size: 0.88rem; }
+#summary-list { display: none; }
+
+/* ── MODALES ── */
+.modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.5); z-index: 300; backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 16px; }
+.modal-backdrop.open { display: flex; animation: fade .15s ease; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.modal { background: var(--surface); border-radius: 18px; padding: 22px; width: 100%; max-width: 820px; max-height: 88vh; overflow-y: auto; box-shadow: var(--shadow-lg); animation: rise .18s ease; }
+.modal.narrow { max-width: 440px; } .modal.mid { max-width: 600px; }
+@keyframes rise { from { transform: translateY(12px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
+.modal-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 800; margin-bottom: 16px; }
+.modal-sub { font-size: 0.88rem; color: var(--muted); margin: -8px 0 14px; }
+.close-x { background: var(--surface-3); border: none; color: var(--muted); width: 36px; height: 36px; border-radius: 50%; font-size: 1rem; cursor: pointer; flex-shrink: 0; }
+.close-x:hover { background: var(--red-50); color: var(--red); }
+.modal-title .nav-arrow { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: #fff; color: var(--primary); cursor: pointer; font-size: 1.1rem; }
+.modal-title .nav-arrow:hover { background: var(--primary-50); }
+.modal-actions { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+.modal-actions .btn { flex: 1; }
+.choice { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left; padding: 14px 16px; white-space: normal; }
+.choice small { font-weight: 500; opacity: .85; font-size: 0.8rem; }
+.callout { border-radius: 12px; padding: 12px 14px; font-size: 0.86rem; margin-bottom: 14px; }
+.callout.info { background: var(--blue-50); border: 1px solid #c3d4fb; color: #1e3a8a; }
+.callout.warn { background: var(--amber-50); border: 1px solid #fcd98a; color: #78350f; }
+.callout.danger { background: #fff1f3; border: 1px solid #fecdd3; color: #9f1239; font-weight: 700; text-align: center; }
+.callout.success { background: var(--green-50); border: 1px solid #a7dcb9; color: #14532d; }
+.big-input { font-size: 1.3rem; text-align: center; font-weight: 800; }
+.pick-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.pick-chip { display: flex; align-items: center; gap: 8px; padding: 5px 12px 5px 5px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--surface-2); cursor: pointer; font-size: 0.88rem; font-weight: 700; color: var(--subtle); }
+.pick-chip.on { border-color: var(--primary); background: var(--primary-50); color: var(--text); }
+.pick-chip .avatar { opacity: .45; }
+.pick-chip.on .avatar { opacity: 1; }
+.lunch-modal input[type=number] { font-size: 1.4rem; text-align: center; font-weight: 800; }
+
+/* Historial / revisión */
+.hist-round { background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+.hist-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.hist-header strong { font-size: 0.95rem; font-weight: 800; color: var(--primary); }
+.hist-meta { font-size: 0.78rem; color: var(--muted); }
+.hist-judge-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 0.84rem; }
+.hist-j-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.hist-notes { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 6px; margin-top: 6px; }
+.rr-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); margin-bottom: 6px; }
+.rr-row.na { opacity: .55; }
+.rr-name { font-size: 0.92rem; font-weight: 700; }
+.rr-zone { font-size: 0.82rem; color: var(--primary); margin-top: 1px; }
+.rr-ext { font-size: 0.84rem; background: var(--ruling-50); border: 1px solid #d9c7fb; border-radius: 10px; padding: 9px 11px; margin-top: 6px; }
+.badge { font-size: 0.68rem; font-weight: 800; border-radius: 999px; padding: 2px 8px; border: 1px solid; margin-left: 4px; }
+.nav-row { display: flex; gap: 8px; margin-top: 14px; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+.nav-counter { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+
+/* Editar venue */
+.ext-check { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border: 1.5px solid var(--border); border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 0.98rem; margin-bottom: 8px; }
+.ext-check input { width: 22px; height: 22px; flex: none; accent-color: var(--primary); }
+.ext-check:has(input:checked) { border-color: var(--primary); background: var(--primary-50); }
+.ext-check.r:has(input:checked) { border-color: var(--ruling); background: var(--ruling-50); }
+.ext-check.dc:has(input:checked) { border-color: var(--dc); background: var(--dc-50); }
+.ext-quick { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.ext-quick .btn { flex: 1; min-width: 52px; }
+
+/* Ayuda */
+.help-steps { display: grid; gap: 10px; }
+.help-step { display: flex; gap: 12px; align-items: flex-start; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+.help-step .n { width: 34px; height: 34px; border-radius: 10px; background: var(--primary-50); display: grid; place-items: center; font-size: 1.1rem; flex-shrink: 0; }
+.help-step b { display: block; margin-bottom: 2px; }
+.help-step p { font-size: 0.86rem; color: var(--muted); }
+
+/* ── NOTIFICACIONES ── */
+.tap-guard { position: fixed; inset: 0; z-index: 9999; background: transparent; }
+.notify { position: fixed; top: calc(var(--header-h) + 10px); right: 14px; z-index: 400; display: flex; flex-direction: column; gap: 8px; max-width: min(360px, calc(100vw - 28px)); pointer-events: none; }
+.toast { background: #0f172a; color: #fff; font-size: 0.88rem; font-weight: 600; padding: 11px 14px; border-radius: 12px; box-shadow: var(--shadow-lg); animation: slideIn .25s ease; border-left: 4px solid #60a5fa; }
+.toast.warn { border-left-color: var(--amber); }
+.toast.alert { border-left-color: #f87171; background: #3b0d0d; }
+.toast.ok { border-left-color: #4ade80; }
+@keyframes slideIn { from { transform: translateX(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1100px) {
+  .judges-panel { width: 200px; }
+  .hbtn .lbl { display: none; }
+}
+@media (max-width: 760px) {
+  :root { --header-h: 56px; }
+  .brand small, .hdr-chip { display: none; }
+  .brand h1 { font-size: 0.9rem; }
+  .app-top { flex-direction: column; }
+  .judges-panel { width: 100%; border-right: none; border-bottom: 1px solid var(--border); max-height: none; flex-shrink: 0; }
+  .panel-header { padding: 8px 10px; }
+  .judges-list { flex-direction: row; overflow-x: auto; overflow-y: hidden; padding: 8px 10px 10px; }
+  .judge-card { min-width: 200px; }
+  .bottom-bar { padding: 8px; gap: 8px; }
+  .round-card { min-width: 180px; }
+  .round-timer { font-size: 1.5rem; min-width: 84px; }
+  .pz-side-col { width: 44px; }
+  .setup-wrap { padding: 18px 12px 140px; }
+  .brand h1, .brand small { display: none; }
+  .floor-wrap { padding: 10px; gap: 8px; }
+  .floor-outer, .pz-middle-row { flex: none; }
+  .floor-map { min-height: 0; }
+  #guide-text { font-size: 0.8rem; min-width: 0; }
+  .guide-icon { width: 26px; height: 26px; }
+  .stat { padding: 4px 8px; }
+  .stat .v { font-size: 0.95rem; }
+  .stat .l { font-size: 0.68rem; }
+  .bb-card { padding: 8px 10px; }
+  .judges-list .judge-card { min-width: 180px; }
+}
+@media print { header, .bottom-bar, .judges-panel { display: none; } }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>JUDGE FLOOR MGR</h1>
-  <div class="header-center" id="hdr-event"></div>
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">⚖️</div>
+    <div><h1>Judge Floor</h1><small>Yu-Gi-Oh! · Gestión de piso</small></div>
+  </div>
+  <div class="header-center">
+    <span id="hdr-event"></span>
+    <span class="hdr-chip app-only" id="hdr-round"></span>
+  </div>
   <div class="header-right">
-    <button class="btn app-only" onclick="openHistory()">📋 HISTORIAL</button>
-    <button class="btn warn app-only" onclick="openEditVenue()">✏️ VENUE</button>
-    <button class="btn danger sm app-only" onclick="hardReset()" title="Borrar el evento y empezar de cero" aria-label="Reiniciar evento">↩ RESET</button>
+    <button class="hbtn app-only" onclick="openHistory()" title="Historial de rondas"><span>📋</span><span class="lbl">Historial</span></button>
+    <button class="hbtn app-only" onclick="openEditVenue()" title="Editar venue"><span>🗺️</span><span class="lbl">Venue</span></button>
+    <button class="hbtn" onclick="openHelp()" title="Cómo se usa" aria-label="Ayuda"><span>❔</span><span class="lbl">Ayuda</span></button>
+    <div class="menu-wrap">
+      <button class="hbtn" onclick="toggleMenu(event)" aria-label="Más opciones" aria-haspopup="true" title="Más opciones">⋯</button>
+      <div class="dropdown" id="main-menu" role="menu">
+        <button class="app-only" onclick="closeMenu();exportBackup()">💾 Descargar respaldo .json</button>
+        <button onclick="closeMenu();document.getElementById('import-file').click()">📂 Cargar respaldo</button>
+        <button class="app-only" onclick="closeMenu();exportTxt()">📝 Exportar historial .txt</button>
+        <button class="app-only" onclick="closeMenu();exportMapPDF('all')">🖨️ Mapas PDF (todas las rondas)</button>
+        <hr class="app-only">
+        <button class="danger app-only" onclick="closeMenu();hardReset()">↩ Reiniciar evento…</button>
+      </div>
+    </div>
   </div>
 </header>
 
-<!-- ════════════ SETUP SCREEN ════════════ -->
+<!-- ════════════ CONFIGURACIÓN ════════════ -->
 <div id="setup-screen" class="screen active">
 <div class="setup-wrap">
-  <div class="setup-title">CONFIGURAR EVENTO</div>
-  <div class="setup-sub">DEFINE EL VENUE ANTES DE EMPEZAR</div>
-    <div style="font-family:'Inter',sans-serif;font-size:0.72rem;color:#dc2626;text-align:center;margin-bottom:8px;font-weight:600;">⚠ Registro tardío = Match Loss Ronda 1 (regla oficial KDE)</div>
-
-  <div class="card">
-    <div class="card-title">EVENTO</div>
-    <div class="form-row">
-      <div class="fg"><label>NOMBRE</label><input id="s-name" placeholder="ej. Regional Qualifier — CDMX"></div>
-      <div class="fg" style="max-width:130px;"><label>JUGADORES</label><input type="number" id="s-players" min="4" placeholder="ej. 96" oninput="updateTableCalc()"></div>
-      <div class="fg" style="max-width:110px;">
-        <label>RONDAS DÍA 1</label>
-        <input type="number" id="s-rounds-d1" min="1" max="20" placeholder="—" oninput="this.dataset.manual='1'">
-      </div>
-      <div class="fg" style="max-width:110px;">
-        <label>RONDAS DÍA 2</label>
-        <input type="number" id="s-rounds-d2" min="0" max="20" placeholder="—" oninput="this.dataset.manual='1'">
-      </div>
-      <div class="fg" style="max-width:160px;">
-        <label>NUMERACIÓN ZIGZAG</label>
-        <div style="display:flex;gap:6px;margin-top:2px;">
-          <button class="btn sm" id="nm-col-btn" onclick="setNumberingMode('column')"
-            style="flex:1;border-color:#1a56a0;color:#1a56a0;background:#e8f0fc;font-weight:700;">POR COLUMNA</button>
-          <button class="btn sm" id="nm-row-btn" onclick="setNumberingMode('row')"
-            style="flex:1;">POR FILA</button>
-        </div>
-        <div id="nm-desc" style="font-size:0.7rem;color:#64748b;margin-top:4px;font-family:'Inter',sans-serif;">
-          Zigzag vertical por columna
-        </div>
-      </div>
-      <div class="fg" style="max-width:110px;">
-        <label>MIN. POR RONDA</label>
-        <input type="number" id="s-round-min" min="1" max="120" value="50">
-      </div>
-    </div>
-    <div style="font-family:'Inter',sans-serif;font-size:0.78rem;padding:4px 2px 6px;min-height:18px;" id="s-rounds-info"></div>
-    <div class="form-row">
-      <div class="fg" style="max-width:none;"><label>MESAS REQUERIDAS VS. VENUE</label><div id="s-tables-calc" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 9px;font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:600;color:var(--accent);">—</div></div>
-    </div>
+  <div class="setup-hero">
+    <h2>Configura tu evento</h2>
+    <p>Tres pasos y listo: datos del torneo, distribución de mesas y equipo de jueces.</p>
+    <div class="notice">⚠ Registro tardío = Match Loss Ronda 1 (regla oficial KDE)</div>
   </div>
 
   <div class="card">
-    <div class="card-title">COLUMNAS DE MESAS</div>
-    <p style="font-size:0.7rem;color:var(--muted);margin-bottom:12px;font-family:'Share Tech Mono',monospace;line-height:1.7;">
-      Agrega columnas verticales. Dentro de cada columna define los grupos de mesas (2 o 3 mesas por grupo). Grupos de 2 = 4 jugadores, grupos de 3 = 6 jugadores.
-    </p>
+    <div class="card-title"><div class="step">1</div><div><h3>Evento</h3><p>Nombre, jugadores y estructura de rondas.</p></div></div>
+    <div class="form-row">
+      <div class="fg" style="min-width:220px;"><label for="s-name">Nombre del evento</label><input id="s-name" placeholder="ej. Regional Qualifier — Bogotá"></div>
+      <div class="fg" style="max-width:150px;"><label for="s-players">Jugadores</label><input type="number" id="s-players" min="4" placeholder="ej. 96" oninput="updateTableCalc()"></div>
+    </div>
+    <div class="form-row">
+      <div class="fg" style="max-width:130px;"><label for="s-rounds-d1">Rondas día 1</label><input type="number" id="s-rounds-d1" min="1" max="20" placeholder="—" oninput="this.dataset.manual='1';updateSetupSummary()"></div>
+      <div class="fg" style="max-width:130px;"><label for="s-rounds-d2">Rondas día 2</label><input type="number" id="s-rounds-d2" min="0" max="20" placeholder="—" oninput="this.dataset.manual='1';updateSetupSummary()"></div>
+      <div class="fg" style="max-width:130px;"><label for="s-round-min">Minutos por ronda</label><input type="number" id="s-round-min" min="1" max="120" value="50"></div>
+      <div class="fg" style="min-width:230px;">
+        <span class="label">Numeración de mesas</span>
+        <div class="seg" role="group" aria-label="Numeración">
+          <button id="nm-col-btn" class="on" onclick="setNumberingMode('column')">Por columna</button>
+          <button id="nm-row-btn" onclick="setNumberingMode('row')">Por fila</button>
+        </div>
+        <div id="nm-desc" class="help">Zigzag vertical por columna</div>
+      </div>
+    </div>
+    <div class="info-line" id="s-rounds-info"></div>
+    <div class="calc-box" id="s-tables-calc">—</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><div class="step">2</div><div><h3>Venue</h3><p>Columnas de mesas y sus grupos. Grupos de 2 mesas = 4 jugadores, de 3 = 6 jugadores.</p></div></div>
     <div id="s-cols-list"></div>
-    <button class="btn" onclick="sAddColumn()">+ COLUMNA</button>
+    <button class="btn" onclick="sAddColumn()">＋ Agregar columna</button>
+    <div class="venue-preview" id="venue-preview"></div>
   </div>
 
   <div class="card">
-    <div class="card-title">JUECES</div>
-    <div class="form-row">
-      <div class="fg"><input id="s-judge-inp" placeholder="Nombre del juez" onkeydown="if(event.key==='Enter')sAddJudge()"></div>
-      <button class="btn primary" onclick="sAddJudge()" style="flex-shrink:0;">+ AGREGAR</button>
+    <div class="card-title"><div class="step">3</div><div><h3>Jueces</h3><p>Escribe un nombre y pulsa Enter. Cada juez recibe un color.</p></div></div>
+    <div class="form-row" style="margin-bottom:0;">
+      <div class="fg"><input id="s-judge-inp" placeholder="Nombre del juez" aria-label="Nombre del juez" onkeydown="if(event.key==='Enter')sAddJudge()"></div>
+      <button class="btn primary" onclick="sAddJudge()">＋ Agregar</button>
     </div>
     <div class="tag-list" id="s-judges-list"></div>
   </div>
-
-  <div class="setup-actions">
-    <button class="btn primary" onclick="startApp()" style="padding:11px 40px;font-size:0.85rem;letter-spacing:3px;">▶ INICIAR</button>
-    <button class="btn" onclick="document.getElementById('import-file').click()" title="Cargar un respaldo .json exportado antes">📂 CARGAR RESPALDO</button>
+</div>
+</div>
+<div class="setup-footer">
+  <div class="setup-footer-inner">
+    <div id="setup-summary"></div>
+    <button class="btn" onclick="document.getElementById('import-file').click()">📂 Cargar respaldo</button>
+    <button class="btn primary lg" onclick="startApp()">▶ Iniciar evento</button>
   </div>
 </div>
-</div>
 
-<!-- ════════════ APP SCREEN ════════════ -->
+<!-- ════════════ APP ════════════ -->
 <div id="app-screen" class="screen">
 <div class="app-layout">
-
-  <!-- TOP: Judges + Floor -->
   <div class="app-top">
 
-    <!-- LEFT: Judges -->
-    <div class="judges-panel">
+    <aside class="judges-panel" aria-label="Jueces">
       <div class="panel-header">
-        <span>JUECES <span style="font-size:0.72rem;color:var(--muted)" id="judges-count"></span></span>
-        <button class="panel-add" onclick="appAddJudge()" title="Agregar juez" aria-label="Agregar juez">+</button>
+        <h2>Jueces <span id="judges-count"></span></h2>
+        <button class="panel-add" onclick="appAddJudge()" aria-label="Agregar juez">＋ Juez</button>
       </div>
-      <div id="sel-indicator" style="display:none;padding:6px 10px;background:#e8f0fc;border-bottom:2px solid var(--accent);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:700;color:var(--accent);text-align:center;">
-        ✓ TOCA ZONA
-      </div>
+      <div id="sel-indicator"></div>
       <div class="judges-list" id="judges-list"></div>
-    </div>
+    </aside>
 
-    <!-- CENTER: Floor -->
-    <div class="floor-wrap">
+    <main class="floor-wrap">
       <div id="edit-banner"></div>
-      <div class="counter-bar" id="counter-bar" style="margin-bottom:6px;"></div>
+      <div class="guide-bar" id="guide-bar">
+        <div class="guide-icon" id="guide-icon">👆</div>
+        <div id="guide-text"></div>
+        <button class="btn sm ghost" id="guide-cancel" style="display:none" onclick="cancelSelection()">Cancelar</button>
+      </div>
+      <div class="counter-bar" id="counter-bar"></div>
       <div id="top8-container"></div>
-    <div class="floor-outer" id="floor-outer">
+      <div class="floor-outer" id="floor-outer">
         <div class="pz-sup-row" id="pz-sup-row"></div>
         <div class="pz-middle-row">
           <div class="pz-side-col" id="pz-izq-col"></div>
@@ -632,320 +657,244 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
         </div>
         <div class="pz-inf-row" id="pz-inf-row"></div>
       </div>
-    </div>
-
+    </main>
   </div>
 
-  <!-- BOTTOM BAR: Round controls -->
   <div class="bottom-bar">
-
-    <!-- Ronda + Timer -->
-    <div class="bottom-section">
-      <div class="round-num" id="round-num">RONDA 1</div>
-      <div id="round-sub" style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--muted);font-weight:500;margin-top:-3px;"></div>
-      <div class="round-timer" id="round-timer">50:00</div>
-      <div class="timer-controls">
-        <button class="btn success sm" onclick="timerStart()" aria-label="Iniciar reloj" title="Iniciar">▶</button>
-        <button class="btn sm" onclick="timerPause()" aria-label="Pausar reloj" title="Pausar">⏸</button>
-        <button class="btn danger sm" onclick="timerResetAsk()" aria-label="Reiniciar reloj" title="Reiniciar reloj">↺</button>
+    <div class="bb-card round-card">
+      <div>
+        <div class="round-num" id="round-num">RONDA 1</div>
+        <div id="round-sub"></div>
+      </div>
+      <div class="timer-row">
+        <div class="round-timer" id="round-timer">50:00</div>
+        <div class="timer-controls">
+          <button class="btn sm success" onclick="timerStart()" aria-label="Iniciar reloj" title="Iniciar">▶</button>
+          <button class="btn sm" onclick="timerPause()" aria-label="Pausar reloj" title="Pausar">⏸</button>
+          <button class="btn sm danger" onclick="timerResetAsk()" aria-label="Reiniciar reloj" title="Reiniciar reloj">↺</button>
+        </div>
       </div>
     </div>
 
-    <!-- Acciones -->
-    <div class="bottom-section" id="action-section">
-      <button class="btn primary" onclick="saveRound()" id="save-btn">GUARDAR RONDA</button>
-      <button class="btn sm" style="border-color:var(--blue);color:var(--blue)" onclick="exportMapPDF('current')">MAPA PDF</button>
-      <button class="btn sm" style="border-color:#6d28d9;color:#6d28d9" onclick="openPrevRoundModal()" id="ver-anterior-btn">VER ANTERIOR</button>
-      <div style="display:flex;gap:4px;">
-        <button class="btn sm warn" onclick="undoLastRound()" id="undo-btn" style="flex:1;">DESHACER</button>
-        <button class="btn sm" onclick="clearAssignments()" style="flex:1;">LIMPIAR</button>
+    <div class="bb-card actions-card" id="action-section">
+      <button class="btn primary" onclick="saveRound()" id="save-btn">💾 Guardar ronda</button>
+      <div class="row">
+        <button class="btn sm" onclick="openPrevRoundModal()" id="ver-anterior-btn" title="Ver y aplicar asignaciones de rondas anteriores">👁 Anterior</button>
+        <button class="btn sm" onclick="exportMapPDF('current')" title="Mapa de esta ronda en PDF">🖨️ PDF</button>
       </div>
-      <div id="edit-round-btns" style="display:none;gap:4px;flex-direction:column;">
-        <button class="btn success sm" onclick="saveRound()">CONFIRMAR EDICION</button>
-        <button class="btn danger sm" onclick="cancelRoundEdit()">CANCELAR EDICION</button>
+      <div class="row">
+        <button class="btn sm warn" onclick="undoLastRound()" id="undo-btn" title="Volver a la ronda guardada anterior">↶ Deshacer</button>
+        <button class="btn sm" onclick="clearAssignments()" title="Quitar todas las asignaciones">🧹 Limpiar</button>
       </div>
-    </div>
-
-    <!-- Notas -->
-    <div class="bottom-section">
-      <div class="round-notes-wrap">
-        <label>NOTAS / INCIDENCIAS</label>
-        <textarea id="round-notes" placeholder="Incidencias, cambios..." oninput="onNotesInput()"></textarea>
+      <div id="edit-round-btns">
+        <button class="btn success" onclick="saveRound()">✓ Confirmar edición</button>
+        <button class="btn danger sm" onclick="cancelRoundEdit()">Cancelar edición</button>
       </div>
     </div>
 
-    <!-- Extensiones de tiempo -->
-    <div class="bottom-section ext-section">
-      <div class="summary-title">⏱ EXTENSIONES DE TIEMPO</div>
+    <div class="bb-card ext-section">
+      <div class="bb-title">⏱ Extensiones de tiempo</div>
       <div id="ext-panel"></div>
     </div>
 
-    <!-- Resumen asignaciones -->
-    <div class="bottom-section" style="flex:1;overflow:hidden;">
-      <div class="round-summary">
-        <div class="summary-title">ASIGNACIONES</div>
-        <div id="summary-list" style="display:flex;flex-wrap:wrap;gap:4px 12px;"></div>
-      </div>
+    <div class="bb-card notes-card">
+      <label class="bb-title" for="round-notes">📝 Notas / incidencias</label>
+      <textarea id="round-notes" placeholder="Incidencias, cambios, penalizaciones…" oninput="onNotesInput()"></textarea>
     </div>
-
+    <div id="summary-list"></div>
   </div>
-
 </div>
 </div>
 
-<!-- ════════════ RECICLAR RONDA MODAL ════════════ -->
+<!-- ════════════ NUEVA RONDA ════════════ -->
 <div class="modal-backdrop" id="recycle-modal">
-  <div class="modal" style="max-width:480px;">
-    <div class="modal-title">
-      NUEVA RONDA — ASIGNACIONES
-      <button class="close-x" onclick="closeModal('recycle-modal')">✕</button>
-    </div>
-    <div style="font-family:'Inter',sans-serif;font-size:0.85rem;color:#444;margin-bottom:16px;">
-      ¿Cómo quieres iniciar las asignaciones de esta ronda?
-    </div>
+  <div class="modal narrow">
+    <div class="modal-title">Nueva ronda — ¿cómo empiezas? <button class="close-x" onclick="closeModal('recycle-modal')">✕</button></div>
     <div style="display:flex;flex-direction:column;gap:10px;">
-      <button class="btn primary" onclick="recycleAssignments()" style="padding:14px;font-size:0.95rem;">
-        ♻️ RECICLAR RONDA ANTERIOR
-        <div style="font-size:0.75rem;font-weight:400;margin-top:3px;opacity:0.85;">Copia las asignaciones de la ronda anterior como punto de partida</div>
-      </button>
-      <button class="btn" onclick="closeModal('recycle-modal');selectedJudge=null;" style="padding:14px;font-size:0.95rem;border-color:#1a56a0;color:#1a56a0;">
-        EMPEZAR EN BLANCO
-        <div style="font-size:0.75rem;font-weight:400;margin-top:3px;opacity:0.7;">Mapa limpio para esta ronda</div>
-      </button>
+      <button class="btn primary choice" onclick="recycleAssignments()">♻️ Reciclar ronda anterior
+        <small>Copia las asignaciones de la ronda anterior (solo jueces en piso o break).</small></button>
+      <button class="btn choice" onclick="closeModal('recycle-modal');selectedJudge=null;renderAll();">🧼 Empezar en blanco
+        <small>Mapa limpio para asignar desde cero.</small></button>
     </div>
   </div>
 </div>
 
-<!-- ════════════ VER RONDA ANTERIOR MODAL ════════════ -->
+<!-- ════════════ VER RONDA ANTERIOR ════════════ -->
 <div class="modal-backdrop" id="prev-round-modal">
-  <div class="modal" style="max-width:600px;">
+  <div class="modal mid">
     <div class="modal-title">
-      <span style="display:flex;align-items:center;gap:4px;">
-        <button class="nav-arrow" onclick="prevRoundNav(-1)" aria-label="Ronda anterior">&#8592;</button>
-        <span id="prev-round-title">RONDA ANTERIOR</span>
-        <button class="nav-arrow" onclick="prevRoundNav(1)" aria-label="Ronda siguiente">&#8594;</button>
+      <span style="display:flex;align-items:center;gap:8px;">
+        <button class="nav-arrow" onclick="prevRoundNav(-1)" aria-label="Ronda anterior">←</button>
+        <span id="prev-round-title">Ronda anterior</span>
+        <button class="nav-arrow" onclick="prevRoundNav(1)" aria-label="Ronda siguiente">→</button>
       </span>
-      <button class="close-x" onclick="closePrevRoundModal()" aria-label="Cerrar">✕</button>
+      <button class="close-x" onclick="closePrevRoundModal()">✕</button>
     </div>
-    <div id="prev-round-meta" style="font-family:'Inter',sans-serif;font-size:0.75rem;color:var(--muted);margin-bottom:10px;"></div>
+    <div id="prev-round-meta" class="modal-sub"></div>
     <div id="prev-round-content" style="overflow-y:auto;max-height:50vh;"></div>
-    <div style="display:flex;gap:8px;margin-top:14px;justify-content:space-between;align-items:center;">
-      <div style="display:flex;gap:8px;">
-        <button class="btn" onclick="prevRoundNav(-1)">&#8592; ANTERIOR</button>
-        <span id="prev-round-counter" style="font-family:'Inter',sans-serif;font-size:0.82rem;color:var(--muted);align-self:center;padding:0 4px;"></span>
-        <button class="btn" onclick="prevRoundNav(1)">SIGUIENTE &#8594;</button>
-      </div>
-      <button class="btn primary" onclick="applyPrevRound()" id="apply-prev-btn">
-        APLICAR ESTAS ASIGNACIONES
-      </button>
+    <div class="nav-row">
+      <span id="prev-round-counter" class="nav-counter"></span>
+      <button class="btn primary" onclick="applyPrevRound()" id="apply-prev-btn">Aplicar estas asignaciones</button>
     </div>
   </div>
 </div>
 
-<!-- ════════════ TORNEO FINALIZADO MODAL ════════════ -->
+<!-- ════════════ TORNEO FINALIZADO ════════════ -->
 <div class="modal-backdrop" id="end-modal">
-  <div class="modal" style="max-width:480px;text-align:center;">
-    <div style="font-size:2.5rem;margin-bottom:8px;">🏆</div>
-    <div class="modal-title" style="justify-content:center;font-size:1.2rem;letter-spacing:3px;">
-      TORNEO FINALIZADO
-    </div>
-    <div id="end-winner-info" style="font-family:'Inter',sans-serif;font-size:0.85rem;
-      color:#166534;background:#dcfce7;border-radius:8px;padding:12px;margin-bottom:16px;
-      border:1.5px solid #86efac;"></div>
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <button class="btn primary" onclick="exportMapPDF('all')" style="font-size:0.95rem;padding:12px;">
-        IMPRIMIR RESUMEN COMPLETO (PDF)
-      </button>
-      <button class="btn" onclick="openRoundReview()" style="font-size:0.95rem;padding:12px;border-color:var(--accent);color:var(--accent);">
-        REVISAR RONDA A RONDA
-      </button>
-      <button class="btn" onclick="closeModal('end-modal')" style="font-size:0.85rem;">
-        CERRAR
-      </button>
+  <div class="modal narrow" style="text-align:center;">
+    <div style="font-size:3rem;margin-bottom:4px;">🏆</div>
+    <div class="modal-title" style="justify-content:center;">Torneo finalizado</div>
+    <div id="end-winner-info" class="callout success"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn primary lg" onclick="exportMapPDF('all')">🖨️ Imprimir resumen completo (PDF)</button>
+      <button class="btn lg" onclick="openRoundReview()">🔎 Revisar ronda a ronda</button>
+      <button class="btn ghost" onclick="closeModal('end-modal')">Cerrar</button>
     </div>
   </div>
 </div>
 
-<!-- ════════════ ROUND REVIEW MODAL ════════════ -->
+<!-- ════════════ REVISIÓN ════════════ -->
 <div class="modal-backdrop" id="review-modal">
-  <div class="modal" style="max-width:700px;">
+  <div class="modal mid">
     <div class="modal-title">
-      <span style="display:flex;align-items:center;gap:4px;">
-        <button class="nav-arrow" onclick="reviewNav(-1)" aria-label="Ronda anterior">&#8592;</button>
-        <span id="review-title">RONDA 1</span>
-        <button class="nav-arrow" onclick="reviewNav(1)" aria-label="Ronda siguiente">&#8594;</button>
+      <span style="display:flex;align-items:center;gap:8px;">
+        <button class="nav-arrow" onclick="reviewNav(-1)" aria-label="Ronda anterior">←</button>
+        <span id="review-title">Ronda 1</span>
+        <button class="nav-arrow" onclick="reviewNav(1)" aria-label="Ronda siguiente">→</button>
       </span>
-      <button class="close-x" onclick="closeModal('review-modal')" aria-label="Cerrar">✕</button>
+      <button class="close-x" onclick="closeModal('review-modal')">✕</button>
     </div>
-    <div id="review-meta" style="font-family:'Inter',sans-serif;font-size:0.78rem;color:var(--muted);margin-bottom:12px;"></div>
+    <div id="review-meta" class="modal-sub"></div>
     <div id="review-content" style="overflow-y:auto;max-height:55vh;"></div>
-    <div style="display:flex;gap:8px;margin-top:14px;justify-content:center;">
-      <button class="btn" onclick="reviewNav(-1)">&#8592; ANTERIOR</button>
-      <span id="review-counter" style="font-family:'Inter',sans-serif;font-size:0.82rem;color:var(--muted);align-self:center;padding:0 8px;"></span>
-      <button class="btn" onclick="reviewNav(1)">SIGUIENTE &#8594;</button>
-    </div>
+    <div class="nav-row"><span id="review-counter" class="nav-counter"></span></div>
   </div>
 </div>
 
-<!-- ════════════ DÍA 2 CUT MODAL ════════════ -->
+<!-- ════════════ DÍA 2 ════════════ -->
 <div class="modal-backdrop" id="day2cut-modal">
-  <div class="modal" style="max-width:500px;">
-    <div class="modal-title">
-      FIN DÍA 1 — CONFIGURAR DÍA 2
-      <button class="close-x" onclick="closeModal('day2cut-modal')">✕</button>
+  <div class="modal narrow" style="max-width:520px;">
+    <div class="modal-title">Fin del Día 1 — Configurar Día 2 <button class="close-x" onclick="closeModal('day2cut-modal')">✕</button></div>
+    <div class="callout info"><b>Referencia Konami — avanzan a Día 2:</b><div id="day2cut-info" style="margin-top:4px;"></div></div>
+    <div class="fg" style="margin-bottom:12px;">
+      <label for="day2-real-players">Jugadores confirmados para Día 2</label>
+      <input type="number" id="day2-real-players" class="big-input" min="1" placeholder="ej. 64" oninput="updateDay2MesasCalc()">
+      <div id="day2-mesas-calc" class="info-line"></div>
     </div>
-
-    <!-- Referencia Konami -->
-    <div style="font-family:'Inter',sans-serif;font-size:0.8rem;background:#eff6ff;border-radius:6px;padding:10px 14px;margin-bottom:14px;border:1.5px solid #93c5fd;">
-      <div style="font-weight:700;color:#1e40af;margin-bottom:4px;">REFERENCIA KONAMI — AVANZAN A DÍA 2:</div>
-      <div id="day2cut-info" style="color:#1e3a8a;font-size:0.82rem;line-height:1.8;"></div>
+    <div class="fg" style="margin-bottom:12px;">
+      <label for="day2-tables">Mesas activas para Día 2</label>
+      <input type="number" id="day2-tables" class="big-input" min="1" max="200" placeholder="ej. 32" oninput="this.dataset.manual='1'">
+      <span class="help">Se desactivan las mesas sobrantes. Puedes reactivarlas desde "Editar mesas".</span>
     </div>
-
-    <!-- Jugadores reales confirmados -->
-    <div style="margin-bottom:14px;">
-      <label style="font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:700;color:#111;display:block;margin-bottom:6px;">
-        Jugadores confirmados para Día 2 (según head judge):
-      </label>
-      <input type="number" id="day2-real-players" min="1" placeholder="ej. 64"
-        style="font-size:1.1rem;padding:10px;text-align:center;font-weight:700;border:2px solid #1a56a0;"
-        oninput="updateDay2MesasCalc()">
-      <div id="day2-mesas-calc" style="font-family:'Inter',sans-serif;font-size:0.8rem;color:#1a56a0;font-weight:600;margin-top:5px;"></div>
+    <div class="fg" style="margin-bottom:6px;">
+      <span class="label">Jueces disponibles para Día 2 (toca para incluir/excluir)</span>
+      <div id="day2-judges-list" class="pick-list"></div>
     </div>
-
-    <!-- Mesas activas -->
-    <div style="margin-bottom:14px;">
-      <label style="font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:700;color:#111;display:block;margin-bottom:6px;">
-        Mesas activas para Día 2:
-      </label>
-      <input type="number" id="day2-tables" min="1" max="200" placeholder="ej. 32"
-        oninput="this.dataset.manual='1'"
-        style="font-size:1.1rem;padding:10px;text-align:center;font-weight:700;border:2px solid #94a3b8;">
-      <p style="font-family:'Inter',sans-serif;font-size:0.74rem;color:#888;margin-top:5px;">
-        Se desactivarán las mesas sobrantes. Puedes reactivar manualmente desde el mapa.
-      </p>
-    </div>
-
-    <!-- Jueces disponibles Día 2 -->
-    <div style="margin-bottom:16px;">
-      <label style="font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:700;color:#111;display:block;margin-bottom:8px;">
-        Jueces disponibles para Día 2:
-      </label>
-      <div id="day2-judges-list" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
-    </div>
-
-    <button class="btn primary" onclick="confirmDay2()" style="width:100%;font-size:0.95rem;padding:12px;">
-      CONFIGURAR DÍA 2
-    </button>
+    <div class="modal-actions"><button class="btn primary lg" onclick="confirmDay2()">Configurar Día 2</button></div>
   </div>
 </div>
 
-<!-- ════════════ TOP 8 MODAL ════════════ -->
+<!-- ════════════ TOP 8 ════════════ -->
 <div class="modal-backdrop" id="top8-modal">
-  <div class="modal" style="max-width:500px;">
-    <div class="modal-title">
-      TOP 8 — PLAYOFF
-      <button class="close-x" onclick="closeModal('top8-modal')">✕</button>
+  <div class="modal narrow" style="max-width:520px;">
+    <div class="modal-title">🏆 Top 8 — Playoff <button class="close-x" onclick="closeModal('top8-modal')">✕</button></div>
+    <div id="top8-headline" class="callout danger">Swiss completado — 8 jugadores al playoff</div>
+    <div class="fg" style="margin-bottom:10px;">
+      <span class="label">Jueces para el Top 8 (toca para incluir/excluir)</span>
+      <div id="top8-judges-list" class="pick-list"></div>
     </div>
-    <div id="top8-headline" style="font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:700;color:#991b1b;background:#fef2f2;border-radius:6px;padding:10px 14px;margin-bottom:14px;text-align:center;">
-      Swiss completado — 8 jugadores al playoff
-    </div>
-
-    <div style="font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:600;color:#444;margin-bottom:6px;">Jueces disponibles para Top 8:</div>
-    <div id="top8-judges-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
-
-    <p style="font-family:'Inter',sans-serif;font-size:0.8rem;color:#444;margin-bottom:16px;">
-      Mesas del playoff: <b>Cuartos 4</b> · <b>Semifinal 2</b> · <b>Final 1</b>. Los jueces no seleccionados pasan a OFF.
-    </p>
-
-    <div style="display:flex;gap:8px;">
-      <button class="btn primary" onclick="confirmTop8()" style="flex:1;">INICIAR TOP 8</button>
-      <button class="btn" onclick="closeModal('top8-modal')">CANCELAR</button>
+    <p class="help">Mesas del playoff: <b>Cuartos 4</b> · <b>Semifinal 2</b> · <b>Final 1</b>. Los jueces no seleccionados pasan a OFF.</p>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal('top8-modal')">Cancelar</button>
+      <button class="btn primary" onclick="confirmTop8()">Iniciar Top 8</button>
     </div>
   </div>
 </div>
 
-<!-- ════════════ HISTORY MODAL ════════════ -->
+<!-- ════════════ HISTORIAL ════════════ -->
 <div class="modal-backdrop" id="hist-modal">
   <div class="modal">
-    <div class="modal-title">
-      📋 HISTORIAL DE RONDAS
-      <button class="close-x" onclick="closeModal('hist-modal')">✕</button>
-    </div>
+    <div class="modal-title">📋 Historial de rondas <button class="close-x" onclick="closeModal('hist-modal')">✕</button></div>
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-      <button class="btn success sm" onclick="exportTxt()">EXPORTAR .TXT</button>
-      <button class="btn sm" style="border-color:var(--blue);color:var(--blue)" onclick="exportMapPDF('all')">EXPORTAR MAPA PDF (TODAS)</button>
-      <button class="btn sm" style="border-color:#991b1b;color:#991b1b" onclick="closeModal('hist-modal');openTop8Modal()">INICIAR TOP 8</button>
-      <button class="btn sm" onclick="exportBackup()" title="Descargar todo el evento en un archivo .json">💾 RESPALDO .JSON</button>
-      <button class="btn sm" onclick="document.getElementById('import-file').click()">📂 CARGAR RESPALDO</button>
-      <button class="btn danger sm" onclick="clearHistory()">BORRAR</button>
+      <button class="btn sm" onclick="exportMapPDF('all')">🖨️ Mapas PDF</button>
+      <button class="btn sm" onclick="exportTxt()">📝 Exportar .txt</button>
+      <button class="btn sm" onclick="exportBackup()">💾 Respaldo .json</button>
+      <button class="btn sm" onclick="document.getElementById('import-file').click()">📂 Cargar respaldo</button>
+      <button class="btn sm" style="color:#be123c;border-color:#fecdd3;" onclick="closeModal('hist-modal');openTop8Modal()">🏆 Iniciar Top 8</button>
+      <button class="btn sm danger" onclick="clearHistory()">🗑 Borrar historial</button>
     </div>
     <div id="hist-content"></div>
   </div>
 </div>
 
-<!-- ════════════ LUNCH MODAL ════════════ -->
+<!-- ════════════ ALMUERZO / DESCANSO ════════════ -->
 <div class="modal-backdrop" id="lunch-modal">
-  <div class="modal lunch-modal">
-    <div class="modal-title">
-      <span id="lunch-modal-title">ALMUERZO</span>
-      <button class="close-x" onclick="closeModal('lunch-modal')">✕</button>
+  <div class="modal narrow lunch-modal" style="max-width:380px;">
+    <div class="modal-title"><span id="lunch-modal-title">Almuerzo</span> <button class="close-x" onclick="closeModal('lunch-modal')">✕</button></div>
+    <p class="modal-sub" id="lunch-judge-name"></p>
+    <div class="fg" style="margin-bottom:6px;">
+      <label for="lunch-minutes">Minutos</label>
+      <input type="number" id="lunch-minutes" value="30" min="1" max="240">
     </div>
-    <p style="font-family:'Share Tech Mono',monospace;font-size:0.72rem;color:var(--muted);margin-bottom:12px;" id="lunch-judge-name"></p>
-    <div class="fg" style="margin-bottom:12px;">
-      <label>MINUTOS</label>
-      <input type="number" id="lunch-minutes" value="30" min="1" max="120">
-    </div>
-    <button class="btn primary" style="width:100%" onclick="confirmLunch()">▶ INICIAR TIMER</button>
+    <div class="modal-actions"><button class="btn primary lg" onclick="confirmLunch()">▶ Iniciar temporizador</button></div>
   </div>
 </div>
 
-<!-- ════════════ EDIT VENUE MODAL ════════════ -->
+<!-- ════════════ EDITAR VENUE ════════════ -->
 <div class="modal-backdrop" id="edit-venue-modal">
   <div class="modal">
-    <div class="modal-title">
-      ✏️ EDITAR VENUE
-      <button class="close-x" onclick="closeModal('edit-venue-modal')">✕</button>
-    </div>
-    <p style="font-family:'Inter',sans-serif;font-size:0.78rem;color:var(--muted);margin-bottom:14px;">Los cambios se aplican de inmediato al mapa actual. Las asignaciones se conservan si no cambias el número de columnas ni de grupos. El historial no se modifica.</p>
+    <div class="modal-title">🗺️ Editar venue <button class="close-x" onclick="closeModal('edit-venue-modal')">✕</button></div>
+    <p class="modal-sub">Los cambios se aplican de inmediato. Las asignaciones se conservan si no cambias el número de columnas ni de grupos. El historial no se modifica.</p>
     <div id="edit-cols-list"></div>
-    <button class="btn sm" onclick="editAddColumn()" style="margin-bottom:12px;">+ COLUMNA</button>
-    <div style="display:flex;gap:8px;">
-      <button class="btn primary" onclick="applyEditVenue()">✅ APLICAR</button>
-      <button class="btn" onclick="closeModal('edit-venue-modal')">CANCELAR</button>
+    <button class="btn sm" onclick="editAddColumn()">＋ Agregar columna</button>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal('edit-venue-modal')">Cancelar</button>
+      <button class="btn primary" onclick="applyEditVenue()">✓ Aplicar cambios</button>
     </div>
   </div>
 </div>
 
-<!-- ════════════ EXTENSIÓN DE TIEMPO MODAL ════════════ -->
+<!-- ════════════ EXTENSIÓN DE TIEMPO ════════════ -->
 <div class="modal-backdrop" id="ext-modal">
-  <div class="modal" style="max-width:400px;">
-    <div class="modal-title">
-      <span id="ext-title">MESA — EXTENSIÓN DE TIEMPO</span>
-      <button class="close-x" onclick="closeModal('ext-modal')" aria-label="Cerrar">✕</button>
-    </div>
-    <div class="fg" style="margin-bottom:12px;">
-      <label>MINUTOS DE EXTENSIÓN</label>
+  <div class="modal narrow" style="max-width:420px;">
+    <div class="modal-title"><span id="ext-title">Mesa — extensión de tiempo</span> <button class="close-x" onclick="closeModal('ext-modal')">✕</button></div>
+    <div class="fg" style="margin-bottom:14px;">
+      <label for="ext-min">Minutos de extensión</label>
       <div class="ext-quick">
         <button class="btn sm" type="button" onclick="setExtMin(3)">3</button>
         <button class="btn sm" type="button" onclick="setExtMin(5)">5</button>
         <button class="btn sm" type="button" onclick="setExtMin(10)">10</button>
         <button class="btn sm" type="button" onclick="setExtMin(15)">15</button>
       </div>
-      <input type="number" id="ext-min" min="1" max="90" style="font-size:1.3rem;text-align:center;font-weight:700;">
+      <input type="number" id="ext-min" class="big-input" min="1" max="90" placeholder="min">
     </div>
-    <div class="fg" style="margin-bottom:12px;">
-      <label>MOTIVO (MARCA UNO O AMBOS)</label>
-      <label class="ext-check"><input type="checkbox" id="ext-ruling"> ⚖️ Ruling</label>
-      <label class="ext-check"><input type="checkbox" id="ext-dc"> 🃏 Deck Check</label>
+    <div class="fg">
+      <span class="label">Motivo (marca uno o ambos)</span>
+      <label class="ext-check r"><input type="checkbox" id="ext-ruling"> ⚖️ Ruling</label>
+      <label class="ext-check dc"><input type="checkbox" id="ext-dc"> 🃏 Deck Check</label>
     </div>
-    <div style="display:flex;gap:8px;">
-      <button class="btn primary" style="flex:1;" onclick="confirmExtension()">GUARDAR</button>
-      <button class="btn danger" id="ext-remove-btn" onclick="removeExtension()">QUITAR</button>
+    <div class="modal-actions">
+      <button class="btn danger" id="ext-remove-btn" onclick="removeExtension()">Quitar</button>
+      <button class="btn primary" style="flex:2;" onclick="confirmExtension()">Guardar</button>
     </div>
   </div>
 </div>
 
-<!-- Notification -->
+<!-- ════════════ AYUDA ════════════ -->
+<div class="modal-backdrop" id="help-modal">
+  <div class="modal mid">
+    <div class="modal-title">❔ Cómo se usa <button class="close-x" onclick="closeModal('help-modal')">✕</button></div>
+    <div class="help-steps">
+      <div class="help-step"><div class="n">👆</div><div><b>Asignar jueces</b><p>Toca un juez (queda marcado con ✓) y luego toca un grupo de mesas o una zona de patrullaje. Puedes seguir tocando zonas para darle varias. En computador también puedes arrastrarlo.</p></div></div>
+      <div class="help-step"><div class="n">✕</div><div><b>Quitar una asignación</b><p>Toca el nombre del juez dentro del grupo.</p></div></div>
+      <div class="help-step"><div class="n">🔄</div><div><b>Cambiar estado</b><p>Toca la etiqueta de estado del juez (PISO ▾) para ponerlo en Side, Lunch, Break u Off. Lunch y Break inician un temporizador que avisa cuando debe regresar.</p></div></div>
+      <div class="help-step"><div class="n">⏱</div><div><b>Extensión de tiempo</b><p>Sin juez seleccionado, toca el número de una mesa: registra los minutos y marca si fue por Ruling o Deck Check. La lista de abajo te lleva a cada mesa.</p></div></div>
+      <div class="help-step"><div class="n">🔧</div><div><b>Activar o desactivar mesas</b><p>Pulsa "Editar mesas" y toca las mesas o el botón (−) de un grupo. Pulsa "Listo" para volver.</p></div></div>
+      <div class="help-step"><div class="n">💾</div><div><b>Guardar la ronda</b><p>Al terminar, pulsa "Guardar ronda". La siguiente ronda puede empezar reciclando las asignaciones. Descarga un respaldo .json desde el menú ⋯ de vez en cuando.</p></div></div>
+    </div>
+    <div class="modal-actions"><button class="btn primary lg" onclick="closeModal('help-modal')">¡Entendido!</button></div>
+  </div>
+</div>
+
 <div class="notify" id="notify" role="status" aria-live="polite"></div>
 <input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="importBackup(this)">
 
@@ -1010,6 +959,14 @@ function nextColor(list) {
   let best = 0, min = Infinity;
   for (let c = 0; c < COLORS.length; c++) { const n = used.filter(u => u === c).length; if (n < min) { min = n; best = c; } }
   return best;
+}
+function initials(name) {
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
+  const t = parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : String(name).trim().slice(0, 2);
+  return esc(t.toUpperCase());
+}
+function avatarHTML(j, cls = '') {
+  return `<span class="avatar ${cls}" style="background:${COLORS[j.ci] || '#64748b'}" aria-hidden="true">${initials(j.name)}</span>`;
 }
 function totalSwiss() { return (S.roundsD1 || 0) + (S.roundsD2 || 0); }
 
@@ -1195,7 +1152,7 @@ function sRemoveGroup(ci, gi) {
 
 function sizeOptions(selected) {
   const opts = [];
-  for (let n = 2; n <= 18; n++) opts.push(`<option value="${n}"${selected === n ? ' selected' : ''}>${n} mesas (${n * 2}j)</option>`);
+  for (let n = 2; n <= 18; n++) opts.push(`<option value="${n}"${selected === n ? ' selected' : ''}>${n} mesas · ${n * 2} jug.</option>`);
   return opts.join('');
 }
 
@@ -1238,7 +1195,7 @@ function renderColumnEditor(el, cols, mode, onChange) {
     if (g.off) g.off = g.off.filter(i => i < g.size);
     onChange();
   });
-  on('input[data-type="name"]', 'input', e => { cols[+e.target.dataset.ci].name = e.target.value; });
+  on('input[data-type="name"]', 'input', e => { cols[+e.target.dataset.ci].name = e.target.value; if (cols === SC.columns) renderVenuePreview(); });
   on('input[data-type="groupcount"]', 'change', e => onChange('groupcount', +e.target.dataset.ci, e.target.value));
   on('button[data-type="dir"]', 'click', e => { const c = cols[+e.currentTarget.dataset.ci]; c.dir = c.dir === 'up' ? 'down' : 'up'; onChange(); });
   on('button[data-type="orient"]', 'click', e => { const c = cols[+e.currentTarget.dataset.ci]; c.orient = c.orient === 'h' ? 'v' : 'h'; onChange(); });
@@ -1258,6 +1215,8 @@ function renderSetupCols() {
     renderSetupCols();
   });
   updateTableCalc();
+  renderVenuePreview();
+  updateSetupSummary();
 }
 
 function sAddJudge() {
@@ -1273,25 +1232,47 @@ function sAddJudge() {
 function sRemoveJudge(i) { SC.judges.splice(i, 1); renderSetupJudges(); }
 function renderSetupJudges() {
   const el = document.getElementById('s-judges-list');
-  el.innerHTML = SC.judges.map((j, i) =>
-    `<div class="judge-tag" style="color:${COLORS[j.ci]};border-color:${COLORS[j.ci]}">
-      <div class="dot" style="background:${COLORS[j.ci]}"></div>${esc(j.name)}
-      <span class="rm" data-idx="${i}" role="button" tabindex="0" aria-label="Quitar juez">✕</span>
+  el.innerHTML = SC.judges.length ? SC.judges.map((j, i) =>
+    `<div class="judge-tag">${avatarHTML(j)}${esc(j.name)}
+      <span class="rm" data-idx="${i}" role="button" tabindex="0" aria-label="Quitar a ${esc(j.name)}">✕</span>
     </div>`
-  ).join('');
-  el.querySelectorAll('.rm').forEach(x => x.addEventListener('click', () => sRemoveJudge(+x.dataset.idx)));
+  ).join('') : '<div class="empty-hint">Aún no hay jueces. Agrega al menos uno.</div>';
+  el.querySelectorAll('.rm').forEach(x => {
+    x.addEventListener('click', () => sRemoveJudge(+x.dataset.idx));
+    x.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sRemoveJudge(+x.dataset.idx); } });
+  });
+  updateSetupSummary();
 }
 
 function setNumberingMode(mode) {
   SC.numberingMode = mode;
-  const colBtn = document.getElementById('nm-col-btn');
-  const rowBtn = document.getElementById('nm-row-btn');
-  const desc = document.getElementById('nm-desc');
-  const on = b => { b.style.background = '#e8f0fc'; b.style.borderColor = '#1a56a0'; b.style.color = '#1a56a0'; b.style.fontWeight = '700'; };
-  const off = b => { b.style.background = ''; b.style.borderColor = ''; b.style.color = ''; b.style.fontWeight = ''; };
-  if (mode === 'column') { on(colBtn); off(rowBtn); desc.textContent = 'Zigzag vertical por columna'; }
-  else { on(rowBtn); off(colBtn); desc.textContent = 'Zigzag horizontal por fila'; }
+  document.getElementById('nm-col-btn').classList.toggle('on', mode === 'column');
+  document.getElementById('nm-row-btn').classList.toggle('on', mode === 'row');
+  document.getElementById('nm-desc').textContent = mode === 'column' ? 'Zigzag vertical por columna' : 'Zigzag horizontal por fila';
   renderSetupCols();
+}
+function renderVenuePreview() {
+  const el = document.getElementById('venue-preview');
+  if (!el) return;
+  if (!SC.columns.length) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  const mode = SC.numberingMode;
+  const nums = numberingFor(SC.columns, mode);
+  el.innerHTML = `<div class="vp-title">Vista previa del venue</div><div class="vp-cols">${SC.columns.map((col, ci) =>
+    `<div class="vp-col"><div class="vp-head">${esc(col.name || colName(ci))}</div>${displayGroups(col, mode).map(({gi}) => {
+      const arr = nums[`${ci}-${gi}`] || [];
+      return `<div class="vp-grp">${Math.min(...arr)}–${Math.max(...arr)}</div>`;
+    }).join('')}</div>`).join('')}</div>`;
+}
+function updateSetupSummary() {
+  const el = document.getElementById('setup-summary');
+  if (!el) return;
+  let tables = 0; SC.columns.forEach(c => c.groups.forEach(g => tables += g.size));
+  const d1 = parseInt(document.getElementById('s-rounds-d1').value) || 0;
+  const d2 = parseInt(document.getElementById('s-rounds-d2').value) || 0;
+  const parts = [`${SC.columns.length} columna${SC.columns.length === 1 ? '' : 's'}`, `${tables} mesas`, `${SC.judges.length} juez${SC.judges.length === 1 ? '' : 'es'}`];
+  if (d1 || d2) parts.push(`${d1 + d2} rondas`);
+  el.textContent = parts.join(' · ');
 }
 
 function calcRounds(players) {
@@ -1320,6 +1301,7 @@ function updateTableCalc() {
       el.innerHTML = `${req} mesas requeridas · venue: ${venue} mesas ${ok ? '✓' : `<span style="color:#b45309">⚠ faltan ${req - venue}</span>`}`;
     } else el.textContent = `Venue: ${venue} mesas`;
   }
+  updateSetupSummary();
   if (p > 0) {
     const r = calcRounds(p);
     const d1El = document.getElementById('s-rounds-d1');
@@ -1332,7 +1314,7 @@ function updateTableCalc() {
       if (r.swiss > 0) {
         const topStr = r.top > 0 ? ` · Top ${r.top}` : '';
         const d2str = r.d2 > 0 ? ` (${r.d1} + ${r.d2})` : '';
-        infoEl.textContent = `Sugerencia: ${r.swiss} rondas suizas${d2str}${topStr} — verifica con la tabla oficial vigente`;
+        infoEl.textContent = `💡 Sugerencia: ${r.swiss} rondas suizas${d2str}${topStr} — verifica con la tabla oficial vigente`;
         infoEl.style.color = '#1a56a0';
       } else infoEl.textContent = '';
     }
@@ -1369,10 +1351,13 @@ function showApp() {
   document.body.classList.add('in-app');
   document.getElementById('setup-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
-  document.getElementById('hdr-event').textContent = S.eventName.toUpperCase();
+  document.getElementById('hdr-event').textContent = S.eventName;
   document.getElementById('round-notes').value = S.notes || '';
   if (S.timerRunning && S.timerStart) startTicking(); else renderTimer();
   renderAll();
+  try {
+    if (!localStorage.getItem('ygojfm-help-seen')) { localStorage.setItem('ygojfm-help-seen', '1'); setTimeout(openHelp, 400); }
+  } catch (_) {}
 }
 function showSetup() {
   document.body.classList.remove('in-app');
@@ -1389,17 +1374,17 @@ function renderAll() {
   const dl = getDayRoundLabel(S.currentRound);
   const rn = document.getElementById('round-num');
   rn.textContent = editing ? `${dl.label} (EDITANDO)` : dl.label;
-  rn.style.color = editing ? 'var(--yellow)' : (S.isTop8 ? '#991b1b' : '');
+  rn.style.color = editing ? 'var(--yellow)' : (S.isTop8 ? '#be123c' : '');
   const sub = document.getElementById('round-sub');
-  sub.textContent = S.finished && !editing ? 'TORNEO FINALIZADO' : dl.sub;
-  sub.style.color = S.isTop8 ? '#991b1b' : '';
-  sub.style.fontWeight = S.isTop8 ? '800' : '';
+  sub.textContent = S.finished && !editing ? '🏆 Torneo finalizado' : dl.sub;
+  sub.style.color = S.isTop8 ? '#be123c' : '';
+  document.getElementById('hdr-round').textContent = editing ? `Editando ${dl.label}` : dl.label;
 
   document.getElementById('ver-anterior-btn').style.display = (S.rounds.length && !editing) ? '' : 'none';
   document.getElementById('edit-round-btns').style.display = editing ? 'flex' : 'none';
   const sb = document.getElementById('save-btn');
   sb.style.display = editing ? 'none' : '';
-  sb.textContent = S.finished ? 'TORNEO FINALIZADO' : 'GUARDAR RONDA';
+  sb.textContent = S.finished ? '🏆 Torneo finalizado' : '💾 Guardar ronda';
   document.getElementById('undo-btn').disabled = editing;
 
   const banner = document.getElementById('edit-banner');
@@ -1410,6 +1395,7 @@ function renderAll() {
   document.getElementById('floor-outer').style.display = top8 ? 'none' : '';
   document.getElementById('top8-container').style.display = top8 ? 'block' : 'none';
   document.getElementById('counter-bar').style.display = top8 ? 'none' : '';
+  document.getElementById('top8-container').style.display = top8 ? 'block' : 'none';
   document.querySelector('.floor-wrap').classList.toggle('edit-tables', tableEditMode && !top8);
 
   renderJudges();
@@ -1434,28 +1420,23 @@ function renderJudges() {
   el.innerHTML = S.judges.map((j, i) => {
     const hasTimer = (j.status === 'lunch' || j.status === 'break') && j.lunchEnd;
     const isSel = selectedJudge === j.name;
-    const nZones = (zones[j.name] || []).length;
-    const load = (j.status === 'active' || j.status === 'break')
-      ? `<div class="judge-load${nZones ? '' : ' free'}">${nZones ? `${nZones} zona${nZones > 1 ? 's' : ''}` : 'LIBRE'}</div>` : '';
-    const btn = (st, cls, label, style = '') => j.status !== st
-      ? `<button class="btn sm ${cls}" data-act="${st}" data-idx="${i}" ${style}>${label}</button>` : '';
+    const z = zones[j.name] || [];
+    let sub = '';
+    if (hasTimer) sub = `<div class="lunch-timer" id="lt-${i}">--:--</div>`;
+    else if (j.status === 'active' || j.status === 'break') sub = z.length
+      ? `<div class="judge-load" title="${esc(z.join(', '))}">${esc(z.join(' · '))}</div>`
+      : `<div class="judge-load free" title="En piso sin zona asignada">● Libre</div>`;
+    else if (j.status === 'side') sub = `<div class="judge-load">En side events</div>`;
+    else if (j.status === 'off') sub = `<div class="judge-load">Fuera de servicio</div>`;
+    if (hasTimer && z.length) sub += `<div class="judge-load">${esc(z.join(' · '))}</div>`;
     return `<div class="judge-card status-${j.status}${isSel ? ' selected' : ''}" draggable="${j.status === 'active'}"
-        data-idx="${i}" data-judge="${esc(j.name)}" id="jcard-${i}" ${j.status === 'active' ? 'tabindex="0" role="button" aria-pressed="' + isSel + '"' : ''}>
-      <div class="judge-card-top">
-        <div class="j-dot" style="background:${COLORS[j.ci]}"></div>
+        data-idx="${i}" data-judge="${esc(j.name)}" id="jcard-${i}" ${j.status === 'active' ? `tabindex="0" role="button" aria-pressed="${isSel}"` : ''}>
+      ${avatarHTML(j)}
+      <div class="jc-body">
         <span class="judge-name" title="${esc(j.name)}">${esc(j.name)}</span>
-        <span class="judge-status-badge">${STATUS_LABELS[j.status]}</span>
+        ${sub}
       </div>
-      ${load}
-      ${hasTimer ? `<div class="lunch-timer" id="lt-${i}">--:--</div>` : ''}
-      <div class="judge-actions">
-        ${btn('active', 'success', 'PISO')}
-        ${btn('side', 'warn', 'SIDE')}
-        ${btn('lunch', 'danger', 'LUNCH')}
-        ${btn('break', '', 'BREAK', 'style="border-color:var(--blue);color:var(--blue)"')}
-        ${btn('off', '', 'OFF')}
-        ${j.status === 'off' ? `<button class="btn sm danger" data-act="remove" data-idx="${i}" title="Quitar juez del evento">✕</button>` : ''}
-      </div>
+      <button class="status-pill st-${j.status}" data-menu="${i}" aria-haspopup="true" title="Cambiar estado">${STATUS_LABELS[j.status]}</button>
     </div>`;
   }).join('');
 
@@ -1463,27 +1444,99 @@ function renderJudges() {
     const i = +card.dataset.idx;
     card.addEventListener('click', e => {
       if (e.target.closest('button')) return;
-      if (S.judges[i] && S.judges[i].status === 'active') selectJudge(S.judges[i].name);
+      const j = S.judges[i];
+      if (!j) return;
+      if (j.status === 'active') selectJudge(j.name);
+      else notify(`ℹ️ ${j.name} está en ${STATUS_LABELS[j.status]}. Toca su estado para ponerlo en PISO.`);
     });
     card.addEventListener('keydown', e => {
       if ((e.key === 'Enter' || e.key === ' ') && e.target === card) { e.preventDefault(); card.click(); }
     });
     card.addEventListener('dragstart', e => onDragStart(e, S.judges[i].name));
   });
-  el.querySelectorAll('button[data-act]').forEach(b => b.addEventListener('click', e => {
-    e.stopPropagation(); // evita que el clic seleccione la tarjeta
-    const i = +b.dataset.idx, act = b.dataset.act;
+  el.querySelectorAll('button[data-menu]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation(); // abrir el menú no selecciona la tarjeta
+    openStatusMenu(+b.dataset.menu, b);
+  }));
+
+  updateLunchTimers();
+  document.body.classList.toggle('selecting', !!selectedJudge);
+  renderGuide();
+}
+
+// ─── Menú de estado del juez ───
+function closeStatusMenu() { document.querySelectorAll('.status-menu').forEach(m => m.remove()); }
+function openStatusMenu(i, anchor) {
+  closeStatusMenu();
+  const j = S.judges[i];
+  if (!j) return;
+  const opts = [
+    ['active', '🟢', 'Piso', 'Disponible para asignar', 'var(--green)'],
+    ['side', '🟡', 'Side', 'Side events (libera sus zonas)', 'var(--yellow)'],
+    ['lunch', '🍽️', 'Lunch', 'Almuerzo con temporizador', 'var(--red)'],
+    ['break', '☕', 'Break', 'Descanso corto (conserva zonas)', 'var(--blue)'],
+    ['off', '⚪', 'Off', 'Fuera de servicio', 'var(--gray)'],
+  ];
+  const menu = document.createElement('div');
+  menu.className = 'status-menu';
+  menu.setAttribute('role', 'menu');
+  menu.innerHTML = `<div class="sm-title">${esc(j.name)}</div>` + opts.map(([st, ic, lb, ds]) =>
+    `<button data-act="${st}" class="${j.status === st ? 'cur' : ''}" role="menuitem"><span>${ic}</span><span><b>${lb}</b><br><small style="color:var(--muted);font-weight:500">${ds}</small></span></button>`
+  ).join('') + `<hr><button data-act="remove" class="danger" role="menuitem"><span>🗑</span><span>Quitar del evento</span></button>`;
+  document.body.appendChild(menu);
+  const r = anchor.getBoundingClientRect();
+  const mh = menu.offsetHeight, mw = menu.offsetWidth;
+  let top = r.bottom + 6; if (top + mh > innerHeight - 8) top = Math.max(8, r.top - mh - 6);
+  let left = r.right - mw; if (left < 8) left = 8; if (left + mw > innerWidth - 8) left = innerWidth - mw - 8;
+  menu.style.top = top + 'px'; menu.style.left = left + 'px';
+  menu.querySelectorAll('button[data-act]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    closeStatusMenu();
+    const act = b.dataset.act;
+    if (act === j.status) return;
     if (act === 'lunch') openLunch(i, 'lunch');
     else if (act === 'break') openLunch(i, 'break');
     else if (act === 'remove') removeJudge(i);
     else setStatus(i, act);
   }));
-
-  updateLunchTimers();
-  const ind = document.getElementById('sel-indicator');
-  if (selectedJudge) { ind.style.display = 'block'; ind.textContent = `✓ ${selectedJudge} — TOCA ZONA`; }
-  else ind.style.display = 'none';
+  const first = menu.querySelector('button'); if (first) first.focus();
 }
+document.addEventListener('click', e => {
+  if (!e.target.closest('.status-menu') && !e.target.closest('[data-menu]')) closeStatusMenu();
+  if (!e.target.closest('.menu-wrap')) closeMenu();
+});
+
+// ─── Barra de guía contextual ───
+function renderGuide() {
+  const bar = document.getElementById('guide-bar');
+  if (!bar) return;
+  const icon = document.getElementById('guide-icon');
+  const text = document.getElementById('guide-text');
+  const cancel = document.getElementById('guide-cancel');
+  bar.classList.remove('selecting', 'editing');
+  cancel.style.display = 'none';
+  if (selectedJudge) {
+    bar.classList.add('selecting');
+    icon.textContent = '👉';
+    text.innerHTML = S.isTop8
+      ? `<b>${esc(selectedJudge)}</b> seleccionado: toca una mesa del playoff para asignarlo.`
+      : `<b>${esc(selectedJudge)}</b> seleccionado: toca un grupo de mesas o una zona de patrullaje. Puedes darle varias zonas.`;
+    cancel.style.display = '';
+  } else if (tableEditMode && !S.isTop8) {
+    bar.classList.add('editing');
+    icon.textContent = '🔧';
+    text.innerHTML = '<b>Editando mesas:</b> toca una mesa para activarla o desactivarla, o el botón (−) de un grupo. Pulsa <b>Listo</b> al terminar.';
+  } else if (editingRound !== null) {
+    icon.textContent = '✏️';
+    text.innerHTML = 'Estás editando una ronda del historial. Ajusta asignaciones y pulsa <b>Confirmar edición</b>.';
+  } else {
+    icon.textContent = '👆';
+    text.innerHTML = S.isTop8
+      ? 'Toca un <b>juez</b> y luego una <b>mesa</b>. El botón ⏱ de cada mesa registra extensiones de tiempo.'
+      : 'Toca un <b>juez</b> y luego un <b>grupo</b> para asignarlo. Toca el <b>número de una mesa</b> para registrar una extensión de tiempo.';
+  }
+}
+function cancelSelection() { selectedJudge = null; renderJudges(); }
 
 function removeAllAssignmentsOf(name) {
   Object.keys(S.assignments).forEach(k => {
@@ -1530,7 +1583,7 @@ function openLunch(i, mode) {
   lunchTarget = i;
   const modal = document.getElementById('lunch-modal');
   modal.dataset.mode = mode;
-  document.getElementById('lunch-modal-title').textContent = mode === 'break' ? 'DESCANSO' : 'ALMUERZO';
+  document.getElementById('lunch-modal-title').textContent = mode === 'break' ? '☕ Descanso' : '🍽️ Almuerzo';
   document.getElementById('lunch-judge-name').textContent = `Juez: ${S.judges[i].name}`;
   document.getElementById('lunch-minutes').value = mode === 'break' ? 10 : 30;
   openModal('lunch-modal');
@@ -1563,8 +1616,8 @@ function updateLunchTimers() {
       const card = document.getElementById(`jcard-${i}`);
       if (!el) return;
       const rem = j.lunchEnd - Date.now();
-      if (rem > 0) { el.textContent = fmtMS(rem); el.classList.remove('overdue'); card && card.classList.remove('overdue'); }
-      else { el.textContent = `⏰ REGRESA (+${fmtMS(-rem)})`; el.classList.add('overdue'); card && card.classList.add('overdue'); }
+      if (rem > 0) { el.textContent = `${j.status === 'break' ? '☕' : '🍽️'} ${fmtMS(rem)} restantes`; el.classList.remove('overdue'); card && card.classList.remove('overdue'); }
+      else { el.textContent = `⏰ Debe regresar (+${fmtMS(-rem)})`; el.classList.add('overdue'); card && card.classList.add('overdue'); }
     }
   });
 }
@@ -1619,7 +1672,7 @@ function extLabelFor(key) {
 function openExtension(key) {
   extTarget = key;
   const e = (S.extensions || {})[key];
-  document.getElementById('ext-title').textContent = `${extLabelFor(key).toUpperCase()} — EXTENSIÓN DE TIEMPO`;
+  document.getElementById('ext-title').textContent = `⏱ ${extLabelFor(key)} · Extensión de tiempo`;
   document.getElementById('ext-min').value = e ? e.min : '';
   document.getElementById('ext-ruling').checked = !!(e && e.ruling);
   document.getElementById('ext-dc').checked = !!(e && e.deckcheck);
@@ -1776,15 +1829,19 @@ function makeChip(name, onRemove, extraClass = 'assigned-chip', small = false) {
   const color = judge ? COLORS[judge.ci] : '#64748b';
   const chip = document.createElement('div');
   chip.className = extraClass;
-  chip.style.cssText = `color:${color};border-color:${color};${small ? 'font-size:0.68rem;padding:2px 7px;' : ''}`;
-  chip.title = 'Click para quitar';
+  chip.style.cssText = `color:${color};border-color:${color};${small ? 'font-size:0.7rem;' : ''}`;
+  chip.title = `Quitar a ${name}`;
   chip.setAttribute('role', 'button');
   chip.setAttribute('aria-label', `Quitar a ${name}`);
   const dot = document.createElement('div');
   dot.className = 'dot';
   dot.style.background = color;
+  dot.innerHTML = initials(name);
+  const nm = document.createElement('span');
+  nm.className = 'chip-name';
+  nm.textContent = name;
   chip.appendChild(dot);
-  chip.appendChild(document.createTextNode(name));
+  chip.appendChild(nm);
   chip.addEventListener('click', e => { e.stopPropagation(); onRemove(); });
   return chip;
 }
@@ -1827,14 +1884,14 @@ function renderCounter() {
   const zones = judgeZonesFor(currentRecordLike());
   const free = S.judges.filter(j => j.status === 'active' && !(zones[j.name] || []).length).length;
   el.innerHTML = `
-    <div class="counter-item"><span class="counter-label">MESAS</span><span class="counter-val">${active}</span><span class="counter-label">/ ${total}</span></div>
-    ${removed > 0 ? `<div class="counter-item"><span class="counter-label">DESACTIVADAS</span><span class="counter-val" style="color:var(--red)">${removed}</span></div>` : ''}
-    <div class="counter-item"><span class="counter-label">JUGADORES</span><span class="counter-val">${active * 2}</span>${S.players > 0 ? `<span class="counter-label">/ ${S.players} reg.</span>` : ''}</div>
-    <div class="counter-item"><span class="counter-label">GRUPOS SIN JUEZ</span><span class="counter-val ${uncovered ? 'counter-warn' : ''}">${uncovered}</span></div>
-    <div class="counter-item"><span class="counter-label">JUECES LIBRES</span><span class="counter-val ${free ? 'counter-warn' : ''}">${free}</span></div>
+    <div class="stat"><span class="v">${active}</span><span class="l">/ ${total} mesas activas</span></div>
+    <div class="stat"><span class="v">${active * 2}</span><span class="l">jugadores${S.players > 0 ? ` · ${S.players} reg.` : ''}</span></div>
+    ${removed > 0 ? `<div class="stat bad"><span class="v">${removed}</span><span class="l">desactivadas</span></div>` : ''}
+    <div class="stat ${uncovered ? 'warn' : ''}" title="Grupos con mesas activas y sin juez (borde amarillo)"><span class="v">${uncovered}</span><span class="l">grupos sin juez</span></div>
+    <div class="stat ${free ? 'warn' : ''}" title="Jueces en PISO sin ninguna zona"><span class="v">${free}</span><span class="l">jueces libres</span></div>
+    <span class="counter-spacer"></span>
     <button class="btn sm edit-mode-btn${tableEditMode ? ' on' : ''}" onclick="toggleTableEditMode()" aria-pressed="${tableEditMode}">
-      ${tableEditMode ? '✓ LISTO' : '🔧 EDITAR MESAS'}</button>
-    ${tableEditMode ? '<span class="edit-hint">Toca una mesa para activarla/desactivarla, o (−) para el grupo completo.</span>' : ''}
+      ${tableEditMode ? '✓ Listo' : '🔧 Editar mesas'}</button>
   `;
 }
 
@@ -2044,15 +2101,13 @@ function renderTop8Map() {
     const hdr = document.createElement('div');
     hdr.className = 'top8-mesa-header';
     hdr.innerHTML = `
-      <div class="top8-mesa-num">MESA ${m}</div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
-        <div class="top8-mesa-label">${esc(roundLabel)}</div>
-      </div>`;
+      <div class="top8-mesa-num">Mesa ${m}</div>
+      <div class="top8-mesa-label">${esc(roundLabel)}</div>`;
     const ext8 = (S.extensions || {})[key];
     const extBtn = document.createElement('button');
     extBtn.className = `btn sm top8-ext-btn${ext8 ? ' has-ext ' + extClass(ext8) : ''}`;
     extBtn.dataset.extkey = key;
-    extBtn.textContent = ext8 ? `⏱ +${ext8.min} min · ${extReasons(ext8).join(' + ')}` : '⏱ EXTENSIÓN DE TIEMPO';
+    extBtn.textContent = ext8 ? `⏱ +${ext8.min} min · ${extReasons(ext8).join(' + ')}` : '⏱ Extensión de tiempo';
     if (ext8) { extBtn.style.borderColor = ext8.deckcheck && !ext8.ruling ? '#c2410c' : '#6d28d9'; extBtn.style.color = extBtn.style.borderColor; }
     extBtn.addEventListener('click', e => { e.stopPropagation(); openExtension(key); });
     hdr.firstElementChild.appendChild(document.createElement('br'));
@@ -2211,7 +2266,7 @@ function openRoundEdit(idx) {
   closeModal('hist-modal');
   selectedJudge = null;
   renderAll();
-  notify(`EDITANDO ${getDayRoundLabel(r.round).label} — CONFIRMA O CANCELA ABAJO`);
+  notify(`✏️ Editando ${getDayRoundLabel(r.round).label} — confirma o cancela abajo`);
 }
 function restoreEditBackup() {
   const b = S._editBackup;
@@ -2254,21 +2309,21 @@ function onNotesInput() {
 function openHistory() {
   const el = document.getElementById('hist-content');
   if (!S.rounds.length) {
-    el.innerHTML = '<div style="font-family:Inter,sans-serif;font-size:0.85rem;color:var(--muted);padding:20px;text-align:center;">Sin rondas guardadas.</div>';
+    el.innerHTML = '<div class="empty-hint" style="text-align:center;padding:24px;">Aún no hay rondas guardadas. Usa “Guardar ronda” al terminar cada ronda.</div>';
   } else {
     el.innerHTML = S.rounds.map((r, idx) => {
       const zones = judgeZonesFor(r);
       const rows = (r.judges || []).map(j => `<div class="hist-judge-row">
           <div class="hist-j-dot" style="background:${COLORS[j.ci] || '#64748b'}"></div>
-          <span style="font-family:Inter,sans-serif;font-size:0.78rem;min-width:130px;">${STATUS_ICONS[j.status] || ''} ${esc(j.name)} <span style="color:var(--muted)">[${STATUS_LABELS[j.status] || j.status}]</span></span>
-          <span style="font-family:Inter,sans-serif;font-size:0.75rem;color:var(--muted);">${esc((zones[j.name] || []).join(', ')) || '—'}</span>
+          <span style="min-width:150px;font-weight:600;">${esc(j.name)} <span class="badge st-${j.status}">${STATUS_LABELS[j.status] || j.status}</span></span>
+          <span style="color:var(--muted);">${esc((zones[j.name] || []).join(', ')) || '—'}</span>
         </div>`).join('');
       return `<div class="hist-round">
         <div class="hist-header">
           <strong>${esc(getDayRoundLabel(r.round).label)}</strong>
           <span style="display:flex;align-items:center;gap:8px;">
             <span class="hist-meta">${esc(r.elapsed)} | ${esc(r.ts)}</span>
-            <button class="btn sm warn" data-edit="${idx}" ${editingRound !== null ? 'disabled' : ''}>EDITAR</button>
+            <button class="btn sm warn" data-edit="${idx}" ${editingRound !== null ? 'disabled' : ''}>✏️ Editar</button>
           </span>
         </div>
         <div class="hist-assignments">${rows}</div>
@@ -2418,18 +2473,15 @@ function closeModal(id) {
   document.body.appendChild(guard);
   setTimeout(() => guard.remove(), 200);
 }
-const notifyQueue = [];
 function notify(msg) {
-  const el = document.getElementById('notify');
-  const item = { msg };
-  notifyQueue.push(item);
-  if (notifyQueue.length > 4) notifyQueue.shift();
-  const paint = () => {
-    el.textContent = notifyQueue.map(x => x.msg).join('\n');
-    el.style.display = notifyQueue.length ? 'block' : 'none';
-  };
-  paint();
-  setTimeout(() => { const i = notifyQueue.indexOf(item); if (i >= 0) notifyQueue.splice(i, 1); paint(); }, 4000);
+  const box = document.getElementById('notify');
+  const t = document.createElement('div');
+  const kind = /^⚠/.test(msg) ? 'warn' : /^⏰/.test(msg) ? 'alert' : /GUARDAD|ACTUALIZAD|CARGADO|AGREGADO|APLICAD|RECICLAD|INICIADO|CONFIGURADO|DESCARGADO|\+\d+ min/.test(msg) ? 'ok' : '';
+  t.className = `toast ${kind}`;
+  t.textContent = msg;
+  box.appendChild(t);
+  while (box.children.length > 4) box.firstChild.remove();
+  setTimeout(() => { t.style.transition = 'opacity .3s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, kind === 'alert' ? 7000 : 4000);
 }
 
 function hardReset() {
@@ -2603,13 +2655,8 @@ function renderJudgePicker(listId) {
   const jList = document.getElementById(listId);
   jList.innerHTML = S.judges.map((j, i) => {
     const sel = top8SelectedJudges.has(j.name);
-    return `<div data-idx="${i}" role="button" tabindex="0" aria-pressed="${sel}"
-      style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:20px;
-        border:2px solid ${sel ? '#1a56a0' : '#ccc'};background:${sel ? '#e8f0fc' : '#f8fafc'};
-        cursor:pointer;font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:600;transition:all 0.15s;">
-      <div style="width:8px;height:8px;border-radius:50%;background:${COLORS[j.ci]};flex-shrink:0;"></div>
-      ${esc(j.name)}
-    </div>`;
+    return `<div class="pick-chip${sel ? ' on' : ''}" data-idx="${i}" role="button" tabindex="0" aria-pressed="${sel}">
+      ${avatarHTML(j)}${esc(j.name)}</div>`;
   }).join('');
   jList.querySelectorAll('[data-idx]').forEach(el => {
     const toggle = () => toggleTop8Judge(S.judges[+el.dataset.idx].name, el);
@@ -2620,8 +2667,7 @@ function renderJudgePicker(listId) {
 function toggleTop8Judge(name, el) {
   const on = !top8SelectedJudges.has(name);
   if (on) top8SelectedJudges.add(name); else top8SelectedJudges.delete(name);
-  el.style.borderColor = on ? '#1a56a0' : '#ccc';
-  el.style.background = on ? '#e8f0fc' : '#f8fafc';
+  el.classList.toggle('on', on);
   el.setAttribute('aria-pressed', on);
 }
 
@@ -2629,7 +2675,7 @@ function openDay2CutModal() {
   const info = getAdvanceInfo(S.players);
   const el = document.getElementById('day2cut-info');
   el.innerHTML = S.players > 0
-    ? `<b>${info.count}</b> jugadores &nbsp;—&nbsp; o &nbsp;—&nbsp; mínimo <b>${info.pts} puntos</b><br><span style="font-size:0.74rem;color:#1e40af;">(el criterio que resulte en mayor número de jugadores — verifica con la política vigente)</span>`
+    ? `<b>${info.count}</b> jugadores &nbsp;—&nbsp; o &nbsp;—&nbsp; mínimo <b>${info.pts} puntos</b><br><span class="help">(el criterio que resulte en mayor número de jugadores — verifica con la política vigente)</span>`
     : 'Consulta la política de Konami según el número de participantes.';
   const playersEl = document.getElementById('day2-real-players');
   playersEl.value = S.players > 0 ? info.n : '';
@@ -2681,7 +2727,8 @@ function openTop8Modal() {
   const head = document.getElementById('top8-headline');
   if (pending > 0) {
     head.textContent = `⚠ Aún faltan ${pending} ronda${pending > 1 ? 's' : ''} suizas de ${totalSwiss()}. Si inicias el Top 8 ahora, la ronda actual será Cuartos.`;
-  } else head.textContent = 'Swiss completado — 8 jugadores al playoff';
+    head.className = 'callout warn';
+  } else { head.textContent = '✅ Swiss completado — 8 jugadores al playoff'; head.className = 'callout danger'; }
   top8SelectedJudges = new Set(S.judges.filter(j => j.status !== 'off').map(j => j.name));
   renderJudgePicker('top8-judges-list');
   openModal('top8-modal');
@@ -2765,26 +2812,21 @@ function prevRoundNav(dir) {
 function roundRowsHTML(r, markUnavailable) {
   const zones = judgeZonesFor(r);
   const activeNow = new Set(S.judges.filter(j => j.status !== 'off').map(j => j.name));
-  return (r.judges || []).map(j => {
+  const rows = (r.judges || []).map(j => {
     const still = !markUnavailable || activeNow.has(j.name);
     const z = zones[j.name] || [];
-    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:6px;
-      background:${still ? '#f8fafc' : '#f3f4f6'};border:1.5px solid ${still ? '#e2e8f0' : '#d1d5db'};margin-bottom:6px;opacity:${still ? '1' : '0.55'};">
-      <div style="width:10px;height:10px;border-radius:50%;background:${COLORS[j.ci] || '#1d4ed8'};margin-top:3px;flex-shrink:0;"></div>
-      <div style="flex:1;">
-        <div style="font-family:'Inter',sans-serif;font-size:0.88rem;font-weight:700;color:#111;">${esc(j.name)}
-          <span style="font-size:0.72rem;font-weight:500;color:#555;margin-left:6px;">[${STATUS_LABELS[j.status] || j.status}]</span>
-          ${!still ? '<span style="font-size:0.7rem;color:#dc2626;margin-left:4px;">NO DISPONIBLE</span>' : ''}
-        </div>
-        <div style="font-family:'Inter',sans-serif;font-size:0.8rem;color:#1a56a0;margin-top:2px;">
-          ${z.length ? esc(z.join(', ')) : '<span style="color:#64748b;font-style:italic;">Sin zona</span>'}
-        </div>
+    return `<div class="rr-row${still ? '' : ' na'}">
+      ${avatarHTML(j)}
+      <div style="flex:1;min-width:0;">
+        <div class="rr-name">${esc(j.name)} <span class="badge st-${j.status}">${STATUS_LABELS[j.status] || j.status}</span>
+          ${!still ? '<span class="badge st-lunch">No disponible ahora</span>' : ''}</div>
+        <div class="rr-zone">${z.length ? esc(z.join(' · ')) : '<span style="color:var(--subtle)">Sin zona</span>'}</div>
       </div>
     </div>`;
-  }).join('') + (resolveExtensions(r).length
-    ? `<div style="font-family:'Inter',sans-serif;font-size:0.82rem;background:#f5f3ff;border:1.5px solid #c4b5fd;border-radius:6px;padding:8px 10px;margin-top:4px;">
-        <b>⏱ Extensiones de tiempo</b><br>${resolveExtensions(r).map(x => esc(extText(x))).join('<br>')}</div>`
-    : '') || '<div style="text-align:center;color:#666;padding:20px;font-family:Inter,sans-serif;font-size:0.82rem;">Sin datos</div>';
+  }).join('');
+  const ex = resolveExtensions(r);
+  const exHTML = ex.length ? `<div class="rr-ext"><b>⏱ Extensiones de tiempo</b><br>${ex.map(x => esc(extText(x))).join('<br>')}</div>` : '';
+  return (rows + exHTML) || '<div class="empty-hint" style="text-align:center;padding:20px;">Sin datos</div>';
 }
 function renderPrevRound() {
   const r = S.rounds[prevRoundIdx];
@@ -2793,7 +2835,7 @@ function renderPrevRound() {
   document.getElementById('prev-round-title').textContent = dl.label;
   document.getElementById('prev-round-counter').textContent = `${prevRoundIdx + 1} / ${S.rounds.length}`;
   document.getElementById('prev-round-meta').textContent = `Reloj: ${r.elapsed}  |  ${r.ts}${r.notes ? '  |  ' + r.notes : ''}`;
-  document.getElementById('apply-prev-btn').textContent = `APLICAR ${dl.label}`;
+  document.getElementById('apply-prev-btn').textContent = `Aplicar asignaciones de ${dl.label}`;
   document.getElementById('prev-round-content').innerHTML = roundRowsHTML(r, true);
 }
 function applyPrevRound() {
@@ -2843,12 +2885,19 @@ function renderReview() {
   document.getElementById('review-content').innerHTML = roundRowsHTML(r, false);
 }
 
+// ═══════════ MENÚ Y AYUDA ═══════════
+function toggleMenu(e) { e.stopPropagation(); document.getElementById('main-menu').classList.toggle('open'); }
+function closeMenu() { const m = document.getElementById('main-menu'); if (m) m.classList.remove('open'); }
+function openHelp() { closeMenu(); openModal('help-modal'); }
+
 // ═══════════ TECLADO Y MODALES ═══════════
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
+  if (document.querySelector('.status-menu')) { closeStatusMenu(); return; }
+  if (document.getElementById('main-menu').classList.contains('open')) { closeMenu(); return; }
   const open = [...document.querySelectorAll('.modal-backdrop.open')];
   if (open.length) { closeModal(open[open.length - 1].id); return; }
-  if (selectedJudge) { selectedJudge = null; renderJudges(); }
+  if (selectedJudge) cancelSelection();
 });
 document.querySelectorAll('.modal-backdrop').forEach(b => {
   b.addEventListener('click', e => { if (e.target === b) closeModal(b.id); });
