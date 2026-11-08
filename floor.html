@@ -486,8 +486,28 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
 .group-toggle { display: none; }
 .floor-wrap.edit-tables .group-toggle { display: flex; }
 .floor-wrap.edit-tables .table-cell { cursor: pointer; box-shadow: inset 0 0 0 1px #f59e0b; }
-.floor-wrap:not(.edit-tables) .table-cell { cursor: default; }
-.floor-wrap:not(.edit-tables) .table-cell:hover { background: #f8fafc; border-color: #94a3b8; }
+.floor-wrap:not(.edit-tables) .table-cell { position: relative; }
+.ext-badge { display: block; margin-top: 3px; font-size: 0.62rem; font-weight: 800; line-height: 1.2; border-radius: 4px; padding: 2px 3px; color: #fff; background: #6d28d9; text-decoration: none; }
+.ext-badge.dc { background: #c2410c; }
+.ext-badge.both { background: linear-gradient(90deg, #6d28d9 50%, #c2410c 50%); }
+.table-cell.has-ext { border-width: 2.5px; border-color: #6d28d9; }
+.table-cell.has-ext.dc { border-color: #c2410c; }
+.table-cell.locate { animation: locate 0.6s ease 4; }
+@keyframes locate { 0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); } 50% { box-shadow: 0 0 0 6px rgba(245,158,11,0.9); background: #fef3c7; } }
+.ext-section { min-width: 190px; max-width: 280px; }
+#ext-panel { overflow-y: auto; max-height: 92px; display: flex; flex-direction: column; gap: 3px; }
+.ext-row { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; cursor: pointer; padding: 3px 6px; border-radius: 5px; border: 1px solid var(--border2); background: #fff; text-align: left; font-family: 'Inter', sans-serif; color: var(--text); }
+.ext-row:hover { border-color: var(--accent); background: #e8f0fc; }
+.ext-row b { min-width: 58px; }
+.ext-tag { font-size: 0.66rem; font-weight: 800; color: #fff; border-radius: 4px; padding: 1px 5px; }
+.ext-tag.r { background: #6d28d9; } .ext-tag.dc { background: #c2410c; }
+.ext-empty { font-size: 0.75rem; color: var(--muted); font-style: italic; }
+.ext-check { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; }
+.ext-check input { width: 22px; height: 22px; flex: none; accent-color: var(--accent); }
+.ext-check:has(input:checked) { border-color: var(--accent); background: #e8f0fc; }
+.ext-quick { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.ext-quick .btn { min-width: 48px; }
+.top8-ext-btn { margin-top: 4px; }
 .edit-mode-btn.on { background: #f59e0b; border-color: #b45309; color: #fff; }
 .edit-hint { font-size: 0.75rem; color: #92400e; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 4px 10px; }
 .counter-warn { color: #b45309; }
@@ -652,6 +672,12 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
         <label>NOTAS / INCIDENCIAS</label>
         <textarea id="round-notes" placeholder="Incidencias, cambios..." oninput="onNotesInput()"></textarea>
       </div>
+    </div>
+
+    <!-- Extensiones de tiempo -->
+    <div class="bottom-section ext-section">
+      <div class="summary-title">⏱ EXTENSIONES DE TIEMPO</div>
+      <div id="ext-panel"></div>
     </div>
 
     <!-- Resumen asignaciones -->
@@ -890,6 +916,35 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
   </div>
 </div>
 
+<!-- ════════════ EXTENSIÓN DE TIEMPO MODAL ════════════ -->
+<div class="modal-backdrop" id="ext-modal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-title">
+      <span id="ext-title">MESA — EXTENSIÓN DE TIEMPO</span>
+      <button class="close-x" onclick="closeModal('ext-modal')" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="fg" style="margin-bottom:12px;">
+      <label>MINUTOS DE EXTENSIÓN</label>
+      <div class="ext-quick">
+        <button class="btn sm" type="button" onclick="setExtMin(3)">3</button>
+        <button class="btn sm" type="button" onclick="setExtMin(5)">5</button>
+        <button class="btn sm" type="button" onclick="setExtMin(10)">10</button>
+        <button class="btn sm" type="button" onclick="setExtMin(15)">15</button>
+      </div>
+      <input type="number" id="ext-min" min="1" max="90" style="font-size:1.3rem;text-align:center;font-weight:700;">
+    </div>
+    <div class="fg" style="margin-bottom:12px;">
+      <label>MOTIVO (MARCA UNO O AMBOS)</label>
+      <label class="ext-check"><input type="checkbox" id="ext-ruling"> ⚖️ Ruling</label>
+      <label class="ext-check"><input type="checkbox" id="ext-dc"> 🃏 Deck Check</label>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn primary" style="flex:1;" onclick="confirmExtension()">GUARDAR</button>
+      <button class="btn danger" id="ext-remove-btn" onclick="removeExtension()">QUITAR</button>
+    </div>
+  </div>
+</div>
+
 <!-- Notification -->
 <div class="notify" id="notify" role="status" aria-live="polite"></div>
 <input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="importBackup(this)">
@@ -922,6 +977,7 @@ function defaultState() {
     rounds: [],
     currentRound: 1,
     notes: '',
+    extensions: {},  // 'ci-gi:idx' | 'top8-n' -> {min, ruling, deckcheck}
     timerStart: null, timerElapsed: 0, timerRunning: false
   };
 }
@@ -1361,6 +1417,7 @@ function renderAll() {
   else { renderFloor(); renderPatrolZones(); }
   renderSummary();
   renderCounter();
+  renderExtPanel();
 }
 
 // ═══════════ PANEL DE JUECES ═══════════
@@ -1527,6 +1584,91 @@ function startLunchWatcher() {
   }, 1000);
 }
 
+// ═══════════ EXTENSIONES DE TIEMPO POR MESA ═══════════
+let extTarget = null;
+function extReasons(e) {
+  const r = [];
+  if (e.ruling) r.push('Ruling');
+  if (e.deckcheck) r.push('Deck Check');
+  return r;
+}
+function extClass(e) { return e.ruling && e.deckcheck ? 'both' : e.deckcheck ? 'dc' : ''; }
+function extShort(e) { return [e.ruling ? 'R' : '', e.deckcheck ? 'DC' : ''].filter(Boolean).join('+'); }
+// Lista ordenada por número de mesa, para cualquier ronda (actual o del historial)
+function resolveExtensions(rec) {
+  const cols = rec.columns || S.columns;
+  const nums = numberingFor(cols, rec.numberingMode || S.numberingMode);
+  return Object.entries(rec.extensions || {}).map(([key, e]) => {
+    if (!e || !(e.min > 0)) return null;
+    let num;
+    if (key.startsWith('top8-')) num = +key.slice(5);
+    else {
+      const [gk, idx] = key.split(':');
+      const arr = nums[gk];
+      if (!arr || arr[+idx] === undefined) return null;
+      num = arr[+idx];
+    }
+    return { key, num, label: `Mesa ${num}`, ...e };
+  }).filter(Boolean).sort((a, b) => a.num - b.num);
+}
+function extText(x) { return `${x.label}: +${x.min} min (${extReasons(x).join(' + ')})`; }
+function extLabelFor(key) {
+  const found = resolveExtensions({ extensions: { [key]: { min: 1 } } })[0];
+  return found ? found.label : 'Mesa';
+}
+function openExtension(key) {
+  extTarget = key;
+  const e = (S.extensions || {})[key];
+  document.getElementById('ext-title').textContent = `${extLabelFor(key).toUpperCase()} — EXTENSIÓN DE TIEMPO`;
+  document.getElementById('ext-min').value = e ? e.min : '';
+  document.getElementById('ext-ruling').checked = !!(e && e.ruling);
+  document.getElementById('ext-dc').checked = !!(e && e.deckcheck);
+  document.getElementById('ext-remove-btn').style.display = e ? '' : 'none';
+  openModal('ext-modal');
+  setTimeout(() => document.getElementById('ext-min').focus(), 50);
+}
+function setExtMin(n) { document.getElementById('ext-min').value = n; }
+function confirmExtension() {
+  const min = parseInt(document.getElementById('ext-min').value);
+  const ruling = document.getElementById('ext-ruling').checked;
+  const deckcheck = document.getElementById('ext-dc').checked;
+  if (!(min >= 1 && min <= 90)) { alert('Ingresa los minutos de extensión (1 a 90).'); return; }
+  if (!ruling && !deckcheck) { alert('Marca el motivo: Ruling, Deck Check o ambos.'); return; }
+  S.extensions = S.extensions || {};
+  S.extensions[extTarget] = { min, ruling, deckcheck };
+  const label = extLabelFor(extTarget);
+  save(); closeModal('ext-modal'); renderAll();
+  notify(`${label}: +${min} min (${extReasons({ruling, deckcheck}).join(' + ')})`);
+}
+function removeExtension() {
+  if (!S.extensions || !S.extensions[extTarget]) return;
+  const label = extLabelFor(extTarget);
+  if (!confirm(`¿Quitar la extensión de ${label}?`)) return;
+  delete S.extensions[extTarget];
+  save(); closeModal('ext-modal'); renderAll();
+}
+function renderExtPanel() {
+  const el = document.getElementById('ext-panel');
+  const list = resolveExtensions({ extensions: S.extensions, columns: S.columns, numberingMode: S.numberingMode });
+  if (!list.length) {
+    el.innerHTML = `<div class="ext-empty">Sin extensiones. Toca una mesa (sin juez seleccionado) para registrar una.</div>`;
+    return;
+  }
+  el.innerHTML = list.map(x => `<button class="ext-row" data-key="${esc(x.key)}" title="Ubicar en el mapa">
+      <b>${esc(x.label)}</b><span>+${x.min} min</span>
+      ${x.ruling ? '<span class="ext-tag r">RULING</span>' : ''}${x.deckcheck ? '<span class="ext-tag dc">DECK CHECK</span>' : ''}
+    </button>`).join('');
+  el.querySelectorAll('.ext-row').forEach(b => b.addEventListener('click', () => locateTable(b.dataset.key)));
+}
+// Resalta la mesa en el mapa y la desplaza a la vista
+function locateTable(key) {
+  const cell = [...document.querySelectorAll('[data-extkey]')].find(c => c.dataset.extkey === key);
+  if (!cell) { openExtension(key); return; }
+  cell.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+  cell.classList.remove('locate'); void cell.offsetWidth; cell.classList.add('locate');
+  setTimeout(() => cell.classList.remove('locate'), 2600);
+}
+
 // ═══════════ MAPA DEL PISO ═══════════
 function renderFloor() {
   const el = document.getElementById('floor-map');
@@ -1590,11 +1732,28 @@ function renderFloor() {
         const idx = asc.indexOf(t);
         const off = (grp.off || []).includes(idx);
         const tc = document.createElement('div');
-        tc.className = `table-cell${grp.size === 2 ? ' t4' : ''}${off ? ' table-off' : ''}`;
+        const extKey = `${key}:${idx}`;
+        const ext = (S.extensions || {})[extKey];
+        tc.className = `table-cell${grp.size === 2 ? ' t4' : ''}${off ? ' table-off' : ''}${ext ? ' has-ext ' + extClass(ext) : ''}`;
+        tc.dataset.extkey = extKey;
         tc.textContent = t;
+        if (ext) {
+          const bd = document.createElement('span');
+          bd.className = `ext-badge ${extClass(ext)}`;
+          bd.textContent = `+${ext.min}′ ${extShort(ext)}`;
+          tc.appendChild(bd);
+        }
         if (tableEditMode) {
           tc.title = off ? 'Activar mesa' : 'Desactivar mesa';
           tc.onclick = e => { e.stopPropagation(); toggleTable(ci, gi, idx); };
+        } else {
+          tc.title = ext ? `Extensión: +${ext.min} min (${extReasons(ext).join(' + ')})` : 'Toca para registrar extensión de tiempo';
+          tc.onclick = e => {
+            if (selectedJudge) return; // con juez seleccionado, el toque asigna al grupo
+            e.stopPropagation();
+            if (!grp.active || off) { notify('MESA DESACTIVADA'); return; }
+            openExtension(extKey);
+          };
         }
         tablesRow.appendChild(tc);
       });
@@ -1889,6 +2048,15 @@ function renderTop8Map() {
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
         <div class="top8-mesa-label">${esc(roundLabel)}</div>
       </div>`;
+    const ext8 = (S.extensions || {})[key];
+    const extBtn = document.createElement('button');
+    extBtn.className = `btn sm top8-ext-btn${ext8 ? ' has-ext ' + extClass(ext8) : ''}`;
+    extBtn.dataset.extkey = key;
+    extBtn.textContent = ext8 ? `⏱ +${ext8.min} min · ${extReasons(ext8).join(' + ')}` : '⏱ EXTENSIÓN DE TIEMPO';
+    if (ext8) { extBtn.style.borderColor = ext8.deckcheck && !ext8.ruling ? '#c2410c' : '#6d28d9'; extBtn.style.color = extBtn.style.borderColor; }
+    extBtn.addEventListener('click', e => { e.stopPropagation(); openExtension(key); });
+    hdr.firstElementChild.appendChild(document.createElement('br'));
+    hdr.firstElementChild.appendChild(extBtn);
     mesa.appendChild(hdr);
 
     const zone = document.createElement('div');
@@ -1937,7 +2105,8 @@ function snapshotRecord() {
     notes: document.getElementById('round-notes').value.trim(),
     columns: clone(S.columns),
     numberingMode: S.numberingMode || 'column',
-    isTop8: isTop8Round(S.currentRound)
+    isTop8: isTop8Round(S.currentRound),
+    extensions: clone(S.extensions || {})
   };
 }
 
@@ -1952,6 +2121,7 @@ function saveRound() {
   const record = snapshotRecord();
   S.rounds.push(record);
   S.assignments = {};
+  S.extensions = {};
   S.notes = '';
   document.getElementById('round-notes').value = '';
   timerReset();
@@ -1992,6 +2162,7 @@ function undoLastRound() {
   S.rounds.pop();
   S.currentRound = last.round;
   S.assignments = clone(last.assignments || {});
+  S.extensions = clone(last.extensions || {});
   // Restaurar estados del snapshot sin perder jueces agregados ni almuerzos en curso
   const snap = Object.fromEntries((last.judges || []).map(j => [j.name, j]));
   S.judges.forEach(j => {
@@ -2024,10 +2195,12 @@ function openRoundEdit(idx) {
   S._editBackup = clone({
     assignments: S.assignments, judges: S.judges, columns: S.columns,
     isTop8: S.isTop8, currentRound: S.currentRound, numberingMode: S.numberingMode,
+    extensions: S.extensions || {},
     notes: document.getElementById('round-notes').value
   });
   editingRound = idx;
   S.assignments = clone(r.assignments || {});
+  S.extensions = clone(r.extensions || {});
   S.judges = (r.judges || []).map(j => ({...j, lunchEnd: null, lunchNotified: false}));
   if (r.columns) S.columns = clone(r.columns);
   if (r.numberingMode) S.numberingMode = r.numberingMode;
@@ -2044,6 +2217,7 @@ function restoreEditBackup() {
   const b = S._editBackup;
   S.assignments = b.assignments; S.judges = b.judges; S.columns = b.columns;
   S.isTop8 = b.isTop8; S.currentRound = b.currentRound; S.numberingMode = b.numberingMode;
+  S.extensions = b.extensions || {};
   S.notes = b.notes;
   document.getElementById('round-notes').value = b.notes || '';
   S._editBackup = null;
@@ -2058,6 +2232,7 @@ function saveRoundEdit() {
   r.judges = S.judges.map(j => ({name: j.name, ci: j.ci, status: j.status}));
   r.notes = document.getElementById('round-notes').value.trim();
   r.columns = clone(S.columns);
+  r.extensions = clone(S.extensions || {});
   const lbl = getDayRoundLabel(r.round).label;
   restoreEditBackup();
   save(); renderAll();
@@ -2097,6 +2272,7 @@ function openHistory() {
           </span>
         </div>
         <div class="hist-assignments">${rows}</div>
+        ${resolveExtensions(r).length ? `<div class="hist-notes">⏱ ${esc(resolveExtensions(r).map(extText).join(' · '))}</div>` : ''}
         ${r.notes ? `<div class="hist-notes">📝 ${esc(r.notes)}</div>` : ''}
       </div>`;
     }).join('');
@@ -2130,6 +2306,11 @@ function exportTxt() {
       const st = `[${STATUS_LABELS[j.status] || j.status}]`;
       txt += `  ${st.padEnd(11)} ${j.name.padEnd(18)} ${(zones[j.name] || []).join(', ') || '—'}\n`;
     });
+    const ex = resolveExtensions(r);
+    if (ex.length) {
+      txt += `  EXTENSIONES DE TIEMPO:\n`;
+      ex.forEach(x => { txt += `    ${x.label.padEnd(10)} +${x.min} min  (${extReasons(x).join(' + ')})\n`; });
+    }
     if (r.notes) txt += `  NOTAS: ${r.notes}\n`;
     txt += '\n';
   });
@@ -2206,7 +2387,7 @@ function applyEditVenue() {
   const sameShape = EC.length === S.columns.length && EC.every((c, i) => c.groups.length === S.columns[i].groups.length);
   const hasAssign = Object.entries(S.assignments).some(([k, v]) => k === 'patrol' ? Object.values(v || {}).some(a => a.length) : (v || []).length);
   if (!sameShape && hasAssign &&
-      !confirm('Cambiaste el número de columnas o grupos.\nLas asignaciones de mesas de esta ronda se limpiarán (las de patrullaje se conservan). ¿Continuar?')) return;
+      !confirm('Cambiaste el número de columnas o grupos.\nLas asignaciones y extensiones de tiempo de esta ronda se limpiarán (el patrullaje se conserva). ¿Continuar?')) return;
   S.columns = EC.map((c, ci) => ({
     name: (c.name || '').trim() || colName(ci), dir: c.dir || 'down', orient: c.orient || 'v',
     groups: c.groups.map(g => ({ size: g.size, active: g.active !== false, off: (g.off || []).filter(i => i < g.size) }))
@@ -2214,6 +2395,14 @@ function applyEditVenue() {
   if (!sameShape) {
     const patrol = S.assignments.patrol;
     S.assignments = patrol ? { patrol } : {};
+    S.extensions = {};
+  } else {
+    Object.keys(S.extensions || {}).forEach(k => {
+      const [gk, idx] = k.split(':');
+      const [ci, gi] = gk.split('-').map(Number);
+      const g = S.columns[ci] && S.columns[ci].groups[gi];
+      if (!g || +idx >= g.size) delete S.extensions[k];
+    });
   }
   save(); closeModal('edit-venue-modal'); renderAll();
   notify('✅ VENUE ACTUALIZADO');
@@ -2315,6 +2504,11 @@ function exportMapPDF(mode) {
       .t8 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
       .t8-mesa { border: 2px solid #1a56a0; border-radius: 8px; padding: 10px; }
       .t8-mesa h3 { color: #1a56a0; font-size: 14px; margin-bottom: 6px; }
+      .ext { display: block; font-size: 8px; font-weight: 800; color: #fff; background: #6d28d9; border-radius: 3px; padding: 1px 2px; margin-top: 2px;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; text-decoration: none; }
+      .ext.dc { background: #c2410c; }
+      .ext.both { background: #7c2d12; }
+      .ext-list { margin-top: 10px; padding: 6px 10px; border: 1.5px solid #c4b5fd; background: #f5f3ff; border-radius: 4px; font-size: 10px; line-height: 1.6; }
       .notes-bar { margin-top: 10px; padding: 6px 10px; background: #f8fafc; border-left: 3px solid #1a56a0;
         font-size: 10px; color: #444; border-radius: 0 4px 4px 0; white-space: pre-wrap; }
       .print-btn { position: fixed; bottom: 20px; right: 20px; z-index: 999; background: #1a56a0; color: #fff; border: none;
@@ -2360,7 +2554,7 @@ function buildMapPage(record) {
     const t8 = record.top8Round || top8RoundOf(record.round);
     const n = TOP8_TABLES[t8] || Math.max(1, ...Object.keys(assignments).filter(k => k.startsWith('top8-')).map(k => +k.slice(5)));
     html += `<div class="t8">`;
-    for (let m = 1; m <= n; m++) html += `<div class="t8-mesa"><h3>MESA ${m}</h3><div class="judge-zone">${chips(assignments[`top8-${m}`] || [])}</div></div>`;
+    for (let m = 1; m <= n; m++) html += `<div class="t8-mesa"><h3>MESA ${m}${(record.extensions || {})[`top8-${m}`] ? ` <span class="ext ${extClass(record.extensions[`top8-${m}`])}" style="display:inline-block">+${record.extensions[`top8-${m}`].min}′ ${extShort(record.extensions[`top8-${m}`])}</span>` : ''}</h3><div class="judge-zone">${chips(assignments[`top8-${m}`] || [])}</div></div>`;
     html += `</div>`;
   } else {
     const patrol = assignments.patrol || {};
@@ -2381,7 +2575,8 @@ function buildMapPage(record) {
         html += `<div class="${isH ? 'tables-h' : 'tables-v'}">`;
         displayNums(asc, col, gi, mode).forEach(t => {
           const off = !grp.active || (grp.off || []).includes(asc.indexOf(t));
-          html += `<div class="mesa${off ? ' off' : ''}">${t}</div>`;
+          const ex = (record.extensions || {})[`${key}:${asc.indexOf(t)}`];
+          html += `<div class="mesa${off ? ' off' : ''}">${t}${ex ? `<span class="ext ${extClass(ex)}">+${ex.min}′ ${extShort(ex)}</span>` : ''}</div>`;
         });
         html += `</div><div class="judge-zone">${chips(assigned)}</div></div>`;
       });
@@ -2389,6 +2584,8 @@ function buildMapPage(record) {
     });
     html += `</div>`;
   }
+  const exl = resolveExtensions(record);
+  if (exl.length) html += `<div class="ext-list"><b>Extensiones de tiempo</b> (R = Ruling, DC = Deck Check)<br>${exl.map(x => esc(extText(x))).join('<br>')}</div>`;
   if (record.notes) html += `<div class="notes-bar">Notas: ${esc(record.notes)}</div>`;
   return html + `</div>`;
 }
@@ -2498,6 +2695,7 @@ function confirmTop8() {
     else { j.status = 'active'; j.lunchEnd = null; j.lunchNotified = false; }
   });
   S.assignments = {};
+  S.extensions = {};
   selectedJudge = null;
   tableEditMode = false;
   closeModal('top8-modal');
@@ -2583,7 +2781,10 @@ function roundRowsHTML(r, markUnavailable) {
         </div>
       </div>
     </div>`;
-  }).join('') || '<div style="text-align:center;color:#666;padding:20px;font-family:Inter,sans-serif;font-size:0.82rem;">Sin datos</div>';
+  }).join('') + (resolveExtensions(r).length
+    ? `<div style="font-family:'Inter',sans-serif;font-size:0.82rem;background:#f5f3ff;border:1.5px solid #c4b5fd;border-radius:6px;padding:8px 10px;margin-top:4px;">
+        <b>⏱ Extensiones de tiempo</b><br>${resolveExtensions(r).map(x => esc(extText(x))).join('<br>')}</div>`
+    : '') || '<div style="text-align:center;color:#666;padding:20px;font-family:Inter,sans-serif;font-size:0.82rem;">Sin datos</div>';
 }
 function renderPrevRound() {
   const r = S.rounds[prevRoundIdx];
@@ -2656,6 +2857,7 @@ document.querySelectorAll('.modal-backdrop').forEach(b => {
 });
 document.querySelectorAll('.close-x').forEach(x => { if (!x.getAttribute('aria-label')) x.setAttribute('aria-label', 'Cerrar'); });
 document.getElementById('lunch-minutes').addEventListener('keydown', e => { if (e.key === 'Enter') confirmLunch(); });
+document.getElementById('ext-min').addEventListener('keydown', e => { if (e.key === 'Enter') confirmExtension(); });
 
 // ═══════════ INICIO ═══════════
 try { load(); } catch (e) { console.error('CRASH in load():', e); }
