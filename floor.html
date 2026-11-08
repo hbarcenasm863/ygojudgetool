@@ -359,6 +359,18 @@ body.selecting .table-group:not(.inactive):hover { border-color: var(--primary);
   align-items: center; justify-content: center; z-index: 3; box-shadow: var(--shadow-sm);
 }
 .table-group.inactive .group-toggle { color: var(--green); }
+.group-num-btn { display: none; position: absolute; top: -9px; left: -6px; z-index: 3; height: 26px; padding: 0 8px; border-radius: 13px;
+  border: 1.5px solid var(--ruling); background: #fff; color: var(--ruling); font-size: 0.7rem; font-weight: 800; cursor: pointer; box-shadow: var(--shadow-sm); }
+.floor-wrap.edit-tables .group-num-btn { display: inline-flex; align-items: center; }
+.table-group.manual-num { border-style: dashed; border-color: var(--ruling); }
+.table-group.manual-num::after { content: '✏️ manual'; position: absolute; bottom: -8px; right: 8px; font-size: 0.6rem; font-weight: 800;
+  color: var(--ruling); background: var(--ruling-50); border-radius: 6px; padding: 0 5px; }
+.floor-wrap.edit-tables .table-group.manual-num::after { display: none; }
+.manual-inp { width: 92px !important; padding: 4px 6px !important; font-size: 0.78rem !important; border-radius: 7px !important; }
+.manual-inp.set { border-color: var(--ruling); background: var(--ruling-50); font-weight: 700; }
+.manual-inp.bad { border-color: var(--red); background: var(--red-50); }
+.num-warn { font-size: 0.82rem; font-weight: 600; color: #9f1239; background: #fff1f3; border: 1px solid #fecdd3; border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; }
+.num-help { font-size: 0.8rem; color: var(--muted); margin-bottom: 10px; }
 .floor-wrap.edit-tables .group-toggle { display: flex; }
 .floor-wrap.edit-tables .table-cell { box-shadow: inset 0 0 0 2px rgba(245,158,11,.5); }
 .drop-zone {
@@ -938,7 +950,7 @@ body.selecting .table-group:not(.inactive):hover { border-color: var(--primary);
       <div class="help-step"><div class="n">✕</div><div><b>Quitar una asignación</b><p>Sin ningún juez seleccionado, toca el nombre del juez dentro del grupo.</p></div></div>
       <div class="help-step"><div class="n">🔄</div><div><b>Cambiar estado</b><p>Toca la etiqueta de estado del juez (PISO ▾) para ponerlo en Side, Lunch, Break u Off. Lunch y Break inician un temporizador que avisa cuando debe regresar.</p></div></div>
       <div class="help-step"><div class="n">⏱</div><div><b>Extensión de tiempo</b><p>Sin juez seleccionado, toca el número de una mesa: registra los minutos y marca si fue por Ruling o Deck Check. La lista de abajo te lleva a cada mesa.</p></div></div>
-      <div class="help-step"><div class="n">🔧</div><div><b>Activar o desactivar mesas</b><p>Pulsa "Editar mesas" y toca las mesas o el botón (−) de un grupo. Pulsa "Listo" para volver.</p></div></div>
+      <div class="help-step"><div class="n">🔧</div><div><b>Activar o desactivar mesas</b><p>Pulsa "Editar mesas" y toca las mesas o el botón (−) de un grupo. Con <b>✏️ Nº</b> escribes a mano los números de un grupo (ej. 55, 55-60 o 13,15,17) para configuraciones de emergencia. Pulsa "Listo" para volver.</p></div></div>
       <div class="help-step"><div class="n">📘</div><div><b>Reglas rápidas (FAQ Regional 2026‑2027)</b><p>Rondas de 50 min. Si el match no termina a tiempo es <b>Doble Derrota</b>; un match termina cuando un duelista gana o pierde 2 duelos (si hay 3 duelos sin ganador y queda tiempo, se juega un 4º). Registro tardío: Match Loss por cada ronda perdida. Regionales: solo suizo, sin Top Cut.</p></div></div>
       <div class="help-step"><div class="n">💾</div><div><b>Guardar la ronda</b><p>Al terminar, pulsa "Guardar ronda". La siguiente ronda puede empezar reciclando las asignaciones. Descarga un respaldo .json desde el menú ⋯ de vez en cuando.</p></div></div>
     </div>
@@ -1065,7 +1077,7 @@ function migrateColumns(cols) {
         g.inactiveTables.forEach(t => { const idx = t - start; if (idx >= 0 && idx < size) off.push(idx); });
       }
       off = [...new Set(off.filter(i => i >= 0 && i < size))];
-      return { size, active: g.active !== false, off };
+      return { size, active: g.active !== false, off, manual: g.manual || '' };
     })
   }));
 }
@@ -1106,9 +1118,50 @@ const NUMBERING_DESC = {
   'row': 'Fila por fila en zigzag: la 2ª fila vuelve desde la última columna.',
   'row-ltr': 'Fila por fila: cada fila empieza otra vez en la primera columna (ej. A: 1… I: 54, luego A: 55…).'
 };
+// Numeración manual de un grupo (emergencias): "55" → 55,56…  ·  "55-60"  ·  "13,15,17"
+function parseManual(text, size) {
+  const t = String(text == null ? '' : text).trim();
+  if (!t) return null;
+  if (/^\d+$/.test(t)) { const a = +t; if (a < 1) return null; return Array.from({ length: size }, (_, i) => a + i); }
+  const m = t.match(/^(\d+)\s*[-–]\s*(\d+)$/);
+  if (m) {
+    const a = +m[1], b = +m[2], step = a <= b ? 1 : -1, arr = [];
+    for (let x = a; step > 0 ? x <= b : x >= b; x += step) arr.push(x);
+    return arr.length === size && a >= 1 && b >= 1 ? arr : null;
+  }
+  const parts = t.split(/[,;\s]+/).filter(Boolean);
+  if (parts.length === size && parts.every(x => /^\d+$/.test(x) && +x >= 1)) return parts.map(Number);
+  return null;
+}
+function rangeLabel(arr) {
+  if (!arr || !arr.length) return '';
+  const contiguous = arr.every((n, i) => i === 0 || n === arr[i - 1] + 1);
+  return contiguous ? `${arr[0]}–${arr[arr.length - 1]}` : arr.join(',');
+}
+function numberingIssues(cols, mode) {
+  const nums = numberingFor(cols, mode);
+  const seen = {}, dups = new Set(), invalid = [];
+  Object.values(nums).forEach(arr => arr.forEach(n => { if (seen[n]) dups.add(n); seen[n] = true; }));
+  cols.forEach((c, ci) => c.groups.forEach((g, gi) => {
+    if (String(g.manual || '').trim() && !parseManual(g.manual, g.size)) invalid.push(`${c.name || colName(ci)}, grupo ${gi + 1}`);
+  }));
+  return { dups: [...dups].sort((a, b) => a - b), invalid };
+}
+function issuesHTML(cols, mode) {
+  const { dups, invalid } = numberingIssues(cols, mode);
+  let h = '';
+  if (dups.length) h += `<div class="num-warn">⚠ Números de mesa repetidos: ${dups.slice(0, 20).join(', ')}${dups.length > 20 ? '…' : ''}. Ajusta la numeración manual.</div>`;
+  if (invalid.length) h += `<div class="num-warn">⚠ Numeración manual no válida en: ${esc(invalid.join(' · '))} (se usa la automática).</div>`;
+  return h;
+}
 function numberingFor(cols, mode) {
   const res = {};
   if (!cols || !cols.length) return res;
+  // Los grupos con numeración manual usan sus números; los demás conservan los automáticos
+  cols.forEach((c, ci) => c.groups.forEach((g, gi) => {
+    const man = parseManual(g.manual, g.size);
+    if (man) res[`${ci}-${gi}`] = man;
+  }));
   let n = 1;
   if (isRowMode(mode)) {
     const maxG = Math.max(...cols.map(c => c.groups.length));
@@ -1120,20 +1173,22 @@ function numberingFor(cols, mode) {
         if (!g) return;
         const nums = [];
         for (let t = 0; t < g.size; t++) nums.push(n++);
-        res[`${ci}-${row}`] = nums;
+        if (!res[`${ci}-${row}`]) res[`${ci}-${row}`] = nums; // si es manual, se respeta el manual
       });
     }
   } else {
     cols.forEach((c, ci) => c.groups.forEach((g, gi) => {
       const nums = [];
       for (let t = 0; t < g.size; t++) nums.push(n++);
-      res[`${ci}-${gi}`] = nums;
+      if (!res[`${ci}-${gi}`]) res[`${ci}-${gi}`] = nums; // si es manual, se respeta el manual
     }));
   }
   return res;
 }
 // Orden visual de las mesas dentro de un grupo (igual en pantalla y en PDF)
 function displayNums(nums, col, gi, mode) {
+  const g = col.groups[gi];
+  if (g && parseManual(g.manual, g.size)) return nums; // manual: tal como se escribió
   const isH = (col.orient || 'v') === 'h';
   if (mode === 'row') return gi % 2 === 1 ? [...nums].reverse() : nums;
   if (mode === 'row-ltr') return nums;
@@ -1168,7 +1223,7 @@ function judgeZonesFor(rec) {
       const arr = nums[key];
       const ci = Number(key.split('-')[0]);
       if (!arr || !cols[ci]) return;
-      label = `${cols[ci].name}: ${Math.min(...arr)}–${Math.max(...arr)}`;
+      label = `${cols[ci].name}: ${rangeLabel(arr)}`;
     }
     names.forEach(n => add(n, label));
   });
@@ -1239,12 +1294,16 @@ function renderColumnEditor(el, cols, mode, onChange) {
     return;
   }
   const nums = numberingFor(cols, mode);
-  el.innerHTML = cols.map((col, ci) => {
+  el.innerHTML = `<div class="num-help">✏️ Para emergencias, escribe en <b>Nº auto</b> los números de un grupo: <b>55</b> (55, 56…), <b>55-60</b> o <b>13,15,17</b>. Los demás grupos conservan su número automático.</div>` + issuesHTML(cols, mode) + cols.map((col, ci) => {
     const groupsHTML = col.groups.map((g, gi) => {
       const arr = nums[`${ci}-${gi}`] || [];
+      const man = String(g.manual || '').trim();
+      const ok = man && parseManual(man, g.size);
       return `<div class="group-item">
-        <span>Mesa ${Math.min(...arr)}–${Math.max(...arr)}</span>
+        <span>${ok ? '✏️ ' : ''}Mesa ${rangeLabel(arr)}</span>
         <select data-ci="${ci}" data-gi="${gi}" data-type="size" aria-label="Mesas del grupo">${sizeOptions(g.size)}</select>
+        <input class="manual-inp${man ? (ok ? ' set' : ' bad') : ''}" data-ci="${ci}" data-gi="${gi}" data-type="manual" value="${esc(man)}"
+          placeholder="Nº auto" title="Numeración manual: 55 · 55-60 · 13,15,17 (vacío = automática)" aria-label="Numeración manual del grupo">
         <span class="rm" data-ci="${ci}" data-gi="${gi}" data-type="rmgrp" role="button" tabindex="0" aria-label="Quitar grupo" title="Quitar grupo">✕</span>
       </div>`;
     }).join('');
@@ -1271,6 +1330,11 @@ function renderColumnEditor(el, cols, mode, onChange) {
     if (g.off) g.off = g.off.filter(i => i < g.size);
     onChange();
   });
+  on('input[data-type="manual"]', 'change', e => {
+    cols[+e.target.dataset.ci].groups[+e.target.dataset.gi].manual = e.target.value.trim();
+    onChange();
+  });
+  on('input[data-type="manual"]', 'keydown', e => { if (e.key === 'Enter') e.target.blur(); });
   on('input[data-type="name"]', 'input', e => { cols[+e.target.dataset.ci].name = e.target.value; if (cols === SC.columns) renderVenuePreview(); });
   on('input[data-type="groupcount"]', 'change', e => onChange('groupcount', +e.target.dataset.ci, e.target.value));
   on('button[data-type="dir"]', 'click', e => { const c = cols[+e.currentTarget.dataset.ci]; c.dir = c.dir === 'up' ? 'down' : 'up'; onChange(); });
@@ -1333,7 +1397,9 @@ function venuePreviewHTML(cols, mode) {
   return `<div class="vp-title">Vista previa de la numeración</div><div class="vp-cols">${cols.map((col, ci) =>
     `<div class="vp-col"><div class="vp-head">${esc(col.name || colName(ci))}</div>${displayGroups(col, mode).map(({gi}) => {
       const arr = nums[`${ci}-${gi}`] || [];
-      return `<div class="vp-grp">${Math.min(...arr)}–${Math.max(...arr)}</div>`;
+      const g = col.groups[gi];
+      const man = parseManual(g.manual, g.size);
+      return `<div class="vp-grp"${man ? ' style="border-color:var(--ruling);background:var(--ruling-50)"' : ''}>${man ? '✏️ ' : ''}${rangeLabel(arr)}</div>`;
     }).join('')}</div>`).join('')}</div>`;
 }
 function renderVenuePreview() {
@@ -1463,7 +1529,7 @@ function startApp() {
   S.numberingMode = SC.numberingMode || 'column';
   S.columns = SC.columns.map((c, ci) => ({
     name: c.name.trim() || colName(ci), dir: c.dir || 'down', orient: c.orient || 'v',
-    groups: c.groups.map(g => ({ size: g.size, active: true, off: [] }))
+    groups: c.groups.map(g => ({ size: g.size, active: true, off: [], manual: g.manual || '' }))
   }));
   S.judges = SC.judges.map(j => ({ name: j.name, ci: j.ci, status: 'active', lunchEnd: null, lunchNotified: false }));
   save();
@@ -1649,7 +1715,7 @@ function renderGuide() {
   } else if (tableEditMode && !S.isTop8) {
     bar.classList.add('editing');
     icon.textContent = '🔧';
-    text.innerHTML = '<b>Editando mesas:</b> toca una mesa para activarla o desactivarla, o el botón (−) de un grupo. Pulsa <b>Listo</b> al terminar.';
+    text.innerHTML = '<b>Editando mesas:</b> toca una mesa para activarla o desactivarla, (−) para el grupo completo y <b>✏️ Nº</b> para escribir sus números a mano. Pulsa <b>Listo</b> al terminar.';
   } else if (editingRound !== null) {
     icon.textContent = '✏️';
     text.innerHTML = 'Estás editando una ronda del historial. Ajusta asignaciones y pulsa <b>Confirmar edición</b>.';
@@ -1902,6 +1968,13 @@ function renderFloor() {
         save(); renderAll();
       };
       grpDiv.appendChild(tog);
+      const numBtn = document.createElement('button');
+      numBtn.className = 'group-num-btn';
+      numBtn.textContent = '✏️ Nº';
+      numBtn.title = 'Escribir los números de este grupo';
+      numBtn.onclick = e => { e.stopPropagation(); editGroupNumbers(ci, gi); };
+      grpDiv.appendChild(numBtn);
+      if (parseManual(grp.manual, grp.size)) grpDiv.classList.add('manual-num');
 
       const tablesRow = document.createElement('div');
       tablesRow.className = `tables-row${isH ? ' horiz' : ''}`;
@@ -1975,6 +2048,20 @@ function makeChip(name, onRemove, extraClass = 'assigned-chip', small = false) {
   return chip;
 }
 
+function editGroupNumbers(ci, gi) {
+  const col = S.columns[ci], g = col.groups[gi];
+  const ej = 54 + g.size;
+  const txt = prompt(`Números del grupo ${gi + 1} de la columna ${col.name} (${g.size} mesas).\n\nEjemplos:\n • 55  → 55 a ${ej}\n • 55-${ej}\n • lista de ${g.size} números: 13,15,17…\n\nDeja vacío para volver a la numeración automática.`, g.manual || '');
+  if (txt === null) return;
+  if (txt.trim() && !parseManual(txt, g.size)) {
+    alert(`No es válido. El grupo tiene ${g.size} mesas: escribe un número inicial, un rango de ${g.size} mesas o una lista de ${g.size} números.`);
+    return;
+  }
+  g.manual = txt.trim();
+  save(); renderAll();
+  const { dups } = numberingIssues(S.columns, S.numberingMode);
+  notify(dups.length ? `⚠ Números de mesa repetidos: ${dups.slice(0, 10).join(', ')}` : (g.manual ? `✅ ${col.name}, grupo ${gi + 1}: mesas ${rangeLabel(numberingFor(S.columns, S.numberingMode)[`${ci}-${gi}`])}` : '✅ Grupo con numeración automática'));
+}
 function toggleTable(ci, gi, idx) {
   const grp = S.columns[ci].groups[gi];
   grp.off = grp.off || [];
@@ -2018,6 +2105,7 @@ function renderCounter() {
     ${removed > 0 ? `<div class="stat bad"><span class="v">${removed}</span><span class="l">desactivadas</span></div>` : ''}
     <div class="stat ${uncovered ? 'warn' : ''}" title="Grupos con mesas activas y sin juez (borde amarillo)"><span class="v">${uncovered}</span><span class="l">grupos sin juez</span></div>
     <div class="stat ${free ? 'warn' : ''}" title="Jueces en PISO sin ninguna zona"><span class="v">${free}</span><span class="l">jueces libres</span></div>
+    ${(() => { const d = numberingIssues(S.columns, S.numberingMode).dups; return d.length ? `<div class="stat bad" title="Números: ${d.join(', ')}"><span class="v">⚠ ${d.length}</span><span class="l">mesas con número repetido</span></div>` : ''; })()}
     <span class="counter-spacer"></span>
     <button class="btn sm edit-mode-btn${tableEditMode ? ' on' : ''}" onclick="toggleTableEditMode()" aria-pressed="${tableEditMode}">
       ${tableEditMode ? '✓ Listo' : '🔧 Editar mesas'}</button>
@@ -2607,7 +2695,7 @@ function applyEditVenue() {
       !confirm('Cambiaste el tamaño de algún grupo: las mesas siguientes se renumeran.\nLas asignaciones y extensiones se quedan en el mismo lugar físico, pero su número de mesa puede cambiar. ¿Continuar?')) return;
   S.columns = EC.map((c, ci) => ({
     name: (c.name || '').trim() || colName(ci), dir: c.dir || 'down', orient: c.orient || 'v',
-    groups: c.groups.map(g => ({ size: g.size, active: g.active !== false, off: (g.off || []).filter(i => i < g.size) }))
+    groups: c.groups.map(g => ({ size: g.size, active: g.active !== false, off: (g.off || []).filter(i => i < g.size), manual: g.manual || '' }))
   }));
   if (!sameShape) {
     const patrol = S.assignments.patrol;
