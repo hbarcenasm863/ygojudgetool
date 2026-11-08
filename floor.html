@@ -595,6 +595,14 @@ body.selecting .table-group:not(.inactive):hover { border-color: var(--primary);
         </div>
         <div id="nm-desc" class="help">Zigzag vertical por columna</div>
       </div>
+      <div class="fg" style="min-width:200px;">
+        <span class="label">Playoff</span>
+        <div class="seg" role="group" aria-label="Playoff">
+          <button id="po-yes" class="on" onclick="setPlayoff(true)">Con Top 8</button>
+          <button id="po-no" onclick="setPlayoff(false)">Sin Top 8</button>
+        </div>
+        <div id="po-desc" class="help">Al terminar el suizo se ofrece el Top 8</div>
+      </div>
     </div>
     <div class="info-line" id="s-rounds-info"></div>
     <div class="calc-box" id="s-tables-calc">—</div>
@@ -805,6 +813,7 @@ body.selecting .table-group:not(.inactive):hover { border-color: var(--primary);
     <p class="help">Mesas del playoff: <b>Cuartos 4</b> · <b>Semifinal 2</b> · <b>Final 1</b>. Los jueces no seleccionados pasan a OFF.</p>
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('top8-modal')">Cancelar</button>
+      <button class="btn" onclick="finishWithoutTop8()">🏁 Finalizar sin Top 8</button>
       <button class="btn primary" onclick="confirmTop8()">Iniciar Top 8</button>
     </div>
   </div>
@@ -885,7 +894,7 @@ body.selecting .table-group:not(.inactive):hover { border-color: var(--primary);
     <div class="modal-title">❔ Cómo se usa <button class="close-x" onclick="closeModal('help-modal')">✕</button></div>
     <div class="help-steps">
       <div class="help-step"><div class="n">👆</div><div><b>Asignar jueces</b><p>Toca un juez (queda marcado con ✓) y luego toca un grupo de mesas o una zona de patrullaje. Puedes seguir tocando zonas para darle varias. En computador también puedes arrastrarlo.</p></div></div>
-      <div class="help-step"><div class="n">✕</div><div><b>Quitar una asignación</b><p>Toca el nombre del juez dentro del grupo.</p></div></div>
+      <div class="help-step"><div class="n">✕</div><div><b>Quitar una asignación</b><p>Sin ningún juez seleccionado, toca el nombre del juez dentro del grupo.</p></div></div>
       <div class="help-step"><div class="n">🔄</div><div><b>Cambiar estado</b><p>Toca la etiqueta de estado del juez (PISO ▾) para ponerlo en Side, Lunch, Break u Off. Lunch y Break inician un temporizador que avisa cuando debe regresar.</p></div></div>
       <div class="help-step"><div class="n">⏱</div><div><b>Extensión de tiempo</b><p>Sin juez seleccionado, toca el número de una mesa: registra los minutos y marca si fue por Ruling o Deck Check. La lista de abajo te lleva a cada mesa.</p></div></div>
       <div class="help-step"><div class="n">🔧</div><div><b>Activar o desactivar mesas</b><p>Pulsa "Editar mesas" y toca las mesas o el botón (−) de un grupo. Pulsa "Listo" para volver.</p></div></div>
@@ -918,7 +927,7 @@ const PATROL_META = {
 // ═══════════ ESTADO ═══════════
 function defaultState() {
   return {
-    eventName: '', players: 0, roundsD1: 8, roundsD2: 0, roundMinutes: 50,
+    eventName: '', players: 0, roundsD1: 8, roundsD2: 0, roundMinutes: 50, hasTop8: true,
     isTop8: false, top8Start: null, finished: false, numberingMode: 'column',
     columns: [],     // [{name, dir, orient, groups:[{size, active, off:[índices de mesa]}]}]
     judges: [],      // [{name, ci, status, lunchEnd, lunchNotified}]
@@ -1264,14 +1273,22 @@ function renderVenuePreview() {
       return `<div class="vp-grp">${Math.min(...arr)}–${Math.max(...arr)}</div>`;
     }).join('')}</div>`).join('')}</div>`;
 }
+function setPlayoff(on) {
+  SC.hasTop8 = on;
+  document.getElementById('po-yes').classList.toggle('on', on);
+  document.getElementById('po-no').classList.toggle('on', !on);
+  document.getElementById('po-desc').textContent = on ? 'Al terminar el suizo se ofrece el Top 8' : 'El torneo termina con la última ronda suiza';
+  updateSetupSummary();
+}
 function updateSetupSummary() {
   const el = document.getElementById('setup-summary');
   if (!el) return;
   let tables = 0; SC.columns.forEach(c => c.groups.forEach(g => tables += g.size));
   const d1 = parseInt(document.getElementById('s-rounds-d1').value) || 0;
   const d2 = parseInt(document.getElementById('s-rounds-d2').value) || 0;
-  const parts = [`${SC.columns.length} columna${SC.columns.length === 1 ? '' : 's'}`, `${tables} mesas`, `${SC.judges.length} juez${SC.judges.length === 1 ? '' : 'es'}`];
+  const parts = [`${SC.columns.length} columna${SC.columns.length === 1 ? '' : 's'}`, `${tables} mesas`, `${SC.judges.length} ${SC.judges.length === 1 ? 'juez' : 'jueces'}`];
   if (d1 || d2) parts.push(`${d1 + d2} rondas`);
+  parts.push(SC.hasTop8 === false ? 'sin Top 8' : 'con Top 8');
   el.textContent = parts.join(' · ');
 }
 
@@ -1336,6 +1353,7 @@ function startApp() {
   S.roundsD1 = d1 > 0 ? d1 : 8;
   S.roundsD2 = d2 > 0 ? d2 : 0;
   S.roundMinutes = mins > 0 ? mins : 50;
+  S.hasTop8 = SC.hasTop8 !== false;
   S.numberingMode = SC.numberingMode || 'column';
   S.columns = SC.columns.map((c, ci) => ({
     name: c.name.trim() || colName(ci), dir: c.dir || 'down', orient: c.orient || 'v',
@@ -1760,7 +1778,7 @@ function renderFloor() {
       grpDiv.ondrop = e => { e.preventDefault(); grpDiv.classList.remove('drag-over'); dropJudge(key); };
       grpDiv.onclick = e => {
         if (tableEditMode) return;
-        if (e.target.closest('.assigned-chip')) return;
+        if (!selectedJudge && e.target.closest('.assigned-chip')) return;
         if (selectedJudge) dropJudge(key);
       };
 
@@ -1842,7 +1860,12 @@ function makeChip(name, onRemove, extraClass = 'assigned-chip', small = false) {
   nm.textContent = name;
   chip.appendChild(dot);
   chip.appendChild(nm);
-  chip.addEventListener('click', e => { e.stopPropagation(); onRemove(); });
+  chip.addEventListener('click', e => {
+    // Con un juez seleccionado, tocar un nombre asigna al grupo (no quita al otro juez)
+    if (selectedJudge || dragging) return;
+    e.stopPropagation();
+    onRemove();
+  });
   return chip;
 }
 
@@ -2193,6 +2216,15 @@ function saveRound() {
     return;
   }
 
+  // Última ronda suiza en un evento sin Top 8: el torneo termina aquí
+  if (!record.isTop8 && S.hasTop8 === false && totalSwiss() > 0 && record.round >= totalSwiss()) {
+    S.finished = true;
+    save(); renderAll();
+    notify(`${label} GUARDADA — FIN DEL TORNEO`);
+    setTimeout(openEndModal, 400);
+    return;
+  }
+
   S.currentRound++;
   const d1 = S.roundsD1 || 0, d2 = S.roundsD2 || 0;
   let transition = null;
@@ -2497,6 +2529,7 @@ function hardReset() {
     const x = document.getElementById(id); x.value = ''; delete x.dataset.manual;
   });
   document.getElementById('s-round-min').value = 50;
+  setPlayoff(true);
   document.getElementById('s-rounds-info').textContent = '';
   document.getElementById('round-notes').value = '';
   renderTimer();
@@ -2722,6 +2755,7 @@ function confirmDay2() {
 function openTop8Modal() {
   if (editGuard()) return;
   if (S.isTop8) { notify('EL TOP 8 YA ESTÁ EN CURSO'); return; }
+  if (S.finished) { notify('EL TORNEO YA FINALIZÓ — usa DESHACER si necesitas continuar'); return; }
   const played = S.currentRound - 1;
   const pending = totalSwiss() - played;
   const head = document.getElementById('top8-headline');
@@ -2733,7 +2767,20 @@ function openTop8Modal() {
   renderJudgePicker('top8-judges-list');
   openModal('top8-modal');
 }
+function finishWithoutTop8() {
+  closeModal('top8-modal');
+  if (!S.rounds.length) { notify('⚠ AÚN NO HAY RONDAS GUARDADAS'); return; }
+  const last = S.rounds[S.rounds.length - 1];
+  if (!confirm(`¿Finalizar el torneo después de ${getDayRoundLabel(last.round).label}, sin Top 8?`)) return;
+  S.hasTop8 = false;
+  S.currentRound = last.round; // no hay ronda siguiente
+  S.assignments = {}; S.extensions = {};
+  S.finished = true;
+  save(); renderAll();
+  openEndModal();
+}
 function confirmTop8() {
+  S.hasTop8 = true;
   if (!top8SelectedJudges.size) { alert('Selecciona al menos un juez para el Top 8.'); return; }
   S.isTop8 = true;
   S.top8Start = S.currentRound;
@@ -2859,7 +2906,7 @@ function openEndModal() {
   info.innerHTML = `
     <div style="font-size:1rem;font-weight:800;margin-bottom:6px;">${esc(S.eventName)}</div>
     <div style="font-size:0.82rem;">
-      ${d1 > 0 ? `Día 1: ${d1} rondas` : ''}${d2 > 0 ? ` &nbsp;|&nbsp; Día 2: ${d2} rondas` : ''} &nbsp;|&nbsp; Top 8 completado
+      ${d2 > 0 ? `Día 1: ${d1} rondas &nbsp;|&nbsp; Día 2: ${d2} rondas` : `Suizo: ${d1} rondas`} &nbsp;|&nbsp; ${S.top8Start ? 'Top 8 completado' : 'Sin Top 8'}
     </div>
     <div style="font-size:0.78rem;margin-top:4px;color:#444;">
       Total: ${S.rounds.length} rondas registradas &nbsp;|&nbsp; ${S.players} jugadores
