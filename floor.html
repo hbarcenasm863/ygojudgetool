@@ -536,6 +536,23 @@ body.selecting .table-group:not(.inactive):hover { border-color: var(--primary);
   .bb-card { padding: 8px 10px; }
   .judges-list .judge-card { min-width: 180px; }
 }
+@media (max-height: 820px) {
+  .floor-wrap { padding: 8px 12px 10px; gap: 6px; }
+  .guide-bar { padding: 4px 6px 4px 10px; }
+  #guide-text { font-size: 0.8rem; }
+  .guide-icon { width: 26px; height: 26px; }
+  .stat { padding: 3px 8px; }
+  .stat .v { font-size: 0.95rem; }
+  .pz-sup-row, .pz-inf-row { min-height: 34px; }
+  .pz { padding: 3px; }
+  .bottom-bar { padding: 6px 10px; gap: 8px; }
+  .bb-card { padding: 6px 10px; gap: 4px; }
+  .round-timer { font-size: 1.55rem; }
+  .actions-card .btn { min-height: 32px; padding-top: 4px; padding-bottom: 4px; }
+  .notes-card textarea { min-height: 40px; }
+  #ext-panel { max-height: 64px; }
+  .table-cell { padding: 6px; }
+}
 @media print { header, .bottom-bar, .judges-panel { display: none; } }
 </style>
 </head>
@@ -559,6 +576,8 @@ body.selecting .table-group:not(.inactive):hover { border-color: var(--primary);
       <div class="dropdown" id="main-menu" role="menu">
         <button class="app-only" onclick="closeMenu();exportBackup()">💾 Descargar respaldo .json</button>
         <button onclick="closeMenu();document.getElementById('import-file').click()">📂 Cargar respaldo</button>
+        <button class="app-only" onclick="closeMenu();if(!editGuard())openDay2CutModal()">✂️ Configurar corte a Día 2</button>
+        <button class="app-only" onclick="closeMenu();openTop8Modal()">🏆 Iniciar / finalizar playoff</button>
         <button class="app-only" onclick="closeMenu();exportTxt()">📝 Exportar historial .txt</button>
         <button class="app-only" onclick="closeMenu();exportMapPDF('all')">🖨️ Mapas PDF (todas las rondas)</button>
         <hr class="app-only">
@@ -574,7 +593,7 @@ body.selecting .table-group:not(.inactive):hover { border-color: var(--primary);
   <div class="setup-hero">
     <h2>Configura tu evento</h2>
     <p>Tres pasos y listo: datos del torneo, distribución de mesas y equipo de jueces.</p>
-    <div class="notice">⚠ Registro tardío = Match Loss Ronda 1 (regla oficial KDE)</div>
+    <div class="notice">📘 FAQ Regional Qualifiers 2026‑2027: rondas de 50 min · match sin terminar = <b>Doble Derrota</b> · registro tardío = Match Loss por cada ronda perdida</div>
   </div>
 
   <div class="card">
@@ -595,13 +614,22 @@ body.selecting .table-group:not(.inactive):hover { border-color: var(--primary);
         </div>
         <div id="nm-desc" class="help">Zigzag vertical por columna</div>
       </div>
+      <div class="fg" style="min-width:300px;">
+        <span class="label">Tipo de evento</span>
+        <div class="seg" role="group" aria-label="Tipo de evento">
+          <button id="et-regional" class="on" onclick="setEventType('regional')">Regional Qualifier</button>
+          <button id="et-ycs" onclick="setEventType('ycs')">YCS / 2 días</button>
+          <button id="et-custom" onclick="setEventType('custom')">Personalizado</button>
+        </div>
+        <div id="et-desc" class="help">Solo suizo, sin Top Cut (FAQ 2026‑2027)</div>
+      </div>
       <div class="fg" style="min-width:200px;">
         <span class="label">Playoff</span>
         <div class="seg" role="group" aria-label="Playoff">
-          <button id="po-yes" class="on" onclick="setPlayoff(true)">Con Top 8</button>
-          <button id="po-no" onclick="setPlayoff(false)">Sin Top 8</button>
+          <button id="po-yes" onclick="setPlayoff(true)">Con Top 8</button>
+          <button id="po-no" class="on" onclick="setPlayoff(false)">Sin Top 8</button>
         </div>
-        <div id="po-desc" class="help">Al terminar el suizo se ofrece el Top 8</div>
+        <div id="po-desc" class="help">El torneo termina con la última ronda suiza</div>
       </div>
     </div>
     <div class="info-line" id="s-rounds-info"></div>
@@ -682,6 +710,7 @@ body.selecting .table-group:not(.inactive):hover { border-color: var(--primary);
           <button class="btn sm danger" onclick="timerResetAsk()" aria-label="Reiniciar reloj" title="Reiniciar reloj">↺</button>
         </div>
       </div>
+      <div id="timer-note" class="help" style="font-size:0.72rem;"></div>
     </div>
 
     <div class="bb-card actions-card" id="action-section">
@@ -810,7 +839,8 @@ body.selecting .table-group:not(.inactive):hover { border-color: var(--primary);
       <span class="label">Jueces para el Top 8 (toca para incluir/excluir)</span>
       <div id="top8-judges-list" class="pick-list"></div>
     </div>
-    <p class="help">Mesas del playoff: <b>Cuartos 4</b> · <b>Semifinal 2</b> · <b>Final 1</b>. Los jueces no seleccionados pasan a OFF.</p>
+    <p class="help">Mesas del playoff: <b>Cuartos 4</b> · <b>Semifinal 2</b> · <b>Final 1</b>. Rondas <b>sin límite de tiempo</b> (se sanciona Slow Play). Los jueces no seleccionados pasan a OFF.</p>
+    <p class="help" id="top8-regional-note" style="display:none;margin-top:6px;">En un Regional Qualifier el Top 8 es <b>no oficial</b>: solo si el TO lo anunció antes del evento, y no afecta invitaciones ni premios de KDE.</p>
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('top8-modal')">Cancelar</button>
       <button class="btn" onclick="finishWithoutTop8()">🏁 Finalizar sin Top 8</button>
@@ -898,12 +928,21 @@ body.selecting .table-group:not(.inactive):hover { border-color: var(--primary);
       <div class="help-step"><div class="n">🔄</div><div><b>Cambiar estado</b><p>Toca la etiqueta de estado del juez (PISO ▾) para ponerlo en Side, Lunch, Break u Off. Lunch y Break inician un temporizador que avisa cuando debe regresar.</p></div></div>
       <div class="help-step"><div class="n">⏱</div><div><b>Extensión de tiempo</b><p>Sin juez seleccionado, toca el número de una mesa: registra los minutos y marca si fue por Ruling o Deck Check. La lista de abajo te lleva a cada mesa.</p></div></div>
       <div class="help-step"><div class="n">🔧</div><div><b>Activar o desactivar mesas</b><p>Pulsa "Editar mesas" y toca las mesas o el botón (−) de un grupo. Pulsa "Listo" para volver.</p></div></div>
+      <div class="help-step"><div class="n">📘</div><div><b>Reglas rápidas (FAQ Regional 2026‑2027)</b><p>Rondas de 50 min. Si el match no termina a tiempo es <b>Doble Derrota</b>; un match termina cuando un duelista gana o pierde 2 duelos (si hay 3 duelos sin ganador y queda tiempo, se juega un 4º). Registro tardío: Match Loss por cada ronda perdida. Regionales: solo suizo, sin Top Cut.</p></div></div>
       <div class="help-step"><div class="n">💾</div><div><b>Guardar la ronda</b><p>Al terminar, pulsa "Guardar ronda". La siguiente ronda puede empezar reciclando las asignaciones. Descarga un respaldo .json desde el menú ⋯ de vez en cuando.</p></div></div>
     </div>
     <div class="modal-actions"><button class="btn primary lg" onclick="closeModal('help-modal')">¡Entendido!</button></div>
   </div>
 </div>
 
+<div id="stale-banner" role="alert" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(15,23,42,.65);align-items:center;justify-content:center;padding:16px;">
+  <div class="modal narrow" style="text-align:center;">
+    <div style="font-size:2.4rem;">⚠️</div>
+    <div class="modal-title" style="justify-content:center;">El evento se abrió en otra pestaña</div>
+    <p class="modal-sub" style="margin:0 0 14px;">Para no borrar datos, esta pestaña dejó de guardar. Recárgala para ver la información más reciente (o ciérrala y usa la otra).</p>
+    <button class="btn primary lg block" onclick="location.reload()">↻ Recargar</button>
+  </div>
+</div>
 <div class="notify" id="notify" role="status" aria-live="polite"></div>
 <input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="importBackup(this)">
 
@@ -927,7 +966,7 @@ const PATROL_META = {
 // ═══════════ ESTADO ═══════════
 function defaultState() {
   return {
-    eventName: '', players: 0, roundsD1: 8, roundsD2: 0, roundMinutes: 50, hasTop8: true,
+    eventName: '', players: 0, roundsD1: 8, roundsD2: 0, roundMinutes: 50, hasTop8: true, eventType: 'custom',
     isTop8: false, top8Start: null, finished: false, numberingMode: 'column',
     columns: [],     // [{name, dir, orient, groups:[{size, active, off:[índices de mesa]}]}]
     judges: [],      // [{name, ci, status, lunchEnd, lunchNotified}]
@@ -940,7 +979,7 @@ function defaultState() {
   };
 }
 let S = defaultState();
-let SC = { columns: [], judges: [], numberingMode: 'column' }; // estado temporal de configuración
+let SC = { columns: [], judges: [], numberingMode: 'column', eventType: 'regional', hasTop8: false }; // estado temporal de configuración
 let EC = [];                 // copia de columnas en "Editar venue"
 let editingRound = null;     // índice de la ronda del historial en edición
 let selectedJudge = null;    // asignación por toque
@@ -988,7 +1027,15 @@ function persistable() {
   delete o._editBackup;
   return o;
 }
+let staleTab = false;
+window.addEventListener('storage', e => {
+  if (e.key !== STORAGE_KEY || staleTab) return;
+  staleTab = true;
+  const bar = document.getElementById('stale-banner');
+  if (bar) bar.style.display = 'flex';
+});
 function save() {
+  if (staleTab) { notify('⚠ Esta pestaña está desactualizada: el evento se modificó en otra pestaña. Recarga antes de seguir.'); return; }
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(persistable())); }
   catch (e) { notify('⚠ NO SE PUDO GUARDAR — exporta un respaldo .json'); }
 }
@@ -1273,6 +1320,20 @@ function renderVenuePreview() {
       return `<div class="vp-grp">${Math.min(...arr)}–${Math.max(...arr)}</div>`;
     }).join('')}</div>`).join('')}</div>`;
 }
+function setEventType(type) {
+  SC.eventType = type;
+  ['regional', 'ycs', 'custom'].forEach(t => document.getElementById(`et-${t}`).classList.toggle('on', t === type));
+  document.getElementById('et-desc').textContent = {
+    regional: 'Solo suizo, sin Top Cut (FAQ 2026‑2027)',
+    ycs: 'Día 1 + Día 2 con corte y Top 8 (para más de 128 jugadores)',
+    custom: 'Tú defines rondas y playoff'
+  }[type];
+  if (type === 'regional') setPlayoff(false);
+  if (type === 'ycs') setPlayoff(true);
+  ['s-rounds-d1', 's-rounds-d2'].forEach(id => delete document.getElementById(id).dataset.manual);
+  if (type === 'regional') document.getElementById('s-rounds-d2').value = '';
+  updateTableCalc();
+}
 function setPlayoff(on) {
   SC.hasTop8 = on;
   document.getElementById('po-yes').classList.toggle('on', on);
@@ -1292,18 +1353,34 @@ function updateSetupSummary() {
   el.textContent = parts.join(' · ');
 }
 
-function calcRounds(players) {
-  // Tabla de referencia (verificar contra la política vigente de Konami)
-  if (players <= 0)    return { d1: 0, d2: 0, swiss: 0, top: 0 };
-  if (players <= 8)    return { d1: 4, d2: 0, swiss: 4,  top: 0 };
-  if (players <= 16)   return { d1: 5, d2: 0, swiss: 5,  top: 0 };
-  if (players <= 32)   return { d1: 6, d2: 0, swiss: 6,  top: 0 };
-  if (players <= 64)   return { d1: 7, d2: 0, swiss: 7,  top: 0 };
-  if (players <= 128)  return { d1: 8, d2: 0, swiss: 8,  top: 0 };
-  if (players <= 256)  return { d1: 7, d2: 4, swiss: 11, top: 8 };
-  if (players <= 512)  return { d1: 8, d2: 4, swiss: 12, top: 8 };
-  if (players <= 1024) return { d1: 8, d2: 5, swiss: 13, top: 8 };
-  return                      { d1: 9, d2: 5, swiss: 14, top: 8 };
+// Regional Qualifiers — FAQ KDE 2026‑2027: solo suizo, sin Top Cut
+function regionalRounds(players) {
+  if (players <= 0) return 0;
+  if (players <= 8) return 3;
+  if (players <= 16) return 4;
+  if (players <= 32) return 5;
+  if (players <= 64) return 6;
+  if (players <= 128) return 7;
+  if (players <= 256) return 8;
+  if (players <= 512) return 9;
+  return 10;
+}
+function calcRounds(players, type) {
+  type = type || SC.eventType || 'regional';
+  if (players <= 0) return { d1: 0, d2: 0, swiss: 0, top: 0, src: '' };
+  if (type === 'regional') {
+    const n = regionalRounds(players);
+    return { d1: n, d2: 0, swiss: n, top: 0, src: 'FAQ Regional Qualifiers 2026‑2027' };
+  }
+  if (type === 'ycs') {
+    // Eventos de 2 días (referencia Tournament Policy, Tier 3) — verificar con la FAQ del evento
+    if (players <= 128) { const n = regionalRounds(players); return { d1: n, d2: 0, swiss: n, top: 8, src: 'referencia; verifica la FAQ del evento' }; }
+    if (players <= 256)  return { d1: 7, d2: 4, swiss: 11, top: 8, src: 'referencia Tier 3; verifica la FAQ del evento' };
+    if (players <= 512)  return { d1: 8, d2: 4, swiss: 12, top: 8, src: 'referencia Tier 3; verifica la FAQ del evento' };
+    if (players <= 1024) return { d1: 8, d2: 5, swiss: 13, top: 8, src: 'referencia Tier 3; verifica la FAQ del evento' };
+    return                      { d1: 9, d2: 5, swiss: 14, top: 8, src: 'referencia Tier 3; verifica la FAQ del evento' };
+  }
+  return { d1: 0, d2: 0, swiss: 0, top: 0, src: '' };
 }
 
 function updateTableCalc() {
@@ -1331,11 +1408,12 @@ function updateTableCalc() {
       if (r.swiss > 0) {
         const topStr = r.top > 0 ? ` · Top ${r.top}` : '';
         const d2str = r.d2 > 0 ? ` (${r.d1} + ${r.d2})` : '';
-        infoEl.textContent = `💡 Sugerencia: ${r.swiss} rondas suizas${d2str}${topStr} — verifica con la tabla oficial vigente`;
-        infoEl.style.color = '#1a56a0';
-      } else infoEl.textContent = '';
+        infoEl.textContent = `💡 ${r.swiss} rondas suizas${d2str}${topStr || ' · sin Top Cut'} — ${r.src}`;
+        infoEl.style.color = '';
+      } else infoEl.textContent = SC.eventType === 'custom' ? 'Modo personalizado: escribe tú el número de rondas.' : '';
     }
   }
+  updateSetupSummary();
 }
 
 function startApp() {
@@ -1346,6 +1424,10 @@ function startApp() {
   const d1 = parseInt(document.getElementById('s-rounds-d1').value);
   const d2 = parseInt(document.getElementById('s-rounds-d2').value);
   const mins = parseInt(document.getElementById('s-round-min').value);
+  if (!(d1 > 0)) { alert('Indica cuántas rondas suizas se juegan el Día 1 (o el único día).'); document.getElementById('s-rounds-d1').focus(); return; }
+  let venueT = 0; SC.columns.forEach(c => c.groups.forEach(g => venueT += g.size));
+  if (players > 0 && venueT < Math.ceil(players / 2) &&
+      !confirm(`El venue tiene ${venueT} mesas y se necesitan ${Math.ceil(players / 2)} para ${players} jugadores. ¿Iniciar de todas formas?`)) return;
 
   S = defaultState();
   S.eventName = name;
@@ -1353,7 +1435,8 @@ function startApp() {
   S.roundsD1 = d1 > 0 ? d1 : 8;
   S.roundsD2 = d2 > 0 ? d2 : 0;
   S.roundMinutes = mins > 0 ? mins : 50;
-  S.hasTop8 = SC.hasTop8 !== false;
+  S.hasTop8 = SC.hasTop8 === true;
+  S.eventType = SC.eventType || 'regional';
   S.numberingMode = SC.numberingMode || 'column';
   S.columns = SC.columns.map((c, ci) => ({
     name: c.name.trim() || colName(ci), dir: c.dir || 'down', orient: c.orient || 'v',
@@ -2069,19 +2152,29 @@ function tickTimer() {
 }
 function renderTimer() {
   const el = document.getElementById('round-timer');
+  const note = document.getElementById('timer-note');
   const elapsed = Math.floor(S.timerElapsed / 1000);
+  const mmss = n => `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
+  if (S.isTop8) {
+    // Top 8: rondas sin límite de tiempo (se vigila Slow Play)
+    el.textContent = mmss(elapsed);
+    el.style.color = 'var(--muted)';
+    if (note) note.textContent = '⏱ Top 8 sin límite de tiempo — vigilar Slow Play';
+    return;
+  }
   const dur = roundSecs();
   if (elapsed < dur) {
     const rem = dur - elapsed;
-    el.textContent = `${String(Math.floor(rem / 60)).padStart(2, '0')}:${String(rem % 60).padStart(2, '0')}`;
+    el.textContent = mmss(rem);
     el.style.color = rem <= 60 ? 'var(--red)' : rem <= 300 ? 'var(--yellow)' : 'var(--green)';
+    if (note) note.textContent = 'Al agotarse: match sin terminar = Doble Derrota';
   } else {
-    const extra = elapsed - dur;
-    el.textContent = `+${String(Math.floor(extra / 60)).padStart(2, '0')}:${String(extra % 60).padStart(2, '0')}`;
+    el.textContent = `+${mmss(elapsed - dur)}`;
     el.style.color = 'var(--red)';
+    if (note) note.textContent = 'Tiempo agotado · solo siguen las mesas con extensión';
     if (S.timerRunning && !timeUpNotified) {
       timeUpNotified = true; // una sola vez por ronda
-      notify('⏰ TIEMPO — INICIA EL PROCEDIMIENTO DE FIN DE RONDA');
+      notify('⏰ TIEMPO — Matches sin terminar: DOBLE DERROTA (salvo mesas con extensión de tiempo)');
       alertSignal();
     }
   }
@@ -2184,6 +2277,7 @@ function snapshotRecord() {
     columns: clone(S.columns),
     numberingMode: S.numberingMode || 'column',
     isTop8: isTop8Round(S.currentRound),
+    players: S.players,
     extensions: clone(S.extensions || {})
   };
 }
@@ -2250,6 +2344,7 @@ function undoLastRound() {
   S.currentRound = last.round;
   S.assignments = clone(last.assignments || {});
   S.extensions = clone(last.extensions || {});
+  if (last.players !== undefined) S.players = last.players;
   // Restaurar estados del snapshot sin perder jueces agregados ni almuerzos en curso
   const snap = Object.fromEntries((last.judges || []).map(j => [j.name, j]));
   S.judges.forEach(j => {
@@ -2475,6 +2570,9 @@ function applyEditVenue() {
   const hasAssign = Object.entries(S.assignments).some(([k, v]) => k === 'patrol' ? Object.values(v || {}).some(a => a.length) : (v || []).length);
   if (!sameShape && hasAssign &&
       !confirm('Cambiaste el número de columnas o grupos.\nLas asignaciones y extensiones de tiempo de esta ronda se limpiarán (el patrullaje se conserva). ¿Continuar?')) return;
+  const sizesChanged = sameShape && EC.some((c, i) => c.groups.some((g, gi) => g.size !== S.columns[i].groups[gi].size));
+  if (sizesChanged && (hasAssign || Object.keys(S.extensions || {}).length) &&
+      !confirm('Cambiaste el tamaño de algún grupo: las mesas siguientes se renumeran.\nLas asignaciones y extensiones se quedan en el mismo lugar físico, pero su número de mesa puede cambiar. ¿Continuar?')) return;
   S.columns = EC.map((c, ci) => ({
     name: (c.name || '').trim() || colName(ci), dir: c.dir || 'down', orient: c.orient || 'v',
     groups: c.groups.map(g => ({ size: g.size, active: g.active !== false, off: (g.off || []).filter(i => i < g.size) }))
@@ -2524,12 +2622,12 @@ function hardReset() {
   S = defaultState();
   editingRound = null; selectedJudge = null; dragging = null; tableEditMode = false;
   document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open'));
-  SC = { columns: defaultSetupColumns(), judges: [], numberingMode: 'column' };
+  SC = { columns: defaultSetupColumns(), judges: [], numberingMode: 'column', eventType: 'regional', hasTop8: false };
   ['s-name', 's-players', 's-rounds-d1', 's-rounds-d2', 's-judge-inp'].forEach(id => {
     const x = document.getElementById(id); x.value = ''; delete x.dataset.manual;
   });
   document.getElementById('s-round-min').value = 50;
-  setPlayoff(true);
+  setEventType('regional');
   document.getElementById('s-rounds-info').textContent = '';
   document.getElementById('round-notes').value = '';
   renderTimer();
@@ -2763,6 +2861,7 @@ function openTop8Modal() {
     head.textContent = `⚠ Aún faltan ${pending} ronda${pending > 1 ? 's' : ''} suizas de ${totalSwiss()}. Si inicias el Top 8 ahora, la ronda actual será Cuartos.`;
     head.className = 'callout warn';
   } else { head.textContent = '✅ Swiss completado — 8 jugadores al playoff'; head.className = 'callout danger'; }
+  document.getElementById('top8-regional-note').style.display = S.eventType === 'regional' ? '' : 'none';
   top8SelectedJudges = new Set(S.judges.filter(j => j.status !== 'off').map(j => j.name));
   renderJudgePicker('top8-judges-list');
   openModal('top8-modal');
@@ -2780,10 +2879,16 @@ function finishWithoutTop8() {
   openEndModal();
 }
 function confirmTop8() {
+  if (!top8SelectedJudges.size) { alert('Selecciona al menos un juez para el Top 8.'); return; }
+  const hasWork = Object.entries(S.assignments).some(([k, v]) => k === 'patrol' ? Object.values(v || {}).some(a => a.length) : (v || []).length)
+    || Object.keys(S.extensions || {}).length || (document.getElementById('round-notes').value || '').trim();
+  if (hasWork && !confirm('La ronda actual tiene asignaciones, extensiones o notas sin guardar.\nAl iniciar el Top 8 se limpian. ¿Continuar?\n\n(Si quieres conservarlas, cancela y pulsa "Guardar ronda" primero.)')) return;
   S.hasTop8 = true;
   if (!top8SelectedJudges.size) { alert('Selecciona al menos un juez para el Top 8.'); return; }
   S.isTop8 = true;
   S.top8Start = S.currentRound;
+  S.notes = ''; document.getElementById('round-notes').value = '';
+  timerReset();
   S.judges.forEach(j => {
     if (!top8SelectedJudges.has(j.name)) j.status = 'off';
     else { j.status = 'active'; j.lunchEnd = null; j.lunchNotified = false; }
@@ -2906,7 +3011,7 @@ function openEndModal() {
   info.innerHTML = `
     <div style="font-size:1rem;font-weight:800;margin-bottom:6px;">${esc(S.eventName)}</div>
     <div style="font-size:0.82rem;">
-      ${d2 > 0 ? `Día 1: ${d1} rondas &nbsp;|&nbsp; Día 2: ${d2} rondas` : `Suizo: ${d1} rondas`} &nbsp;|&nbsp; ${S.top8Start ? 'Top 8 completado' : 'Sin Top 8'}
+      Suizo: ${S.rounds.filter(r => !recordIsTop8(r)).length} rondas jugadas${d2 > 0 ? ` (plan: ${d1} + ${d2})` : ''} &nbsp;|&nbsp; ${S.top8Start ? 'Top 8 completado' : 'Sin Top 8'}
     </div>
     <div style="font-size:0.78rem;margin-top:4px;color:#444;">
       Total: ${S.rounds.length} rondas registradas &nbsp;|&nbsp; ${S.players} jugadores
@@ -2958,7 +3063,7 @@ document.getElementById('ext-min').addEventListener('keydown', e => { if (e.key 
 // ═══════════ INICIO ═══════════
 try { load(); } catch (e) { console.error('CRASH in load():', e); }
 startLunchWatcher();
-SC = { columns: defaultSetupColumns(), judges: [], numberingMode: 'column' };
+SC = { columns: defaultSetupColumns(), judges: [], numberingMode: 'column', eventType: 'regional', hasTop8: false };
 if (S.columns.length && S.judges.length) {
   showApp();
 } else {
