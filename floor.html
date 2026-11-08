@@ -606,13 +606,14 @@ body.selecting .table-group:not(.inactive):hover { border-color: var(--primary);
       <div class="fg" style="max-width:130px;"><label for="s-rounds-d1">Rondas día 1</label><input type="number" id="s-rounds-d1" min="1" max="20" placeholder="—" oninput="this.dataset.manual='1';updateSetupSummary()"></div>
       <div class="fg" style="max-width:130px;"><label for="s-rounds-d2">Rondas día 2</label><input type="number" id="s-rounds-d2" min="0" max="20" placeholder="—" oninput="this.dataset.manual='1';updateSetupSummary()"></div>
       <div class="fg" style="max-width:130px;"><label for="s-round-min">Minutos por ronda</label><input type="number" id="s-round-min" min="1" max="120" value="50"></div>
-      <div class="fg" style="min-width:230px;">
+      <div class="fg" style="min-width:330px;">
         <span class="label">Numeración de mesas</span>
         <div class="seg" role="group" aria-label="Numeración">
           <button id="nm-col-btn" class="on" onclick="setNumberingMode('column')">Por columna</button>
-          <button id="nm-row-btn" onclick="setNumberingMode('row')">Por fila</button>
+          <button id="nm-row-btn" onclick="setNumberingMode('row')">Por fila (zigzag)</button>
+          <button id="nm-rowltr-btn" onclick="setNumberingMode('row-ltr')">Por fila (desde A)</button>
         </div>
-        <div id="nm-desc" class="help">Zigzag vertical por columna</div>
+        <div id="nm-desc" class="help">Columna por columna. Usa ↓ / ↑ en cada columna para hacer (o no) el zigzag.</div>
       </div>
       <div class="fg" style="min-width:300px;">
         <span class="label">Tipo de evento</span>
@@ -883,7 +884,17 @@ body.selecting .table-group:not(.inactive):hover { border-color: var(--primary);
   <div class="modal">
     <div class="modal-title">🗺️ Editar venue <button class="close-x" onclick="closeModal('edit-venue-modal')">✕</button></div>
     <p class="modal-sub">Los cambios se aplican de inmediato. Las asignaciones se conservan si no cambias el número de columnas ni de grupos. El historial no se modifica.</p>
+    <div class="fg" style="margin-bottom:12px;">
+      <span class="label">Numeración de mesas</span>
+      <div class="seg" role="group" aria-label="Numeración">
+        <button id="ev-nm-column" onclick="setEditNumbering('column')">Por columna</button>
+        <button id="ev-nm-row" onclick="setEditNumbering('row')">Por fila (zigzag)</button>
+        <button id="ev-nm-row-ltr" onclick="setEditNumbering('row-ltr')">Por fila (desde A)</button>
+      </div>
+      <div id="ev-nm-desc" class="help"></div>
+    </div>
     <div id="edit-cols-list"></div>
+    <div class="venue-preview" id="edit-venue-preview" style="margin-bottom:12px;"></div>
     <button class="btn sm" onclick="editAddColumn()">＋ Agregar columna</button>
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal('edit-venue-modal')">Cancelar</button>
@@ -1087,15 +1098,23 @@ function applyLoadedState(d) {
 
 // ═══════════ NUMERACIÓN DE MESAS (una sola fuente de verdad) ═══════════
 // Devuelve { 'ci-gi': [números de mesa en orden ascendente] }
+// Modos: 'column' (columna por columna; ↓/↑ por columna), 'row' (fila por fila en zigzag),
+// 'row-ltr' (fila por fila, cada fila empieza otra vez en la primera columna)
+function isRowMode(mode) { return mode === 'row' || mode === 'row-ltr'; }
+const NUMBERING_DESC = {
+  'column': 'Columna por columna. Usa ↓ / ↑ en cada columna para hacer (o no) el zigzag.',
+  'row': 'Fila por fila en zigzag: la 2ª fila vuelve desde la última columna.',
+  'row-ltr': 'Fila por fila: cada fila empieza otra vez en la primera columna (ej. A: 1… I: 54, luego A: 55…).'
+};
 function numberingFor(cols, mode) {
   const res = {};
   if (!cols || !cols.length) return res;
   let n = 1;
-  if (mode === 'row') {
+  if (isRowMode(mode)) {
     const maxG = Math.max(...cols.map(c => c.groups.length));
     for (let row = 0; row < maxG; row++) {
       const order = cols.map((_, i) => i);
-      if (row % 2 === 1) order.reverse();
+      if (mode === 'row' && row % 2 === 1) order.reverse();
       order.forEach(ci => {
         const g = cols[ci].groups[row];
         if (!g) return;
@@ -1117,6 +1136,7 @@ function numberingFor(cols, mode) {
 function displayNums(nums, col, gi, mode) {
   const isH = (col.orient || 'v') === 'h';
   if (mode === 'row') return gi % 2 === 1 ? [...nums].reverse() : nums;
+  if (mode === 'row-ltr') return nums;
   if (isH) {
     const rev = (gi % 2 === 1) !== (col.dir === 'up');
     return rev ? [...nums].reverse() : nums;
@@ -1126,7 +1146,7 @@ function displayNums(nums, col, gi, mode) {
 // Orden visual de los grupos dentro de la columna
 function displayGroups(col, mode) {
   const list = col.groups.map((grp, gi) => ({grp, gi}));
-  return (mode !== 'row' && col.dir === 'up') ? list.reverse() : list;
+  return (!isRowMode(mode) && col.dir === 'up') ? list.reverse() : list;
 }
 function groupHasActiveTables(g) { return g.active && (g.off || []).length < g.size; }
 
@@ -1228,7 +1248,7 @@ function renderColumnEditor(el, cols, mode, onChange) {
         <span class="rm" data-ci="${ci}" data-gi="${gi}" data-type="rmgrp" role="button" tabindex="0" aria-label="Quitar grupo" title="Quitar grupo">✕</span>
       </div>`;
     }).join('');
-    const dirBtn = mode === 'row' ? '' : `<button class="btn sm ${col.dir === 'up' ? 'warn' : ''}" data-ci="${ci}" data-type="dir" title="Dirección de la numeración">${col.dir === 'up' ? '↑ INV' : '↓ NOR'}</button>`;
+    const dirBtn = isRowMode(mode) ? '' : `<button class="btn sm ${col.dir === 'up' ? 'warn' : ''}" data-ci="${ci}" data-type="dir" title="Dirección de la numeración">${col.dir === 'up' ? '↑ INV' : '↓ NOR'}</button>`;
     const orientBtn = `<button class="btn sm ${col.orient === 'h' ? 'warn' : ''}" data-ci="${ci}" data-type="orient" title="Orientación de las mesas">${col.orient === 'h' ? 'HORIZ' : 'VERT'}</button>`;
     return `<div class="col-row">
       <div class="col-row-header" style="flex-wrap:wrap;">
@@ -1304,21 +1324,24 @@ function setNumberingMode(mode) {
   SC.numberingMode = mode;
   document.getElementById('nm-col-btn').classList.toggle('on', mode === 'column');
   document.getElementById('nm-row-btn').classList.toggle('on', mode === 'row');
-  document.getElementById('nm-desc').textContent = mode === 'column' ? 'Zigzag vertical por columna' : 'Zigzag horizontal por fila';
+  document.getElementById('nm-rowltr-btn').classList.toggle('on', mode === 'row-ltr');
+  document.getElementById('nm-desc').textContent = NUMBERING_DESC[mode];
   renderSetupCols();
+}
+function venuePreviewHTML(cols, mode) {
+  const nums = numberingFor(cols, mode);
+  return `<div class="vp-title">Vista previa de la numeración</div><div class="vp-cols">${cols.map((col, ci) =>
+    `<div class="vp-col"><div class="vp-head">${esc(col.name || colName(ci))}</div>${displayGroups(col, mode).map(({gi}) => {
+      const arr = nums[`${ci}-${gi}`] || [];
+      return `<div class="vp-grp">${Math.min(...arr)}–${Math.max(...arr)}</div>`;
+    }).join('')}</div>`).join('')}</div>`;
 }
 function renderVenuePreview() {
   const el = document.getElementById('venue-preview');
   if (!el) return;
   if (!SC.columns.length) { el.style.display = 'none'; return; }
   el.style.display = '';
-  const mode = SC.numberingMode;
-  const nums = numberingFor(SC.columns, mode);
-  el.innerHTML = `<div class="vp-title">Vista previa del venue</div><div class="vp-cols">${SC.columns.map((col, ci) =>
-    `<div class="vp-col"><div class="vp-head">${esc(col.name || colName(ci))}</div>${displayGroups(col, mode).map(({gi}) => {
-      const arr = nums[`${ci}-${gi}`] || [];
-      return `<div class="vp-grp">${Math.min(...arr)}–${Math.max(...arr)}</div>`;
-    }).join('')}</div>`).join('')}</div>`;
+  el.innerHTML = venuePreviewHTML(SC.columns, SC.numberingMode);
 }
 function setEventType(type) {
   SC.eventType = type;
@@ -1840,7 +1863,7 @@ function renderFloor() {
     hdr.textContent = col.name + ' ';
     const tag = document.createElement('span');
     tag.style.cssText = 'font-size:0.6rem;opacity:0.75';
-    tag.textContent = mode === 'row' ? 'FILA' : `${col.dir === 'up' ? '↑' : '↓'}${isH ? 'H' : 'V'}`;
+    tag.textContent = isRowMode(mode) ? 'FILA' : `${col.dir === 'up' ? '↑' : '↓'}${isH ? 'H' : 'V'}`;
     hdr.appendChild(tag);
     colDiv.appendChild(hdr);
 
@@ -2539,15 +2562,21 @@ function openEditVenue() {
   if (editGuard()) return;
   if (S.isTop8) { notify('EL VENUE NO SE USA DURANTE EL TOP 8'); return; }
   EC = clone(S.columns); // copia completa: conserva dirección, orientación y mesas desactivadas
+  ECmode = S.numberingMode || 'column';
   renderEditCols();
   openModal('edit-venue-modal');
 }
+let ECmode = 'column';
+function setEditNumbering(mode) { ECmode = mode; renderEditCols(); }
 function editAddColumn() {
   EC.push({ name: colName(EC.length), dir: 'down', orient: 'v', groups: [{size:3, active:true, off:[]},{size:3, active:true, off:[]},{size:3, active:true, off:[]}] });
   renderEditCols();
 }
 function renderEditCols() {
-  renderColumnEditor(document.getElementById('edit-cols-list'), EC, S.numberingMode || 'column', (action, ci, val) => {
+  ['column', 'row', 'row-ltr'].forEach(m => document.getElementById(`ev-nm-${m}`).classList.toggle('on', m === ECmode));
+  document.getElementById('ev-nm-desc').textContent = NUMBERING_DESC[ECmode];
+  document.getElementById('edit-venue-preview').innerHTML = EC.length ? venuePreviewHTML(EC, ECmode) : '';
+  renderColumnEditor(document.getElementById('edit-cols-list'), EC, ECmode, (action, ci, val) => {
     if (action === 'groupcount') return editSetGroupCount(ci, val);
     if (action === 'rmgrp') {
       if (EC[ci].groups.length <= 1) { notify('UNA COLUMNA NECESITA AL MENOS UN GRUPO'); return; }
@@ -2570,6 +2599,9 @@ function applyEditVenue() {
   const hasAssign = Object.entries(S.assignments).some(([k, v]) => k === 'patrol' ? Object.values(v || {}).some(a => a.length) : (v || []).length);
   if (!sameShape && hasAssign &&
       !confirm('Cambiaste el número de columnas o grupos.\nLas asignaciones y extensiones de tiempo de esta ronda se limpiarán (el patrullaje se conserva). ¿Continuar?')) return;
+  const modeChanged = ECmode !== (S.numberingMode || 'column');
+  if (modeChanged && (hasAssign || Object.keys(S.extensions || {}).length) &&
+      !confirm('Cambiaste la numeración de mesas: los números cambian, pero las asignaciones y extensiones se quedan en el mismo lugar físico. ¿Continuar?')) return;
   const sizesChanged = sameShape && EC.some((c, i) => c.groups.some((g, gi) => g.size !== S.columns[i].groups[gi].size));
   if (sizesChanged && (hasAssign || Object.keys(S.extensions || {}).length) &&
       !confirm('Cambiaste el tamaño de algún grupo: las mesas siguientes se renumeran.\nLas asignaciones y extensiones se quedan en el mismo lugar físico, pero su número de mesa puede cambiar. ¿Continuar?')) return;
@@ -2589,6 +2621,7 @@ function applyEditVenue() {
       if (!g || +idx >= g.size) delete S.extensions[k];
     });
   }
+  S.numberingMode = ECmode;
   save(); closeModal('edit-venue-modal'); renderAll();
   notify('✅ VENUE ACTUALIZADO');
 }
@@ -2747,7 +2780,7 @@ function buildMapPage(record) {
     html += `<div class="floor-map">`;
     cols.forEach((col, ci) => {
       const isH = (col.orient || 'v') === 'h';
-      const tag = mode === 'row' ? 'FILA' : `${col.dir === 'up' ? '↑' : '↓'} ${isH ? 'HORIZ' : 'VERT'}`;
+      const tag = isRowMode(mode) ? 'FILA' : `${col.dir === 'up' ? '↑' : '↓'} ${isH ? 'HORIZ' : 'VERT'}`;
       html += `<div class="col-block"><div class="col-header">${esc(col.name)} ${tag}</div>`;
       displayGroups(col, mode).forEach(({grp, gi}) => {
         const key = `${ci}-${gi}`;
