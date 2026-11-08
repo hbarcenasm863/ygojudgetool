@@ -1,0 +1,2672 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Judge Floor Manager — YGO</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #f0f2f5;
+  --surface: #ffffff;
+  --surface2: #f5f7fa;
+  --surface3: #e8ecf2;
+  --border: #c8cdd8;
+  --border2: #dde1ea;
+  --accent: #1a56a0;
+  --accent2: #2470c8;
+  --text: #111827;
+  --muted: #4b5563;
+  --muted2: #9ca3af;
+  --green: #166534;
+  --yellow: #854d0e;
+  --red: #991b1b;
+  --gray: #6b7280;
+  --blue: #1e40af;
+
+  --j0: #1d4ed8; --j1: #166534; --j2: #991b1b; --j3: #92400e;
+  --j4: #6d28d9; --j5: #c2410c; --j6: #0e7490; --j7: #9d174d;
+  --j8: #3f6212; --j9: #1e3a8a; --j10: #713f12; --j11: #164e63;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; overflow: hidden; font-size: 16px; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+
+/* ── HEADER ── */
+header {
+  background: var(--accent);
+  border-bottom: 2px solid #0f3460;
+  padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  height: 56px;
+}
+header h1 { font-family: 'Orbitron', monospace; font-size: 1rem; font-weight: 900; color: #ffffff; letter-spacing: 2px; }
+.header-center { font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; color: rgba(255,255,255,0.85); letter-spacing: 1px; }
+.header-right { display: flex; gap: 8px; align-items: center; }
+
+/* ── BUTTONS ── */
+.btn {
+  font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 600; padding: 8px 14px;
+  border: 1.5px solid var(--border); border-radius: 6px; cursor: pointer;
+  background: var(--surface); color: var(--text); transition: all 0.15s; white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); background: #e8f0fc; }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; }
+.btn.primary:hover { background: var(--accent2); }
+.btn.sm { padding: 5px 10px; font-size: 0.75rem; }
+.btn.danger { border-color: var(--red); color: var(--red); }
+.btn.danger:hover { background: var(--red); color: #fff; }
+.btn.success { border-color: var(--green); color: var(--green); }
+.btn.success:hover { background: var(--green); color: #fff; }
+.btn.warn { border-color: var(--yellow); color: var(--yellow); }
+
+/* ── SCREENS ── */
+.screen { display: none; }
+#setup-screen { position: fixed; top: 56px; left: 0; right: 0; bottom: 0; overflow-y: auto; }
+body:not(.in-app) .app-only { display: none !important; }
+#setup-screen.active { display: block; }
+#app-screen.active { display: flex; }
+
+/* ══════════════════════════════════
+   SETUP SCREEN
+══════════════════════════════════ */
+#setup-screen { background: #f0f2f5; }
+.setup-wrap { max-width: 740px; margin: 0 auto; padding: 24px 16px 60px; }
+.setup-title { font-family: 'Inter', sans-serif; font-size: 1.3rem; font-weight: 900; color: var(--accent); text-align: center; margin-bottom: 4px; }
+.setup-sub { font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: var(--muted); letter-spacing: 2px; text-align: center; margin-bottom: 24px; }
+
+.card { background: #ffffff; border: 1.5px solid var(--border); border-radius: 8px; padding: 18px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.card-title { font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 800; color: var(--accent); letter-spacing: 1px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--accent); }
+
+.form-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 10px; }
+.fg { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 110px; }
+.fg label { font-size: 0.65rem; color: var(--muted); letter-spacing: 1px; font-family: 'Share Tech Mono', monospace; }
+input, select, textarea {
+  background: #ffffff; border: 1.5px solid var(--border); border-radius: 6px;
+  padding: 8px 10px; color: var(--text); font-family: 'Inter', sans-serif;
+  font-size: 0.85rem; outline: none; transition: border-color 0.15s; width: 100%;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(26,86,160,0.15); }
+
+/* Column builder */
+.col-row {
+  background: #f8fafc; border: 1.5px solid var(--border); border-radius: 6px;
+  padding: 10px; margin-bottom: 8px;
+}
+.col-row-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.col-row-header input { flex: 1; }
+.col-name-input { max-width: 100px; }
+.groups-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.group-item {
+  background: #e8ecf4; border: 1px solid var(--border); border-radius: 5px;
+  padding: 5px 8px; font-family: 'Inter', sans-serif; font-size: 0.78rem;
+  color: var(--text); display: flex; align-items: center; gap: 6px;
+}
+.group-item select { padding: 2px 4px; font-size: 0.62rem; width: auto; background: var(--surface2); }
+.group-item .rm { color: var(--red); cursor: pointer; font-size: 0.8rem; }
+
+/* Judge tags */
+.tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.judge-tag {
+  border-radius: 20px; padding: 6px 12px; font-family: 'Inter', sans-serif;
+  font-size: 0.82rem; font-weight: 600; display: flex; align-items: center; gap: 6px;
+  border: 2px solid; background: #ffffff;
+}
+.judge-tag .dot { width: 7px; height: 7px; border-radius: 50%; }
+.judge-tag .rm { cursor: pointer; color: var(--muted); font-size: 0.9rem; }
+.judge-tag .rm:hover { color: var(--red); }
+
+/* ══════════════════════════════════
+   APP SCREEN
+══════════════════════════════════ */
+#app-screen { display: none; flex-direction: column; }
+
+#app-screen.active { position: fixed; top: 56px; left: 0; right: 0; bottom: 0; }
+.app-layout { display: flex; flex-direction: column; height: 100%; overflow: hidden; width: 100%; }
+
+.app-top { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+
+/* LEFT: judges panel */
+.judges-panel {
+  width: 165px; flex-shrink: 0; background: var(--surface);
+  border-right: 2px solid var(--border); display: flex; flex-direction: column; overflow: hidden;
+}
+.panel-header {
+  padding: 10px 12px; border-bottom: 2px solid var(--accent);
+  font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--accent); letter-spacing: 1px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: #e8f0fc;
+}
+.judges-list { flex: 1; overflow-y: auto; padding: 8px; }
+
+.judge-card {
+  background: var(--surface); border: 2px solid var(--border); border-radius: 8px;
+  padding: 10px 10px; margin-bottom: 7px; cursor: grab; user-select: none;
+  transition: all 0.15s; position: relative; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.judge-card:hover { transform: translateX(2px); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+.judge-card.dragging { opacity: 0.3; }
+.judge-card.status-side { border-color: #b45309; background: #fffbeb; }
+.judge-card.status-lunch { border-color: #991b1b; background: #fef2f2; }
+.judge-card.status-break { border-color: #1e40af; background: #eff6ff; }
+.judge-card.status-off { border-color: #9ca3af; background: #f9fafb; opacity: 0.6; }
+.judge-card.status-active { border-color: #166534; background: #f0fdf4; }
+.judge-card.selected { box-shadow: 0 0 0 3px var(--accent); border-color: var(--accent) !important; background: #e8f0fc !important; }
+
+.judge-card-top { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.j-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.judge-name { font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 700; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.judge-status-badge {
+  font-family: 'Inter', sans-serif; font-size: 0.68rem; font-weight: 700; padding: 2px 7px;
+  border-radius: 10px; border: 1.5px solid; letter-spacing: 0.5px;
+}
+.status-active .judge-status-badge { color: #166534; border-color: #166534; background: #dcfce7; }
+.status-side .judge-status-badge { color: #92400e; border-color: #92400e; background: #fef3c7; }
+.status-lunch .judge-status-badge { color: #991b1b; border-color: #991b1b; background: #fee2e2; }
+.status-break .judge-status-badge { color: #1e40af; border-color: #1e40af; background: #dbeafe; }
+.status-off .judge-status-badge { color: #6b7280; border-color: #9ca3af; background: #f3f4f6; }
+
+.lunch-timer { font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 800; color: #dc2626; text-align: center; margin-top: 3px; }
+.judge-actions { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 4px; }
+.judge-actions .btn { font-size: 0.68rem; padding: 5px 7px; min-height: 28px; }
+
+/* ── TOP 8 MAP ── */
+.top8-map {
+  display: block;
+  padding: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.top8-mesa {
+  background: #ffffff; border: 2px solid #1a56a0; border-radius: 10px;
+  padding: 14px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  margin-bottom: 14px;
+}
+.top8-mesa-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid #e8f0fc;
+}
+.top8-mesa-num {
+  font-family: 'Inter', sans-serif; font-size: 1.2rem; font-weight: 900;
+  color: #1a56a0; letter-spacing: 1px;
+}
+.top8-mesa-label {
+  font-family: 'Inter', sans-serif; font-size: 0.75rem; font-weight: 600;
+  color: #888; background: #f0f4ff; padding: 3px 10px; border-radius: 10px;
+}
+.top8-judges-zone {
+  display: flex; flex-wrap: wrap; gap: 8px; min-height: 40px;
+  align-items: center; padding: 6px;
+  border: 2px dashed #93c5fd; border-radius: 6px; background: #f8fafc;
+  transition: all 0.15s;
+}
+.top8-judges-zone.drag-over {
+  border-color: #1a56a0; background: #e8f0fc;
+  box-shadow: 0 0 0 3px rgba(26,86,160,0.15);
+}
+.top8-judges-zone:empty::after {
+  content: 'Soltar juez aquí o tocar zona';
+  font-family: 'Inter', sans-serif; font-size: 0.75rem; color: #64748b;
+  font-style: italic; width: 100%; text-align: center;
+}
+.top8-judge-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 2px solid; border-radius: 20px; padding: 5px 12px;
+  font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 700;
+  cursor: pointer; background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.12s;
+}
+.top8-judge-chip:hover { opacity: 0.7; transform: scale(0.96); }
+.top8-judge-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+.top8-count {
+  font-family: 'Inter', sans-serif; font-size: 0.7rem; color: #888;
+  margin-top: 6px; text-align: right;
+}
+
+/* ── PATROL ZONES (integrated into map) ── */
+
+
+/* Patrol zone shared style */
+.pz {
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 4px;
+  background: #eef2ff; border: 2px dashed #818cf8;
+  border-radius: 6px; cursor: pointer;
+  transition: all 0.15s; position: relative; padding: 4px;
+}
+.pz:hover, .pz.drag-over {
+  background: #e0e7ff; border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79,70,229,0.2);
+}
+.pz-label {
+  font-family: 'Inter', sans-serif; font-size: 0.6rem; font-weight: 800;
+  color: #4f46e5; letter-spacing: 0.5px; text-align: center; white-space: nowrap;
+}
+.pz-drop {
+  display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; align-items: center;
+  width: 100%;
+}
+.pz-drop:empty::after {
+  content: '+'; font-size: 1rem; color: #a5b4fc; font-weight: 300;
+}
+/* Positioning — flex-based */
+.pz-sup  { width: 100%; flex-direction: row; flex-wrap: wrap; }
+.pz-inf  { width: 100%; flex-direction: row; flex-wrap: wrap; }
+.pz-izq  { height: 100%; flex-direction: column; }
+.pz-der  { height: 100%; flex-direction: column; }
+
+
+
+/* ── COUNTER BAR ── */
+.counter-bar {
+  display: flex; align-items: center; gap: 14px;
+  font-family: 'Inter', sans-serif; font-size: 0.82rem; flex-wrap: wrap;
+}
+.counter-item { display: flex; align-items: center; gap: 5px; }
+.counter-label { color: #475569; font-weight: 500; }
+.counter-val { color: var(--accent); font-size: 1rem; font-weight: 800; }
+.counter-sep { color: var(--border); }
+
+/* CENTER: floor map */
+.floor-wrap {
+  flex: 1; overflow: auto; background: #e8ecf4;
+  padding: 12px; position: relative;
+  display: flex; flex-direction: column; gap: 4px;
+  align-items: stretch;
+}
+.floor-outer {
+  display: flex; flex-direction: column; gap: 4px; flex: 1; min-height: 0;
+}
+.pz-sup-row, .pz-inf-row {
+  flex-shrink: 0; min-height: 44px;
+}
+.pz-middle-row {
+  display: flex; flex-direction: row; gap: 4px; flex: 1; min-height: 0;
+}
+.pz-side-col {
+  width: 54px; flex-shrink: 0;
+}
+.floor-map {
+  flex: 1; display: flex; flex-direction: row; gap: 10px;
+  overflow-x: auto; align-items: flex-start; min-width: 0;
+}
+
+
+.col-block { display: flex; flex-direction: column; gap: 6px; min-width: 100px; flex-shrink: 0; }
+.col-header {
+  font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 800; color: #ffffff;
+  letter-spacing: 1px; text-align: center; padding: 7px 6px;
+  border-bottom: 3px solid var(--accent); margin-bottom: 4px; position: sticky; top: 0;
+  background: var(--accent); border-radius: 6px 6px 0 0; z-index: 10;
+}
+
+.col-groups-row { display: flex; flex-direction: column; gap: 8px; }
+
+.table-group {
+  background: #ffffff; border: 2px solid var(--border); border-radius: 8px;
+  padding: 8px; transition: all 0.15s; position: relative; min-width: 90px; width: 100%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.table-group.drag-over { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,86,160,0.2); background: #e8f0fc; }
+.table-group.inactive { opacity: 0.35; }
+
+.tables-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+.table-cell {
+  background: #f8fafc; border: 1.5px solid #94a3b8; border-radius: 5px;
+  padding: 8px 10px; font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 700;
+  color: #1e293b; text-align: center; width: 100%; cursor: pointer;
+  transition: all 0.12s;
+}
+.table-cell:hover { background: #e8f0fc; border-color: var(--accent); }
+.table-cell.t4 { border-color: #1e40af; color: #1e40af; background: #eff6ff; }
+.table-cell.table-off { border-color: #dc2626; color: #dc2626; background: #fef2f2; text-decoration: line-through; opacity: 0.55; }
+
+/* Horizontal table cells */
+.tables-row.horiz { flex-direction: row; gap: 0; margin-bottom: 6px; }
+.tables-row.horiz .table-cell {
+  flex: 1; padding: 10px 6px; font-size: 1rem;
+  border-right: none; border-radius: 0;
+}
+.tables-row.horiz .table-cell:first-child { border-radius: 5px 0 0 5px; }
+.tables-row.horiz .table-cell:last-child { border-right: 1.5px solid #94a3b8; border-radius: 0 5px 5px 0; }
+.table-group.orient-h { min-width: 180px; }
+.table-group.orient-h .drop-zone { min-height: 24px; }
+.col-block.orient-h { min-width: 200px; }
+.col-block.orient-h .col-groups-row { flex-direction: column; gap: 10px; }
+
+.drop-zone {
+  min-height: 32px; border: 2px dashed #94a3b8; border-radius: 6px;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 4px; padding: 4px;
+  transition: all 0.15s; background: #f8fafc;
+}
+.drop-zone:empty::after {
+  content: 'soltar aqui'; font-family: 'Inter', sans-serif; font-size: 0.72rem;
+  color: #64748b; width: 100%; text-align: center; font-weight: 500;
+}
+
+.assigned-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: 1.5px solid; border-radius: 12px; padding: 4px 10px;
+  font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: all 0.12s; background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.assigned-chip:hover { opacity: 0.65; transform: scale(0.97); }
+.assigned-chip .dot { width: 7px; height: 7px; border-radius: 50%; }
+
+/* Group toggle */
+.group-toggle {
+  position: absolute; top: 5px; right: 5px; width: 18px; height: 18px;
+  border-radius: 50%; border: 1.5px solid #94a3b8; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem; font-weight: 700; color: #64748b; background: #f1f5f9; transition: all 0.15s;
+}
+.group-toggle:hover { border-color: #dc2626; color: #dc2626; background: #fef2f2; }
+.table-group.inactive .group-toggle { border-color: #166534; color: #166534; background: #dcfce7; }
+
+/* BOTTOM BAR */
+.bottom-bar {
+  background: #ffffff; border-top: 2px solid var(--border);
+  display: flex; align-items: stretch; gap: 0; flex-shrink: 0; overflow-x: auto;
+  min-height: 90px; max-height: 140px;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+}
+.bottom-section {
+  padding: 10px 14px; border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; justify-content: center; gap: 6px; flex-shrink: 0;
+}
+.bottom-section:last-child { border-right: none; flex: 1; }
+
+.round-num { font-family: 'Inter', sans-serif; font-size: 1.1rem; font-weight: 900; color: var(--accent); letter-spacing: 1px; }
+.round-timer { font-family: 'Inter', sans-serif; font-size: 1.4rem; font-weight: 800; color: #166534; letter-spacing: 1px; }
+.timer-controls { display: flex; gap: 5px; }
+
+.round-notes-wrap label { font-family: 'Inter', sans-serif; font-size: 0.75rem; font-weight: 600; color: var(--muted); display: block; margin-bottom: 3px; }
+.round-notes-wrap textarea { height: 56px; resize: none; font-size: 0.85rem; min-width: 180px; border-radius: 6px; }
+
+.round-summary { overflow-y: auto; min-width: 150px; }
+.summary-title { font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.5px; }
+.summary-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-family: 'Inter', sans-serif; font-size: 0.78rem; }
+.summary-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.summary-zone { color: var(--muted); font-size: 0.72rem; }
+
+/* ── MODALS ── */
+.modal-backdrop {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  z-index: 300; backdrop-filter: blur(3px); align-items: center; justify-content: center;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: #ffffff; border: 2px solid var(--accent); border-radius: 10px;
+  padding: 20px; width: 95%; max-width: 820px; max-height: 85vh; overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+.modal-title {
+  font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 800; color: var(--accent);
+  margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;
+}
+.close-x { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; transition: color 0.15s; }
+.close-x:hover { color: var(--red); }
+
+/* History */
+.hist-round { background: #f8fafc; border: 1.5px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+.hist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border2); }
+.hist-header strong { font-family: 'Orbitron', monospace; font-size: 0.75rem; color: var(--accent); letter-spacing: 2px; }
+.hist-meta { font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: var(--muted); }
+.hist-assignments { font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; line-height: 2; }
+.hist-notes { font-size: 0.7rem; color: var(--muted); font-style: italic; border-top: 1px solid var(--border2); padding-top: 6px; margin-top: 6px; }
+.hist-judge-row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+.hist-j-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+/* Lunch timer modal */
+.lunch-modal { max-width: 340px; }
+.lunch-modal input[type=number] { font-size: 1.4rem; text-align: center; padding: 10px; }
+
+/* Edit venue modal */
+.edit-col-row { background: var(--surface2); border: 1px solid var(--border2); border-radius: 4px; padding: 10px; margin-bottom: 8px; }
+
+/* Alert notify */
+.tap-guard {
+  position: fixed; inset: 0; z-index: 9999;
+  pointer-events: all; background: transparent;
+}
+
+.notify {
+  position: fixed; top: 64px; right: 16px; z-index: 400;
+  background: var(--accent); color: #ffffff; font-family: 'Inter', sans-serif;
+  font-size: 0.9rem; font-weight: 700; padding: 12px 20px; border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2); animation: slideIn 0.3s ease;
+  display: none; max-width: 320px;
+}
+@keyframes slideIn { from { transform: translateY(-10px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+
+/* Color vars for judges */
+.jc0{color:var(--j0);border-color:var(--j0);} .jc1{color:var(--j1);border-color:var(--j1);}
+.jc2{color:var(--j2);border-color:var(--j2);} .jc3{color:var(--j3);border-color:var(--j3);}
+.jc4{color:var(--j4);border-color:var(--j4);} .jc5{color:var(--j5);border-color:var(--j5);}
+.jc6{color:var(--j6);border-color:var(--j6);} .jc7{color:var(--j7);border-color:var(--j7);}
+.jc8{color:var(--j8);border-color:var(--j8);} .jc9{color:var(--j9);border-color:var(--j9);}
+.jc10{color:var(--j10);border-color:var(--j10);} .jc11{color:var(--j11);border-color:var(--j11);}
+
+.jbg0{background:var(--j0);} .jbg1{background:var(--j1);} .jbg2{background:var(--j2);}
+.jbg3{background:var(--j3);} .jbg4{background:var(--j4);} .jbg5{background:var(--j5);}
+.jbg6{background:var(--j6);} .jbg7{background:var(--j7);} .jbg8{background:var(--j8);}
+.jbg9{background:var(--j9);} .jbg10{background:var(--j10);} .jbg11{background:var(--j11);}
+
+@media(max-width:700px){
+  .judges-panel{width:130px;}
+  .header-center{display:none;}
+  header h1{font-size:0.8rem;letter-spacing:1px;}
+  .header-right .btn{padding:6px 8px;font-size:0.72rem;}
+  .judge-card-top{flex-wrap:wrap;}
+  .judge-name{flex-basis:100%;order:-1;}
+  .counter-bar{gap:4px 10px;font-size:0.72rem;}
+}
+
+/* ── MEJORAS v3 ── */
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn:focus-visible, .judge-card:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+.judge-load { font-size: 0.72rem; font-weight: 600; color: var(--muted); margin: 2px 0 2px 13px; }
+.judge-load.free { color: #b45309; }
+.judge-card.overdue { border-color: #dc2626 !important; animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.5); } 50% { box-shadow: 0 0 0 5px rgba(220,38,38,0); } }
+.lunch-timer.overdue { color: #dc2626; font-size: 0.78rem; }
+.panel-add { background: var(--accent); color: #fff; border: none; border-radius: 50%; width: 26px; height: 26px; font-size: 1rem; font-weight: 800; cursor: pointer; line-height: 1; }
+.table-group.uncovered { border-color: #f59e0b; background: #fffbeb; }
+.table-group.uncovered .drop-zone { border-color: #f59e0b; }
+.group-toggle { display: none; }
+.floor-wrap.edit-tables .group-toggle { display: flex; }
+.floor-wrap.edit-tables .table-cell { cursor: pointer; box-shadow: inset 0 0 0 1px #f59e0b; }
+.floor-wrap:not(.edit-tables) .table-cell { cursor: default; }
+.floor-wrap:not(.edit-tables) .table-cell:hover { background: #f8fafc; border-color: #94a3b8; }
+.edit-mode-btn.on { background: #f59e0b; border-color: #b45309; color: #fff; }
+.edit-hint { font-size: 0.75rem; color: #92400e; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 4px 10px; }
+.counter-warn { color: #b45309; }
+#edit-banner { display: none; background: #fef3c7; border: 2px solid #f59e0b; color: #78350f; font-weight: 700; font-size: 0.82rem; padding: 6px 12px; border-radius: 6px; margin-bottom: 6px; }
+#top8-container { display: none; flex: 1; overflow-y: auto; }
+.notify { white-space: pre-line; }
+.modal-title .nav-arrow { font-size: 1.2rem; color: var(--accent); background: none; border: none; cursor: pointer; padding: 4px 8px; }
+.modal-title .nav-arrow:hover { color: var(--accent2); }
+.setup-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; padding: 10px 0 30px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>JUDGE FLOOR MGR</h1>
+  <div class="header-center" id="hdr-event"></div>
+  <div class="header-right">
+    <button class="btn app-only" onclick="openHistory()">📋 HISTORIAL</button>
+    <button class="btn warn app-only" onclick="openEditVenue()">✏️ VENUE</button>
+    <button class="btn danger sm app-only" onclick="hardReset()" title="Borrar el evento y empezar de cero" aria-label="Reiniciar evento">↩ RESET</button>
+  </div>
+</header>
+
+<!-- ════════════ SETUP SCREEN ════════════ -->
+<div id="setup-screen" class="screen active">
+<div class="setup-wrap">
+  <div class="setup-title">CONFIGURAR EVENTO</div>
+  <div class="setup-sub">DEFINE EL VENUE ANTES DE EMPEZAR</div>
+    <div style="font-family:'Inter',sans-serif;font-size:0.72rem;color:#dc2626;text-align:center;margin-bottom:8px;font-weight:600;">⚠ Registro tardío = Match Loss Ronda 1 (regla oficial KDE)</div>
+
+  <div class="card">
+    <div class="card-title">EVENTO</div>
+    <div class="form-row">
+      <div class="fg"><label>NOMBRE</label><input id="s-name" placeholder="ej. Regional Qualifier — CDMX"></div>
+      <div class="fg" style="max-width:130px;"><label>JUGADORES</label><input type="number" id="s-players" min="4" placeholder="ej. 96" oninput="updateTableCalc()"></div>
+      <div class="fg" style="max-width:110px;">
+        <label>RONDAS DÍA 1</label>
+        <input type="number" id="s-rounds-d1" min="1" max="20" placeholder="—" oninput="this.dataset.manual='1'">
+      </div>
+      <div class="fg" style="max-width:110px;">
+        <label>RONDAS DÍA 2</label>
+        <input type="number" id="s-rounds-d2" min="0" max="20" placeholder="—" oninput="this.dataset.manual='1'">
+      </div>
+      <div class="fg" style="max-width:160px;">
+        <label>NUMERACIÓN ZIGZAG</label>
+        <div style="display:flex;gap:6px;margin-top:2px;">
+          <button class="btn sm" id="nm-col-btn" onclick="setNumberingMode('column')"
+            style="flex:1;border-color:#1a56a0;color:#1a56a0;background:#e8f0fc;font-weight:700;">POR COLUMNA</button>
+          <button class="btn sm" id="nm-row-btn" onclick="setNumberingMode('row')"
+            style="flex:1;">POR FILA</button>
+        </div>
+        <div id="nm-desc" style="font-size:0.7rem;color:#64748b;margin-top:4px;font-family:'Inter',sans-serif;">
+          Zigzag vertical por columna
+        </div>
+      </div>
+      <div class="fg" style="max-width:110px;">
+        <label>MIN. POR RONDA</label>
+        <input type="number" id="s-round-min" min="1" max="120" value="50">
+      </div>
+    </div>
+    <div style="font-family:'Inter',sans-serif;font-size:0.78rem;padding:4px 2px 6px;min-height:18px;" id="s-rounds-info"></div>
+    <div class="form-row">
+      <div class="fg" style="max-width:none;"><label>MESAS REQUERIDAS VS. VENUE</label><div id="s-tables-calc" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 9px;font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:600;color:var(--accent);">—</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">COLUMNAS DE MESAS</div>
+    <p style="font-size:0.7rem;color:var(--muted);margin-bottom:12px;font-family:'Share Tech Mono',monospace;line-height:1.7;">
+      Agrega columnas verticales. Dentro de cada columna define los grupos de mesas (2 o 3 mesas por grupo). Grupos de 2 = 4 jugadores, grupos de 3 = 6 jugadores.
+    </p>
+    <div id="s-cols-list"></div>
+    <button class="btn" onclick="sAddColumn()">+ COLUMNA</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">JUECES</div>
+    <div class="form-row">
+      <div class="fg"><input id="s-judge-inp" placeholder="Nombre del juez" onkeydown="if(event.key==='Enter')sAddJudge()"></div>
+      <button class="btn primary" onclick="sAddJudge()" style="flex-shrink:0;">+ AGREGAR</button>
+    </div>
+    <div class="tag-list" id="s-judges-list"></div>
+  </div>
+
+  <div class="setup-actions">
+    <button class="btn primary" onclick="startApp()" style="padding:11px 40px;font-size:0.85rem;letter-spacing:3px;">▶ INICIAR</button>
+    <button class="btn" onclick="document.getElementById('import-file').click()" title="Cargar un respaldo .json exportado antes">📂 CARGAR RESPALDO</button>
+  </div>
+</div>
+</div>
+
+<!-- ════════════ APP SCREEN ════════════ -->
+<div id="app-screen" class="screen">
+<div class="app-layout">
+
+  <!-- TOP: Judges + Floor -->
+  <div class="app-top">
+
+    <!-- LEFT: Judges -->
+    <div class="judges-panel">
+      <div class="panel-header">
+        <span>JUECES <span style="font-size:0.72rem;color:var(--muted)" id="judges-count"></span></span>
+        <button class="panel-add" onclick="appAddJudge()" title="Agregar juez" aria-label="Agregar juez">+</button>
+      </div>
+      <div id="sel-indicator" style="display:none;padding:6px 10px;background:#e8f0fc;border-bottom:2px solid var(--accent);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:700;color:var(--accent);text-align:center;">
+        ✓ TOCA ZONA
+      </div>
+      <div class="judges-list" id="judges-list"></div>
+    </div>
+
+    <!-- CENTER: Floor -->
+    <div class="floor-wrap">
+      <div id="edit-banner"></div>
+      <div class="counter-bar" id="counter-bar" style="margin-bottom:6px;"></div>
+      <div id="top8-container"></div>
+    <div class="floor-outer" id="floor-outer">
+        <div class="pz-sup-row" id="pz-sup-row"></div>
+        <div class="pz-middle-row">
+          <div class="pz-side-col" id="pz-izq-col"></div>
+          <div class="floor-map" id="floor-map"></div>
+          <div class="pz-side-col" id="pz-der-col"></div>
+        </div>
+        <div class="pz-inf-row" id="pz-inf-row"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM BAR: Round controls -->
+  <div class="bottom-bar">
+
+    <!-- Ronda + Timer -->
+    <div class="bottom-section">
+      <div class="round-num" id="round-num">RONDA 1</div>
+      <div id="round-sub" style="font-family:'Inter',sans-serif;font-size:0.7rem;color:var(--muted);font-weight:500;margin-top:-3px;"></div>
+      <div class="round-timer" id="round-timer">50:00</div>
+      <div class="timer-controls">
+        <button class="btn success sm" onclick="timerStart()" aria-label="Iniciar reloj" title="Iniciar">▶</button>
+        <button class="btn sm" onclick="timerPause()" aria-label="Pausar reloj" title="Pausar">⏸</button>
+        <button class="btn danger sm" onclick="timerResetAsk()" aria-label="Reiniciar reloj" title="Reiniciar reloj">↺</button>
+      </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="bottom-section" id="action-section">
+      <button class="btn primary" onclick="saveRound()" id="save-btn">GUARDAR RONDA</button>
+      <button class="btn sm" style="border-color:var(--blue);color:var(--blue)" onclick="exportMapPDF('current')">MAPA PDF</button>
+      <button class="btn sm" style="border-color:#6d28d9;color:#6d28d9" onclick="openPrevRoundModal()" id="ver-anterior-btn">VER ANTERIOR</button>
+      <div style="display:flex;gap:4px;">
+        <button class="btn sm warn" onclick="undoLastRound()" id="undo-btn" style="flex:1;">DESHACER</button>
+        <button class="btn sm" onclick="clearAssignments()" style="flex:1;">LIMPIAR</button>
+      </div>
+      <div id="edit-round-btns" style="display:none;gap:4px;flex-direction:column;">
+        <button class="btn success sm" onclick="saveRound()">CONFIRMAR EDICION</button>
+        <button class="btn danger sm" onclick="cancelRoundEdit()">CANCELAR EDICION</button>
+      </div>
+    </div>
+
+    <!-- Notas -->
+    <div class="bottom-section">
+      <div class="round-notes-wrap">
+        <label>NOTAS / INCIDENCIAS</label>
+        <textarea id="round-notes" placeholder="Incidencias, cambios..." oninput="onNotesInput()"></textarea>
+      </div>
+    </div>
+
+    <!-- Resumen asignaciones -->
+    <div class="bottom-section" style="flex:1;overflow:hidden;">
+      <div class="round-summary">
+        <div class="summary-title">ASIGNACIONES</div>
+        <div id="summary-list" style="display:flex;flex-wrap:wrap;gap:4px 12px;"></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</div>
+
+<!-- ════════════ RECICLAR RONDA MODAL ════════════ -->
+<div class="modal-backdrop" id="recycle-modal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-title">
+      NUEVA RONDA — ASIGNACIONES
+      <button class="close-x" onclick="closeModal('recycle-modal')">✕</button>
+    </div>
+    <div style="font-family:'Inter',sans-serif;font-size:0.85rem;color:#444;margin-bottom:16px;">
+      ¿Cómo quieres iniciar las asignaciones de esta ronda?
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn primary" onclick="recycleAssignments()" style="padding:14px;font-size:0.95rem;">
+        ♻️ RECICLAR RONDA ANTERIOR
+        <div style="font-size:0.75rem;font-weight:400;margin-top:3px;opacity:0.85;">Copia las asignaciones de la ronda anterior como punto de partida</div>
+      </button>
+      <button class="btn" onclick="closeModal('recycle-modal');selectedJudge=null;" style="padding:14px;font-size:0.95rem;border-color:#1a56a0;color:#1a56a0;">
+        EMPEZAR EN BLANCO
+        <div style="font-size:0.75rem;font-weight:400;margin-top:3px;opacity:0.7;">Mapa limpio para esta ronda</div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ VER RONDA ANTERIOR MODAL ════════════ -->
+<div class="modal-backdrop" id="prev-round-modal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-title">
+      <span style="display:flex;align-items:center;gap:4px;">
+        <button class="nav-arrow" onclick="prevRoundNav(-1)" aria-label="Ronda anterior">&#8592;</button>
+        <span id="prev-round-title">RONDA ANTERIOR</span>
+        <button class="nav-arrow" onclick="prevRoundNav(1)" aria-label="Ronda siguiente">&#8594;</button>
+      </span>
+      <button class="close-x" onclick="closePrevRoundModal()" aria-label="Cerrar">✕</button>
+    </div>
+    <div id="prev-round-meta" style="font-family:'Inter',sans-serif;font-size:0.75rem;color:var(--muted);margin-bottom:10px;"></div>
+    <div id="prev-round-content" style="overflow-y:auto;max-height:50vh;"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:space-between;align-items:center;">
+      <div style="display:flex;gap:8px;">
+        <button class="btn" onclick="prevRoundNav(-1)">&#8592; ANTERIOR</button>
+        <span id="prev-round-counter" style="font-family:'Inter',sans-serif;font-size:0.82rem;color:var(--muted);align-self:center;padding:0 4px;"></span>
+        <button class="btn" onclick="prevRoundNav(1)">SIGUIENTE &#8594;</button>
+      </div>
+      <button class="btn primary" onclick="applyPrevRound()" id="apply-prev-btn">
+        APLICAR ESTAS ASIGNACIONES
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ TORNEO FINALIZADO MODAL ════════════ -->
+<div class="modal-backdrop" id="end-modal">
+  <div class="modal" style="max-width:480px;text-align:center;">
+    <div style="font-size:2.5rem;margin-bottom:8px;">🏆</div>
+    <div class="modal-title" style="justify-content:center;font-size:1.2rem;letter-spacing:3px;">
+      TORNEO FINALIZADO
+    </div>
+    <div id="end-winner-info" style="font-family:'Inter',sans-serif;font-size:0.85rem;
+      color:#166534;background:#dcfce7;border-radius:8px;padding:12px;margin-bottom:16px;
+      border:1.5px solid #86efac;"></div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn primary" onclick="exportMapPDF('all')" style="font-size:0.95rem;padding:12px;">
+        IMPRIMIR RESUMEN COMPLETO (PDF)
+      </button>
+      <button class="btn" onclick="openRoundReview()" style="font-size:0.95rem;padding:12px;border-color:var(--accent);color:var(--accent);">
+        REVISAR RONDA A RONDA
+      </button>
+      <button class="btn" onclick="closeModal('end-modal')" style="font-size:0.85rem;">
+        CERRAR
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ ROUND REVIEW MODAL ════════════ -->
+<div class="modal-backdrop" id="review-modal">
+  <div class="modal" style="max-width:700px;">
+    <div class="modal-title">
+      <span style="display:flex;align-items:center;gap:4px;">
+        <button class="nav-arrow" onclick="reviewNav(-1)" aria-label="Ronda anterior">&#8592;</button>
+        <span id="review-title">RONDA 1</span>
+        <button class="nav-arrow" onclick="reviewNav(1)" aria-label="Ronda siguiente">&#8594;</button>
+      </span>
+      <button class="close-x" onclick="closeModal('review-modal')" aria-label="Cerrar">✕</button>
+    </div>
+    <div id="review-meta" style="font-family:'Inter',sans-serif;font-size:0.78rem;color:var(--muted);margin-bottom:12px;"></div>
+    <div id="review-content" style="overflow-y:auto;max-height:55vh;"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:center;">
+      <button class="btn" onclick="reviewNav(-1)">&#8592; ANTERIOR</button>
+      <span id="review-counter" style="font-family:'Inter',sans-serif;font-size:0.82rem;color:var(--muted);align-self:center;padding:0 8px;"></span>
+      <button class="btn" onclick="reviewNav(1)">SIGUIENTE &#8594;</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ DÍA 2 CUT MODAL ════════════ -->
+<div class="modal-backdrop" id="day2cut-modal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-title">
+      FIN DÍA 1 — CONFIGURAR DÍA 2
+      <button class="close-x" onclick="closeModal('day2cut-modal')">✕</button>
+    </div>
+
+    <!-- Referencia Konami -->
+    <div style="font-family:'Inter',sans-serif;font-size:0.8rem;background:#eff6ff;border-radius:6px;padding:10px 14px;margin-bottom:14px;border:1.5px solid #93c5fd;">
+      <div style="font-weight:700;color:#1e40af;margin-bottom:4px;">REFERENCIA KONAMI — AVANZAN A DÍA 2:</div>
+      <div id="day2cut-info" style="color:#1e3a8a;font-size:0.82rem;line-height:1.8;"></div>
+    </div>
+
+    <!-- Jugadores reales confirmados -->
+    <div style="margin-bottom:14px;">
+      <label style="font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:700;color:#111;display:block;margin-bottom:6px;">
+        Jugadores confirmados para Día 2 (según head judge):
+      </label>
+      <input type="number" id="day2-real-players" min="1" placeholder="ej. 64"
+        style="font-size:1.1rem;padding:10px;text-align:center;font-weight:700;border:2px solid #1a56a0;"
+        oninput="updateDay2MesasCalc()">
+      <div id="day2-mesas-calc" style="font-family:'Inter',sans-serif;font-size:0.8rem;color:#1a56a0;font-weight:600;margin-top:5px;"></div>
+    </div>
+
+    <!-- Mesas activas -->
+    <div style="margin-bottom:14px;">
+      <label style="font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:700;color:#111;display:block;margin-bottom:6px;">
+        Mesas activas para Día 2:
+      </label>
+      <input type="number" id="day2-tables" min="1" max="200" placeholder="ej. 32"
+        oninput="this.dataset.manual='1'"
+        style="font-size:1.1rem;padding:10px;text-align:center;font-weight:700;border:2px solid #94a3b8;">
+      <p style="font-family:'Inter',sans-serif;font-size:0.74rem;color:#888;margin-top:5px;">
+        Se desactivarán las mesas sobrantes. Puedes reactivar manualmente desde el mapa.
+      </p>
+    </div>
+
+    <!-- Jueces disponibles Día 2 -->
+    <div style="margin-bottom:16px;">
+      <label style="font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:700;color:#111;display:block;margin-bottom:8px;">
+        Jueces disponibles para Día 2:
+      </label>
+      <div id="day2-judges-list" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+    </div>
+
+    <button class="btn primary" onclick="confirmDay2()" style="width:100%;font-size:0.95rem;padding:12px;">
+      CONFIGURAR DÍA 2
+    </button>
+  </div>
+</div>
+
+<!-- ════════════ TOP 8 MODAL ════════════ -->
+<div class="modal-backdrop" id="top8-modal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-title">
+      TOP 8 — PLAYOFF
+      <button class="close-x" onclick="closeModal('top8-modal')">✕</button>
+    </div>
+    <div id="top8-headline" style="font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:700;color:#991b1b;background:#fef2f2;border-radius:6px;padding:10px 14px;margin-bottom:14px;text-align:center;">
+      Swiss completado — 8 jugadores al playoff
+    </div>
+
+    <div style="font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:600;color:#444;margin-bottom:6px;">Jueces disponibles para Top 8:</div>
+    <div id="top8-judges-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
+
+    <p style="font-family:'Inter',sans-serif;font-size:0.8rem;color:#444;margin-bottom:16px;">
+      Mesas del playoff: <b>Cuartos 4</b> · <b>Semifinal 2</b> · <b>Final 1</b>. Los jueces no seleccionados pasan a OFF.
+    </p>
+
+    <div style="display:flex;gap:8px;">
+      <button class="btn primary" onclick="confirmTop8()" style="flex:1;">INICIAR TOP 8</button>
+      <button class="btn" onclick="closeModal('top8-modal')">CANCELAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ HISTORY MODAL ════════════ -->
+<div class="modal-backdrop" id="hist-modal">
+  <div class="modal">
+    <div class="modal-title">
+      📋 HISTORIAL DE RONDAS
+      <button class="close-x" onclick="closeModal('hist-modal')">✕</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+      <button class="btn success sm" onclick="exportTxt()">EXPORTAR .TXT</button>
+      <button class="btn sm" style="border-color:var(--blue);color:var(--blue)" onclick="exportMapPDF('all')">EXPORTAR MAPA PDF (TODAS)</button>
+      <button class="btn sm" style="border-color:#991b1b;color:#991b1b" onclick="closeModal('hist-modal');openTop8Modal()">INICIAR TOP 8</button>
+      <button class="btn sm" onclick="exportBackup()" title="Descargar todo el evento en un archivo .json">💾 RESPALDO .JSON</button>
+      <button class="btn sm" onclick="document.getElementById('import-file').click()">📂 CARGAR RESPALDO</button>
+      <button class="btn danger sm" onclick="clearHistory()">BORRAR</button>
+    </div>
+    <div id="hist-content"></div>
+  </div>
+</div>
+
+<!-- ════════════ LUNCH MODAL ════════════ -->
+<div class="modal-backdrop" id="lunch-modal">
+  <div class="modal lunch-modal">
+    <div class="modal-title">
+      <span id="lunch-modal-title">ALMUERZO</span>
+      <button class="close-x" onclick="closeModal('lunch-modal')">✕</button>
+    </div>
+    <p style="font-family:'Share Tech Mono',monospace;font-size:0.72rem;color:var(--muted);margin-bottom:12px;" id="lunch-judge-name"></p>
+    <div class="fg" style="margin-bottom:12px;">
+      <label>MINUTOS</label>
+      <input type="number" id="lunch-minutes" value="30" min="1" max="120">
+    </div>
+    <button class="btn primary" style="width:100%" onclick="confirmLunch()">▶ INICIAR TIMER</button>
+  </div>
+</div>
+
+<!-- ════════════ EDIT VENUE MODAL ════════════ -->
+<div class="modal-backdrop" id="edit-venue-modal">
+  <div class="modal">
+    <div class="modal-title">
+      ✏️ EDITAR VENUE
+      <button class="close-x" onclick="closeModal('edit-venue-modal')">✕</button>
+    </div>
+    <p style="font-family:'Inter',sans-serif;font-size:0.78rem;color:var(--muted);margin-bottom:14px;">Los cambios se aplican de inmediato al mapa actual. Las asignaciones se conservan si no cambias el número de columnas ni de grupos. El historial no se modifica.</p>
+    <div id="edit-cols-list"></div>
+    <button class="btn sm" onclick="editAddColumn()" style="margin-bottom:12px;">+ COLUMNA</button>
+    <div style="display:flex;gap:8px;">
+      <button class="btn primary" onclick="applyEditVenue()">✅ APLICAR</button>
+      <button class="btn" onclick="closeModal('edit-venue-modal')">CANCELAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notification -->
+<div class="notify" id="notify" role="status" aria-live="polite"></div>
+<input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="importBackup(this)">
+
+<script>
+// ═══════════ CONSTANTES ═══════════
+const STORAGE_KEY = 'ygojfm';
+const COLORS = ['#1d4ed8','#166534','#991b1b','#92400e','#6d28d9','#c2410c','#0e7490','#9d174d','#3f6212','#1e3a8a','#713f12','#164e63'];
+const STATUS_LABELS = {active:'PISO', side:'SIDE', lunch:'LUNCH', break:'BREAK', off:'OFF'};
+const STATUS_ICONS = {active:'●', side:'◆', lunch:'▼', break:'■', off:'○'};
+const TOP8_TABLES = {1:4, 2:2, 3:1};
+const TOP8_NAMES = {1:'Cuartos de Final', 2:'Semifinal', 3:'Final'};
+const TOP8_MAX_JUDGES = 6;
+const PATROL_ZONES = ['IZQ','DER','SUP','INF'];
+const PATROL_META = {
+  'IZQ': {label:'◀ IZQ', css:'pz pz-izq', id:'pz-izq'},
+  'DER': {label:'DER ▶', css:'pz pz-der', id:'pz-der'},
+  'SUP': {label:'▲ SUP', css:'pz pz-sup', id:'pz-sup'},
+  'INF': {label:'▼ INF', css:'pz pz-inf', id:'pz-inf'},
+};
+
+// ═══════════ ESTADO ═══════════
+function defaultState() {
+  return {
+    eventName: '', players: 0, roundsD1: 8, roundsD2: 0, roundMinutes: 50,
+    isTop8: false, top8Start: null, finished: false, numberingMode: 'column',
+    columns: [],     // [{name, dir, orient, groups:[{size, active, off:[índices de mesa]}]}]
+    judges: [],      // [{name, ci, status, lunchEnd, lunchNotified}]
+    assignments: {}, // 'ci-gi' | 'top8-n' -> [nombres], 'patrol' -> {zona:[nombres]}
+    rounds: [],
+    currentRound: 1,
+    notes: '',
+    timerStart: null, timerElapsed: 0, timerRunning: false
+  };
+}
+let S = defaultState();
+let SC = { columns: [], judges: [], numberingMode: 'column' }; // estado temporal de configuración
+let EC = [];                 // copia de columnas en "Editar venue"
+let editingRound = null;     // índice de la ronda del historial en edición
+let selectedJudge = null;    // asignación por toque
+let dragging = null;         // asignación por arrastre
+let tableEditMode = false;   // modo "editar mesas"
+let top8SelectedJudges = new Set();
+let lunchTarget = null;
+let timerInterval = null, lunchWatcher = null, timeUpNotified = false;
+let prevRoundIdx = 0, reviewIdx = 0;
+
+const clone = o => JSON.parse(JSON.stringify(o));
+function esc(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function colName(i) {
+  let s = ''; i++;
+  while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); }
+  return s;
+}
+function nextColor(list) {
+  const used = list.map(j => j.ci);
+  for (let c = 0; c < COLORS.length; c++) if (!used.includes(c)) return c;
+  // todos usados: el menos repetido
+  let best = 0, min = Infinity;
+  for (let c = 0; c < COLORS.length; c++) { const n = used.filter(u => u === c).length; if (n < min) { min = n; best = c; } }
+  return best;
+}
+function totalSwiss() { return (S.roundsD1 || 0) + (S.roundsD2 || 0); }
+
+// ═══════════ PERSISTENCIA ═══════════
+// Mientras se edita una ronda pasada, se guarda el estado REAL (la copia de respaldo),
+// no la ronda en edición: así una recarga nunca pisa la ronda en curso.
+function persistable() {
+  const o = {...S};
+  if (editingRound !== null && S._editBackup) Object.assign(o, clone(S._editBackup));
+  delete o._editBackup;
+  return o;
+}
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(persistable())); }
+  catch (e) { notify('⚠ NO SE PUDO GUARDAR — exporta un respaldo .json'); }
+}
+
+// Convierte el formato viejo (inactiveTables con número absoluto de mesa) a índices dentro del grupo.
+function migrateColumns(cols) {
+  let n = 1;
+  return (cols || []).map((col, ci) => ({
+    dir: 'down', orient: 'v', ...col,
+    name: col.name || colName(ci),
+    groups: (col.groups || []).map(g => {
+      const size = g.size || 3;
+      const start = n; n += size;
+      let off = Array.isArray(g.off) ? g.off.slice() : [];
+      if (!Array.isArray(g.off) && Array.isArray(g.inactiveTables)) {
+        g.inactiveTables.forEach(t => { const idx = t - start; if (idx >= 0 && idx < size) off.push(idx); });
+      }
+      off = [...new Set(off.filter(i => i >= 0 && i < size))];
+      return { size, active: g.active !== false, off };
+    })
+  }));
+}
+
+function load() {
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); }
+  catch (e) { console.warn('Load error:', e); }
+  if (!d) return;
+  applyLoadedState(d);
+}
+
+function applyLoadedState(d) {
+  S = {...defaultState(), ...d};
+  delete S._editBackup;
+  delete S.timerInterval;
+  delete S.top8Judges;
+  S.columns = migrateColumns(S.columns);
+  S.judges = (S.judges || []).map((j, i) => ({
+    ci: i % 12, status: 'active', lunchEnd: null, lunchNotified: false, ...j
+  }));
+  S.rounds = (S.rounds || []).map(r => ({
+    ...r,
+    columns: r.columns ? migrateColumns(r.columns) : undefined
+  }));
+  if (S.isTop8 && !S.top8Start) S.top8Start = totalSwiss() + 1;
+  if (!S.isTop8) S.top8Start = S.top8Start && S.currentRound >= S.top8Start ? S.top8Start : null;
+  S.rounds.forEach(r => { if (r.isTop8 === undefined) r.isTop8 = isTop8Round(r.round); });
+}
+
+// ═══════════ NUMERACIÓN DE MESAS (una sola fuente de verdad) ═══════════
+// Devuelve { 'ci-gi': [números de mesa en orden ascendente] }
+function numberingFor(cols, mode) {
+  const res = {};
+  if (!cols || !cols.length) return res;
+  let n = 1;
+  if (mode === 'row') {
+    const maxG = Math.max(...cols.map(c => c.groups.length));
+    for (let row = 0; row < maxG; row++) {
+      const order = cols.map((_, i) => i);
+      if (row % 2 === 1) order.reverse();
+      order.forEach(ci => {
+        const g = cols[ci].groups[row];
+        if (!g) return;
+        const nums = [];
+        for (let t = 0; t < g.size; t++) nums.push(n++);
+        res[`${ci}-${row}`] = nums;
+      });
+    }
+  } else {
+    cols.forEach((c, ci) => c.groups.forEach((g, gi) => {
+      const nums = [];
+      for (let t = 0; t < g.size; t++) nums.push(n++);
+      res[`${ci}-${gi}`] = nums;
+    }));
+  }
+  return res;
+}
+// Orden visual de las mesas dentro de un grupo (igual en pantalla y en PDF)
+function displayNums(nums, col, gi, mode) {
+  const isH = (col.orient || 'v') === 'h';
+  if (mode === 'row') return gi % 2 === 1 ? [...nums].reverse() : nums;
+  if (isH) {
+    const rev = (gi % 2 === 1) !== (col.dir === 'up');
+    return rev ? [...nums].reverse() : nums;
+  }
+  return nums;
+}
+// Orden visual de los grupos dentro de la columna
+function displayGroups(col, mode) {
+  const list = col.groups.map((grp, gi) => ({grp, gi}));
+  return (mode !== 'row' && col.dir === 'up') ? list.reverse() : list;
+}
+function groupHasActiveTables(g) { return g.active && (g.off || []).length < g.size; }
+
+// Zonas asignadas por juez para cualquier ronda (actual o del historial)
+function judgeZonesFor(rec) {
+  const cols = rec.columns || S.columns;
+  const nums = numberingFor(cols, rec.numberingMode || S.numberingMode);
+  const out = {};
+  const add = (n, l) => { (out[n] = out[n] || []).push(l); };
+  Object.entries(rec.assignments || {}).forEach(([key, names]) => {
+    if (key === 'patrol') {
+      Object.entries(names || {}).forEach(([z, ns]) => (ns || []).forEach(n => add(n, `Patrulla ${z}`)));
+      return;
+    }
+    if (!Array.isArray(names)) return;
+    let label;
+    if (key.startsWith('top8-')) label = `Mesa ${key.slice(5)}`;
+    else {
+      const arr = nums[key];
+      const ci = Number(key.split('-')[0]);
+      if (!arr || !cols[ci]) return;
+      label = `${cols[ci].name}: ${Math.min(...arr)}–${Math.max(...arr)}`;
+    }
+    names.forEach(n => add(n, label));
+  });
+  return out;
+}
+function currentRecordLike() {
+  return { assignments: S.assignments, columns: S.columns, numberingMode: S.numberingMode };
+}
+
+// ═══════════ TOP 8 / DÍAS ═══════════
+function isTop8Round(roundNum) { return !!S.top8Start && roundNum >= S.top8Start; }
+function top8RoundOf(roundNum) { return S.top8Start ? roundNum - S.top8Start + 1 : 0; }
+function recordIsTop8(r) { return r.isTop8 !== undefined ? r.isTop8 : isTop8Round(r.round); }
+
+function getDayRoundLabel(roundNum) {
+  if (isTop8Round(roundNum)) {
+    const t = top8RoundOf(roundNum);
+    return { label: TOP8_NAMES[t] || `TOP 8 — R${t}`, sub: 'PLAYOFF TOP 8' };
+  }
+  const d1 = S.roundsD1 || 0, d2 = S.roundsD2 || 0;
+  if (!d1 && !d2) return { label: `RONDA ${roundNum}`, sub: '' };
+  if (roundNum <= d1) {
+    return d2 > 0
+      ? { label: `DÍA 1 — R${roundNum}`, sub: `Ronda ${roundNum} de ${d1}` }
+      : { label: `RONDA ${roundNum}`, sub: `Ronda ${roundNum} de ${d1}` };
+  }
+  const r2 = roundNum - d1;
+  if (d2 > 0 && r2 <= d2) return { label: `DÍA 2 — R${r2}`, sub: `Ronda ${r2} de ${d2}` };
+  return { label: `RONDA ${roundNum}`, sub: 'Ronda extra (fuera de lo planificado)' };
+}
+
+// ═══════════ CONFIGURACIÓN ═══════════
+function defaultSetupColumns() {
+  return [
+    { name:'A', dir:'down', orient:'v', groups:[{size:3},{size:3},{size:3},{size:3}] },
+    { name:'B', dir:'up',   orient:'v', groups:[{size:3},{size:3},{size:3},{size:3}] },
+    { name:'C', dir:'down', orient:'v', groups:[{size:3},{size:3},{size:3},{size:3}] },
+  ];
+}
+function sAddColumn() {
+  SC.columns.push({ name: colName(SC.columns.length), dir: 'down', orient: 'v', groups: [{size:3},{size:3},{size:3},{size:3}] });
+  renderSetupCols();
+}
+function sRemoveColumn(i) { SC.columns.splice(i, 1); renderSetupCols(); }
+function sSetGroupCount(ci, n) {
+  n = Math.max(1, Math.min(30, parseInt(n) || 1));
+  const cur = SC.columns[ci].groups.length;
+  if (n > cur) for (let i = cur; i < n; i++) SC.columns[ci].groups.push({size:3});
+  else SC.columns[ci].groups = SC.columns[ci].groups.slice(0, n);
+  renderSetupCols();
+}
+function sRemoveGroup(ci, gi) {
+  if (SC.columns[ci].groups.length <= 1) { notify('UNA COLUMNA NECESITA AL MENOS UN GRUPO'); return; }
+  SC.columns[ci].groups.splice(gi, 1);
+  renderSetupCols();
+}
+
+function sizeOptions(selected) {
+  const opts = [];
+  for (let n = 2; n <= 18; n++) opts.push(`<option value="${n}"${selected === n ? ' selected' : ''}>${n} mesas (${n * 2}j)</option>`);
+  return opts.join('');
+}
+
+// Renderiza la lista de columnas (configuración y editar venue comparten código)
+function renderColumnEditor(el, cols, mode, onChange) {
+  if (!cols.length) {
+    el.innerHTML = '<p style="font-family:Inter,sans-serif;font-size:0.8rem;color:var(--muted);padding:8px 0;">Sin columnas — agrega al menos una</p>';
+    return;
+  }
+  const nums = numberingFor(cols, mode);
+  el.innerHTML = cols.map((col, ci) => {
+    const groupsHTML = col.groups.map((g, gi) => {
+      const arr = nums[`${ci}-${gi}`] || [];
+      return `<div class="group-item">
+        <span>Mesa ${Math.min(...arr)}–${Math.max(...arr)}</span>
+        <select data-ci="${ci}" data-gi="${gi}" data-type="size" aria-label="Mesas del grupo">${sizeOptions(g.size)}</select>
+        <span class="rm" data-ci="${ci}" data-gi="${gi}" data-type="rmgrp" role="button" tabindex="0" aria-label="Quitar grupo" title="Quitar grupo">✕</span>
+      </div>`;
+    }).join('');
+    const dirBtn = mode === 'row' ? '' : `<button class="btn sm ${col.dir === 'up' ? 'warn' : ''}" data-ci="${ci}" data-type="dir" title="Dirección de la numeración">${col.dir === 'up' ? '↑ INV' : '↓ NOR'}</button>`;
+    const orientBtn = `<button class="btn sm ${col.orient === 'h' ? 'warn' : ''}" data-ci="${ci}" data-type="orient" title="Orientación de las mesas">${col.orient === 'h' ? 'HORIZ' : 'VERT'}</button>`;
+    return `<div class="col-row">
+      <div class="col-row-header" style="flex-wrap:wrap;">
+        <input class="col-name-input" value="${esc(col.name)}" data-ci="${ci}" data-type="name" placeholder="Nombre col." aria-label="Nombre de columna">
+        ${dirBtn}
+        ${orientBtn}
+        <input type="number" min="1" max="30" value="${col.groups.length}" data-ci="${ci}" data-type="groupcount"
+          style="width:52px;padding:3px 5px;font-size:0.8rem;text-align:center;flex:none;" aria-label="Número de grupos">
+        <span style="font-family:'Inter',sans-serif;font-size:0.72rem;color:var(--muted);">grupos</span>
+        <button class="btn sm danger" data-ci="${ci}" data-type="rmcol" aria-label="Quitar columna" title="Quitar columna">✕</button>
+      </div>
+      <div class="groups-list">${groupsHTML}</div>
+    </div>`;
+  }).join('');
+
+  const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach(x => x.addEventListener(ev, fn));
+  on('select[data-type="size"]', 'change', e => {
+    const g = cols[+e.target.dataset.ci].groups[+e.target.dataset.gi];
+    g.size = parseInt(e.target.value);
+    if (g.off) g.off = g.off.filter(i => i < g.size);
+    onChange();
+  });
+  on('input[data-type="name"]', 'input', e => { cols[+e.target.dataset.ci].name = e.target.value; });
+  on('input[data-type="groupcount"]', 'change', e => onChange('groupcount', +e.target.dataset.ci, e.target.value));
+  on('button[data-type="dir"]', 'click', e => { const c = cols[+e.currentTarget.dataset.ci]; c.dir = c.dir === 'up' ? 'down' : 'up'; onChange(); });
+  on('button[data-type="orient"]', 'click', e => { const c = cols[+e.currentTarget.dataset.ci]; c.orient = c.orient === 'h' ? 'v' : 'h'; onChange(); });
+  const rmGroup = e => onChange('rmgrp', +e.target.dataset.ci, +e.target.dataset.gi);
+  on('span[data-type="rmgrp"]', 'click', rmGroup);
+  on('span[data-type="rmgrp"]', 'keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); rmGroup(e); } });
+  on('button[data-type="rmcol"]', 'click', e => onChange('rmcol', +e.currentTarget.dataset.ci));
+}
+
+function renderSetupCols() {
+  const el = document.getElementById('s-cols-list');
+  if (!el) return;
+  renderColumnEditor(el, SC.columns, SC.numberingMode, (action, ci, val) => {
+    if (action === 'groupcount') return sSetGroupCount(ci, val);
+    if (action === 'rmgrp') return sRemoveGroup(ci, val);
+    if (action === 'rmcol') return sRemoveColumn(ci);
+    renderSetupCols();
+  });
+  updateTableCalc();
+}
+
+function sAddJudge() {
+  const inp = document.getElementById('s-judge-inp');
+  const name = inp.value.trim();
+  if (!name) return;
+  if (SC.judges.find(j => j.name.toLowerCase() === name.toLowerCase())) { notify(`"${name}" YA ESTÁ EN LA LISTA`); return; }
+  SC.judges.push({ name, ci: nextColor(SC.judges) });
+  inp.value = '';
+  inp.focus();
+  renderSetupJudges();
+}
+function sRemoveJudge(i) { SC.judges.splice(i, 1); renderSetupJudges(); }
+function renderSetupJudges() {
+  const el = document.getElementById('s-judges-list');
+  el.innerHTML = SC.judges.map((j, i) =>
+    `<div class="judge-tag" style="color:${COLORS[j.ci]};border-color:${COLORS[j.ci]}">
+      <div class="dot" style="background:${COLORS[j.ci]}"></div>${esc(j.name)}
+      <span class="rm" data-idx="${i}" role="button" tabindex="0" aria-label="Quitar juez">✕</span>
+    </div>`
+  ).join('');
+  el.querySelectorAll('.rm').forEach(x => x.addEventListener('click', () => sRemoveJudge(+x.dataset.idx)));
+}
+
+function setNumberingMode(mode) {
+  SC.numberingMode = mode;
+  const colBtn = document.getElementById('nm-col-btn');
+  const rowBtn = document.getElementById('nm-row-btn');
+  const desc = document.getElementById('nm-desc');
+  const on = b => { b.style.background = '#e8f0fc'; b.style.borderColor = '#1a56a0'; b.style.color = '#1a56a0'; b.style.fontWeight = '700'; };
+  const off = b => { b.style.background = ''; b.style.borderColor = ''; b.style.color = ''; b.style.fontWeight = ''; };
+  if (mode === 'column') { on(colBtn); off(rowBtn); desc.textContent = 'Zigzag vertical por columna'; }
+  else { on(rowBtn); off(colBtn); desc.textContent = 'Zigzag horizontal por fila'; }
+  renderSetupCols();
+}
+
+function calcRounds(players) {
+  // Tabla de referencia (verificar contra la política vigente de Konami)
+  if (players <= 0)    return { d1: 0, d2: 0, swiss: 0, top: 0 };
+  if (players <= 8)    return { d1: 4, d2: 0, swiss: 4,  top: 0 };
+  if (players <= 16)   return { d1: 5, d2: 0, swiss: 5,  top: 0 };
+  if (players <= 32)   return { d1: 6, d2: 0, swiss: 6,  top: 0 };
+  if (players <= 64)   return { d1: 7, d2: 0, swiss: 7,  top: 0 };
+  if (players <= 128)  return { d1: 8, d2: 0, swiss: 8,  top: 0 };
+  if (players <= 256)  return { d1: 7, d2: 4, swiss: 11, top: 8 };
+  if (players <= 512)  return { d1: 8, d2: 4, swiss: 12, top: 8 };
+  if (players <= 1024) return { d1: 8, d2: 5, swiss: 13, top: 8 };
+  return                      { d1: 9, d2: 5, swiss: 14, top: 8 };
+}
+
+function updateTableCalc() {
+  const p = parseInt(document.getElementById('s-players').value) || 0;
+  const el = document.getElementById('s-tables-calc');
+  let venue = 0;
+  SC.columns.forEach(c => c.groups.forEach(g => venue += g.size));
+  if (el) {
+    if (p > 0) {
+      const req = Math.ceil(p / 2);
+      const ok = venue >= req;
+      el.innerHTML = `${req} mesas requeridas · venue: ${venue} mesas ${ok ? '✓' : `<span style="color:#b45309">⚠ faltan ${req - venue}</span>`}`;
+    } else el.textContent = `Venue: ${venue} mesas`;
+  }
+  if (p > 0) {
+    const r = calcRounds(p);
+    const d1El = document.getElementById('s-rounds-d1');
+    const d2El = document.getElementById('s-rounds-d2');
+    const infoEl = document.getElementById('s-rounds-info');
+    // No sobrescribir rondas escritas a mano
+    if (d1El && !d1El.dataset.manual) d1El.value = r.d1 || '';
+    if (d2El && !d2El.dataset.manual) d2El.value = r.d2 || '';
+    if (infoEl) {
+      if (r.swiss > 0) {
+        const topStr = r.top > 0 ? ` · Top ${r.top}` : '';
+        const d2str = r.d2 > 0 ? ` (${r.d1} + ${r.d2})` : '';
+        infoEl.textContent = `Sugerencia: ${r.swiss} rondas suizas${d2str}${topStr} — verifica con la tabla oficial vigente`;
+        infoEl.style.color = '#1a56a0';
+      } else infoEl.textContent = '';
+    }
+  }
+}
+
+function startApp() {
+  const name = document.getElementById('s-name').value.trim() || 'Torneo YGO';
+  const players = parseInt(document.getElementById('s-players').value) || 0;
+  if (!SC.columns.length) { alert('Agrega al menos una columna.'); return; }
+  if (!SC.judges.length) { alert('Agrega al menos un juez.'); return; }
+  const d1 = parseInt(document.getElementById('s-rounds-d1').value);
+  const d2 = parseInt(document.getElementById('s-rounds-d2').value);
+  const mins = parseInt(document.getElementById('s-round-min').value);
+
+  S = defaultState();
+  S.eventName = name;
+  S.players = players;
+  S.roundsD1 = d1 > 0 ? d1 : 8;
+  S.roundsD2 = d2 > 0 ? d2 : 0;
+  S.roundMinutes = mins > 0 ? mins : 50;
+  S.numberingMode = SC.numberingMode || 'column';
+  S.columns = SC.columns.map((c, ci) => ({
+    name: c.name.trim() || colName(ci), dir: c.dir || 'down', orient: c.orient || 'v',
+    groups: c.groups.map(g => ({ size: g.size, active: true, off: [] }))
+  }));
+  S.judges = SC.judges.map(j => ({ name: j.name, ci: j.ci, status: 'active', lunchEnd: null, lunchNotified: false }));
+  save();
+  showApp();
+}
+
+// ═══════════ PANTALLAS ═══════════
+function showApp() {
+  document.body.classList.add('in-app');
+  document.getElementById('setup-screen').classList.remove('active');
+  document.getElementById('app-screen').classList.add('active');
+  document.getElementById('hdr-event').textContent = S.eventName.toUpperCase();
+  document.getElementById('round-notes').value = S.notes || '';
+  if (S.timerRunning && S.timerStart) startTicking(); else renderTimer();
+  renderAll();
+}
+function showSetup() {
+  document.body.classList.remove('in-app');
+  document.getElementById('app-screen').classList.remove('active');
+  document.getElementById('setup-screen').classList.add('active');
+  document.getElementById('hdr-event').textContent = '';
+  renderSetupCols();
+  renderSetupJudges();
+}
+
+function renderAll() {
+  if (!document.getElementById('app-screen').classList.contains('active')) return;
+  const editing = editingRound !== null;
+  const dl = getDayRoundLabel(S.currentRound);
+  const rn = document.getElementById('round-num');
+  rn.textContent = editing ? `${dl.label} (EDITANDO)` : dl.label;
+  rn.style.color = editing ? 'var(--yellow)' : (S.isTop8 ? '#991b1b' : '');
+  const sub = document.getElementById('round-sub');
+  sub.textContent = S.finished && !editing ? 'TORNEO FINALIZADO' : dl.sub;
+  sub.style.color = S.isTop8 ? '#991b1b' : '';
+  sub.style.fontWeight = S.isTop8 ? '800' : '';
+
+  document.getElementById('ver-anterior-btn').style.display = (S.rounds.length && !editing) ? '' : 'none';
+  document.getElementById('edit-round-btns').style.display = editing ? 'flex' : 'none';
+  const sb = document.getElementById('save-btn');
+  sb.style.display = editing ? 'none' : '';
+  sb.textContent = S.finished ? 'TORNEO FINALIZADO' : 'GUARDAR RONDA';
+  document.getElementById('undo-btn').disabled = editing;
+
+  const banner = document.getElementById('edit-banner');
+  banner.style.display = editing ? 'block' : 'none';
+  if (editing) banner.textContent = `✏️ Editando ${dl.label} del historial — la ronda en curso está a salvo. Confirma o cancela abajo.`;
+
+  const top8 = S.isTop8;
+  document.getElementById('floor-outer').style.display = top8 ? 'none' : '';
+  document.getElementById('top8-container').style.display = top8 ? 'block' : 'none';
+  document.getElementById('counter-bar').style.display = top8 ? 'none' : '';
+  document.querySelector('.floor-wrap').classList.toggle('edit-tables', tableEditMode && !top8);
+
+  renderJudges();
+  if (top8) renderTop8Map();
+  else { renderFloor(); renderPatrolZones(); }
+  renderSummary();
+  renderCounter();
+}
+
+// ═══════════ PANEL DE JUECES ═══════════
+function realJudges() {
+  return (editingRound !== null && S._editBackup) ? S._editBackup.judges : S.judges;
+}
+
+function renderJudges() {
+  const el = document.getElementById('judges-list');
+  const active = S.judges.filter(j => j.status === 'active').length;
+  document.getElementById('judges-count').textContent = `${active}/${S.judges.length}`;
+  const zones = judgeZonesFor(currentRecordLike());
+
+  el.innerHTML = S.judges.map((j, i) => {
+    const hasTimer = (j.status === 'lunch' || j.status === 'break') && j.lunchEnd;
+    const isSel = selectedJudge === j.name;
+    const nZones = (zones[j.name] || []).length;
+    const load = (j.status === 'active' || j.status === 'break')
+      ? `<div class="judge-load${nZones ? '' : ' free'}">${nZones ? `${nZones} zona${nZones > 1 ? 's' : ''}` : 'LIBRE'}</div>` : '';
+    const btn = (st, cls, label, style = '') => j.status !== st
+      ? `<button class="btn sm ${cls}" data-act="${st}" data-idx="${i}" ${style}>${label}</button>` : '';
+    return `<div class="judge-card status-${j.status}${isSel ? ' selected' : ''}" draggable="${j.status === 'active'}"
+        data-idx="${i}" data-judge="${esc(j.name)}" id="jcard-${i}" ${j.status === 'active' ? 'tabindex="0" role="button" aria-pressed="' + isSel + '"' : ''}>
+      <div class="judge-card-top">
+        <div class="j-dot" style="background:${COLORS[j.ci]}"></div>
+        <span class="judge-name" title="${esc(j.name)}">${esc(j.name)}</span>
+        <span class="judge-status-badge">${STATUS_LABELS[j.status]}</span>
+      </div>
+      ${load}
+      ${hasTimer ? `<div class="lunch-timer" id="lt-${i}">--:--</div>` : ''}
+      <div class="judge-actions">
+        ${btn('active', 'success', 'PISO')}
+        ${btn('side', 'warn', 'SIDE')}
+        ${btn('lunch', 'danger', 'LUNCH')}
+        ${btn('break', '', 'BREAK', 'style="border-color:var(--blue);color:var(--blue)"')}
+        ${btn('off', '', 'OFF')}
+        ${j.status === 'off' ? `<button class="btn sm danger" data-act="remove" data-idx="${i}" title="Quitar juez del evento">✕</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  el.querySelectorAll('.judge-card').forEach(card => {
+    const i = +card.dataset.idx;
+    card.addEventListener('click', e => {
+      if (e.target.closest('button')) return;
+      if (S.judges[i] && S.judges[i].status === 'active') selectJudge(S.judges[i].name);
+    });
+    card.addEventListener('keydown', e => {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target === card) { e.preventDefault(); card.click(); }
+    });
+    card.addEventListener('dragstart', e => onDragStart(e, S.judges[i].name));
+  });
+  el.querySelectorAll('button[data-act]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation(); // evita que el clic seleccione la tarjeta
+    const i = +b.dataset.idx, act = b.dataset.act;
+    if (act === 'lunch') openLunch(i, 'lunch');
+    else if (act === 'break') openLunch(i, 'break');
+    else if (act === 'remove') removeJudge(i);
+    else setStatus(i, act);
+  }));
+
+  updateLunchTimers();
+  const ind = document.getElementById('sel-indicator');
+  if (selectedJudge) { ind.style.display = 'block'; ind.textContent = `✓ ${selectedJudge} — TOCA ZONA`; }
+  else ind.style.display = 'none';
+}
+
+function removeAllAssignmentsOf(name) {
+  Object.keys(S.assignments).forEach(k => {
+    if (k === 'patrol') {
+      Object.keys(S.assignments.patrol || {}).forEach(z => {
+        S.assignments.patrol[z] = S.assignments.patrol[z].filter(n => n !== name);
+      });
+    } else S.assignments[k] = (S.assignments[k] || []).filter(n => n !== name);
+  });
+}
+
+function setStatus(i, status) {
+  const j = S.judges[i];
+  j.status = status;
+  if (status !== 'lunch' && status !== 'break') { j.lunchEnd = null; j.lunchNotified = false; }
+  if (status !== 'active') {
+    removeAllAssignmentsOf(j.name);
+    if (selectedJudge === j.name) selectedJudge = null;
+  }
+  save(); renderAll();
+}
+
+function appAddJudge() {
+  if (editGuard()) return;
+  const name = (prompt('Nombre del nuevo juez:') || '').trim();
+  if (!name) return;
+  if (S.judges.find(j => j.name.toLowerCase() === name.toLowerCase())) { notify(`"${name}" YA EXISTE`); return; }
+  S.judges.push({ name, ci: nextColor(S.judges), status: 'active', lunchEnd: null, lunchNotified: false });
+  save(); renderAll();
+  notify(`JUEZ AGREGADO: ${name}`);
+}
+function removeJudge(i) {
+  if (editGuard()) return;
+  const j = S.judges[i];
+  if (!confirm(`¿Quitar a ${j.name} del evento?\nEl historial de rondas anteriores se conserva.`)) return;
+  removeAllAssignmentsOf(j.name);
+  if (selectedJudge === j.name) selectedJudge = null;
+  S.judges.splice(i, 1);
+  save(); renderAll();
+}
+
+// ─── Almuerzo / descanso ───
+function openLunch(i, mode) {
+  lunchTarget = i;
+  const modal = document.getElementById('lunch-modal');
+  modal.dataset.mode = mode;
+  document.getElementById('lunch-modal-title').textContent = mode === 'break' ? 'DESCANSO' : 'ALMUERZO';
+  document.getElementById('lunch-judge-name').textContent = `Juez: ${S.judges[i].name}`;
+  document.getElementById('lunch-minutes').value = mode === 'break' ? 10 : 30;
+  openModal('lunch-modal');
+  setTimeout(() => document.getElementById('lunch-minutes').select(), 50);
+}
+function confirmLunch() {
+  const mins = parseInt(document.getElementById('lunch-minutes').value);
+  if (!(mins >= 1 && mins <= 240)) { alert('Ingresa un número de minutos entre 1 y 240.'); return; }
+  const mode = document.getElementById('lunch-modal').dataset.mode === 'break' ? 'break' : 'lunch';
+  const j = S.judges[lunchTarget];
+  if (!j) { closeModal('lunch-modal'); return; }
+  j.status = mode;
+  j.lunchEnd = Date.now() + mins * 60000;
+  j.lunchNotified = false;
+  // El descanso corto conserva asignaciones; el almuerzo las libera
+  if (mode === 'lunch') removeAllAssignmentsOf(j.name);
+  if (selectedJudge === j.name) selectedJudge = null;
+  save(); closeModal('lunch-modal'); renderAll();
+}
+
+function fmtMS(ms) {
+  const m = String(Math.floor(ms / 60000)).padStart(2, '0');
+  const s = String(Math.floor((ms % 60000) / 1000)).padStart(2, '0');
+  return `${m}:${s}`;
+}
+function updateLunchTimers() {
+  S.judges.forEach((j, i) => {
+    if ((j.status === 'lunch' || j.status === 'break') && j.lunchEnd) {
+      const el = document.getElementById(`lt-${i}`);
+      const card = document.getElementById(`jcard-${i}`);
+      if (!el) return;
+      const rem = j.lunchEnd - Date.now();
+      if (rem > 0) { el.textContent = fmtMS(rem); el.classList.remove('overdue'); card && card.classList.remove('overdue'); }
+      else { el.textContent = `⏰ REGRESA (+${fmtMS(-rem)})`; el.classList.add('overdue'); card && card.classList.add('overdue'); }
+    }
+  });
+}
+function startLunchWatcher() {
+  if (lunchWatcher) return; // un solo intervalo en toda la sesión
+  lunchWatcher = setInterval(() => {
+    let changed = false;
+    realJudges().forEach(j => {
+      if ((j.status === 'lunch' || j.status === 'break') && j.lunchEnd && !j.lunchNotified && Date.now() >= j.lunchEnd) {
+        notify(`⏰ ${j.name} — ${j.status === 'break' ? 'REGRESA DEL DESCANSO' : 'REGRESA DEL ALMUERZO'}`);
+        alertSignal();
+        j.lunchNotified = true; changed = true;
+      }
+    });
+    if (changed) save();
+    updateLunchTimers();
+  }, 1000);
+}
+
+// ═══════════ MAPA DEL PISO ═══════════
+function renderFloor() {
+  const el = document.getElementById('floor-map');
+  el.innerHTML = '';
+  const mode = S.numberingMode || 'column';
+  const nums = numberingFor(S.columns, mode);
+
+  S.columns.forEach((col, ci) => {
+    const isH = (col.orient || 'v') === 'h';
+    const colDiv = document.createElement('div');
+    colDiv.className = `col-block${isH ? ' orient-h' : ''}`;
+
+    const hdr = document.createElement('div');
+    hdr.className = 'col-header';
+    hdr.textContent = col.name + ' ';
+    const tag = document.createElement('span');
+    tag.style.cssText = 'font-size:0.6rem;opacity:0.75';
+    tag.textContent = mode === 'row' ? 'FILA' : `${col.dir === 'up' ? '↑' : '↓'}${isH ? 'H' : 'V'}`;
+    hdr.appendChild(tag);
+    colDiv.appendChild(hdr);
+
+    const groupsRow = document.createElement('div');
+    groupsRow.className = 'col-groups-row';
+
+    displayGroups(col, mode).forEach(({grp, gi}) => {
+      const key = `${ci}-${gi}`;
+      const assigned = S.assignments[key] || [];
+      const asc = nums[key] || [];
+      const uncovered = groupHasActiveTables(grp) && !assigned.length;
+
+      const grpDiv = document.createElement('div');
+      grpDiv.className = `table-group${grp.active ? '' : ' inactive'}${isH ? ' orient-h' : ''}${uncovered ? ' uncovered' : ''}`;
+      grpDiv.dataset.key = key;
+      grpDiv.ondragover = e => { e.preventDefault(); grpDiv.classList.add('drag-over'); };
+      grpDiv.ondragleave = () => grpDiv.classList.remove('drag-over');
+      grpDiv.ondrop = e => { e.preventDefault(); grpDiv.classList.remove('drag-over'); dropJudge(key); };
+      grpDiv.onclick = e => {
+        if (tableEditMode) return;
+        if (e.target.closest('.assigned-chip')) return;
+        if (selectedJudge) dropJudge(key);
+      };
+
+      // Botón de grupo completo (solo visible en modo editar mesas)
+      const tog = document.createElement('button');
+      tog.className = 'group-toggle';
+      tog.title = grp.active ? 'Desactivar grupo completo' : 'Activar grupo';
+      tog.setAttribute('aria-label', tog.title);
+      tog.textContent = grp.active ? '−' : '+';
+      tog.onclick = e => {
+        e.stopPropagation();
+        const g = S.columns[ci].groups[gi];
+        g.active = !g.active;
+        if (!g.active) S.assignments[key] = [];
+        save(); renderAll();
+      };
+      grpDiv.appendChild(tog);
+
+      const tablesRow = document.createElement('div');
+      tablesRow.className = `tables-row${isH ? ' horiz' : ''}`;
+      displayNums(asc, col, gi, mode).forEach(t => {
+        const idx = asc.indexOf(t);
+        const off = (grp.off || []).includes(idx);
+        const tc = document.createElement('div');
+        tc.className = `table-cell${grp.size === 2 ? ' t4' : ''}${off ? ' table-off' : ''}`;
+        tc.textContent = t;
+        if (tableEditMode) {
+          tc.title = off ? 'Activar mesa' : 'Desactivar mesa';
+          tc.onclick = e => { e.stopPropagation(); toggleTable(ci, gi, idx); };
+        }
+        tablesRow.appendChild(tc);
+      });
+      grpDiv.appendChild(tablesRow);
+
+      const dz = document.createElement('div');
+      dz.className = 'drop-zone';
+      assigned.forEach(jName => dz.appendChild(makeChip(jName, () => removeAssignment(key, jName))));
+      grpDiv.appendChild(dz);
+      groupsRow.appendChild(grpDiv);
+    });
+
+    colDiv.appendChild(groupsRow);
+    el.appendChild(colDiv);
+  });
+}
+
+function makeChip(name, onRemove, extraClass = 'assigned-chip', small = false) {
+  const judge = S.judges.find(j => j.name === name);
+  const color = judge ? COLORS[judge.ci] : '#64748b';
+  const chip = document.createElement('div');
+  chip.className = extraClass;
+  chip.style.cssText = `color:${color};border-color:${color};${small ? 'font-size:0.68rem;padding:2px 7px;' : ''}`;
+  chip.title = 'Click para quitar';
+  chip.setAttribute('role', 'button');
+  chip.setAttribute('aria-label', `Quitar a ${name}`);
+  const dot = document.createElement('div');
+  dot.className = 'dot';
+  dot.style.background = color;
+  chip.appendChild(dot);
+  chip.appendChild(document.createTextNode(name));
+  chip.addEventListener('click', e => { e.stopPropagation(); onRemove(); });
+  return chip;
+}
+
+function toggleTable(ci, gi, idx) {
+  const grp = S.columns[ci].groups[gi];
+  grp.off = grp.off || [];
+  const k = grp.off.indexOf(idx);
+  if (k >= 0) grp.off.splice(k, 1); else grp.off.push(idx);
+  save(); renderAll();
+}
+function toggleTableEditMode() {
+  tableEditMode = !tableEditMode;
+  if (tableEditMode) selectedJudge = null;
+  renderAll();
+}
+
+// Deja activas solo las mesas 1..n según la numeración vigente
+function setActiveTableCount(n) {
+  const nums = numberingFor(S.columns, S.numberingMode);
+  S.columns.forEach((c, ci) => c.groups.forEach((g, gi) => {
+    const arr = nums[`${ci}-${gi}`] || [];
+    g.off = [];
+    arr.forEach((t, idx) => { if (t > n) g.off.push(idx); });
+    g.active = g.off.length < g.size;
+    if (!g.active) S.assignments[`${ci}-${gi}`] = [];
+  }));
+}
+
+function renderCounter() {
+  const el = document.getElementById('counter-bar');
+  let total = 0, active = 0, uncovered = 0;
+  S.columns.forEach((col, ci) => col.groups.forEach((g, gi) => {
+    total += g.size;
+    if (!g.active) return;
+    active += g.size - (g.off || []).length;
+    if (groupHasActiveTables(g) && !(S.assignments[`${ci}-${gi}`] || []).length) uncovered++;
+  }));
+  const removed = total - active;
+  const zones = judgeZonesFor(currentRecordLike());
+  const free = S.judges.filter(j => j.status === 'active' && !(zones[j.name] || []).length).length;
+  el.innerHTML = `
+    <div class="counter-item"><span class="counter-label">MESAS</span><span class="counter-val">${active}</span><span class="counter-label">/ ${total}</span></div>
+    ${removed > 0 ? `<div class="counter-item"><span class="counter-label">DESACTIVADAS</span><span class="counter-val" style="color:var(--red)">${removed}</span></div>` : ''}
+    <div class="counter-item"><span class="counter-label">JUGADORES</span><span class="counter-val">${active * 2}</span>${S.players > 0 ? `<span class="counter-label">/ ${S.players} reg.</span>` : ''}</div>
+    <div class="counter-item"><span class="counter-label">GRUPOS SIN JUEZ</span><span class="counter-val ${uncovered ? 'counter-warn' : ''}">${uncovered}</span></div>
+    <div class="counter-item"><span class="counter-label">JUECES LIBRES</span><span class="counter-val ${free ? 'counter-warn' : ''}">${free}</span></div>
+    <button class="btn sm edit-mode-btn${tableEditMode ? ' on' : ''}" onclick="toggleTableEditMode()" aria-pressed="${tableEditMode}">
+      ${tableEditMode ? '✓ LISTO' : '🔧 EDITAR MESAS'}</button>
+    ${tableEditMode ? '<span class="edit-hint">Toca una mesa para activarla/desactivarla, o (−) para el grupo completo.</span>' : ''}
+  `;
+}
+
+// ─── Zonas de patrullaje ───
+function makePzEl(zone) {
+  const m = PATROL_META[zone];
+  const assigned = (S.assignments.patrol || {})[zone] || [];
+  const el = document.createElement('div');
+  el.className = m.css;
+  el.id = m.id;
+  const label = document.createElement('span');
+  label.className = 'pz-label';
+  label.textContent = m.label;
+  el.appendChild(label);
+  const drop = document.createElement('div');
+  drop.className = 'pz-drop';
+  assigned.forEach(name => drop.appendChild(makeChip(name, () => removePatrolAssignment(zone, name), 'assigned-chip', true)));
+  el.appendChild(drop);
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+  el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('drag-over'); dropPatrol(zone); });
+  el.addEventListener('click', () => { if (selectedJudge && !tableEditMode) dropPatrol(zone); });
+  return el;
+}
+function renderPatrolZones() {
+  [['pz-sup-row','SUP'],['pz-inf-row','INF'],['pz-izq-col','IZQ'],['pz-der-col','DER']].forEach(([id, z]) => {
+    const c = document.getElementById(id);
+    if (c) { c.innerHTML = ''; c.appendChild(makePzEl(z)); }
+  });
+}
+function dropPatrol(zone) {
+  const name = takeAssignee();
+  if (!name) return;
+  if (!S.assignments.patrol) S.assignments.patrol = {};
+  if (!S.assignments.patrol[zone]) S.assignments.patrol[zone] = [];
+  if (!S.assignments.patrol[zone].includes(name)) S.assignments.patrol[zone].push(name);
+  save(); renderAll();
+}
+function removePatrolAssignment(zone, name) {
+  if (!S.assignments.patrol || !S.assignments.patrol[zone]) return;
+  S.assignments.patrol[zone] = S.assignments.patrol[zone].filter(n => n !== name);
+  save(); renderAll();
+}
+
+// ═══════════ ARRASTRAR / TOCAR PARA ASIGNAR ═══════════
+document.addEventListener('dragend', () => {
+  dragging = null;
+  document.querySelectorAll('.judge-card').forEach(el => el.classList.remove('dragging'));
+});
+function onDragStart(e, name) {
+  dragging = name;
+  selectedJudge = null;
+  e.dataTransfer.effectAllowed = 'copy';
+  try { e.dataTransfer.setData('text/plain', name); } catch (_) {}
+  setTimeout(() => document.querySelectorAll('.judge-card').forEach(el => {
+    if (el.dataset.judge === name) el.classList.add('dragging');
+  }), 0);
+}
+// Devuelve el juez a asignar (solo si está en PISO)
+function takeAssignee() {
+  document.querySelectorAll('.judge-card').forEach(el => el.classList.remove('dragging'));
+  const name = dragging || selectedJudge;
+  dragging = null;
+  if (!name) return null;
+  const j = S.judges.find(x => x.name === name);
+  if (!j || j.status !== 'active') {
+    notify('SOLO LOS JUECES EN PISO PUEDEN ASIGNARSE');
+    selectedJudge = null; renderJudges();
+    return null;
+  }
+  return name;
+}
+function dropJudge(key) {
+  const [ci, gi] = key.split('-').map(Number);
+  const grp = S.columns[ci] && S.columns[ci].groups[gi];
+  if (!grp || !grp.active) { dragging = null; notify('ESE GRUPO ESTÁ DESACTIVADO'); return; }
+  const name = takeAssignee();
+  if (!name) return;
+  if (!S.assignments[key]) S.assignments[key] = [];
+  if (!S.assignments[key].includes(name)) S.assignments[key].push(name);
+  // selectedJudge se mantiene para asignar el mismo juez a varias zonas
+  save(); renderAll();
+}
+function selectJudge(name) {
+  if (tableEditMode) { notify('SAL DEL MODO "EDITAR MESAS" PARA ASIGNAR'); return; }
+  selectedJudge = selectedJudge === name ? null : name;
+  dragging = null;
+  renderJudges();
+}
+function removeAssignment(key, name) {
+  S.assignments[key] = (S.assignments[key] || []).filter(n => n !== name);
+  save(); renderAll();
+}
+function clearAssignments() {
+  if (!confirm('¿Limpiar todas las asignaciones de esta ronda?')) return;
+  S.assignments = {};
+  selectedJudge = null;
+  save(); renderAll();
+}
+
+// ═══════════ RESUMEN ═══════════
+function renderSummary() {
+  const el = document.getElementById('summary-list');
+  const zones = judgeZonesFor(currentRecordLike());
+  el.innerHTML = S.judges.filter(j => j.status !== 'off').map(j => {
+    const z = zones[j.name] || [];
+    return `<div class="summary-row">
+      <div class="summary-dot" style="background:${COLORS[j.ci]}"></div>
+      <div>
+        <div style="font-size:0.75rem;font-weight:600;">${STATUS_ICONS[j.status] || ''} ${esc(j.name)} <span style="color:var(--muted);font-weight:400;">${STATUS_LABELS[j.status]}</span></div>
+        <div class="summary-zone">${z.length ? esc(z.join(', ')) : '—'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════ RELOJ DE RONDA ═══════════
+function roundSecs() { return (S.roundMinutes || 50) * 60; }
+function timerStart() {
+  if (S.timerRunning) return;
+  S.timerRunning = true;
+  S.timerStart = Date.now() - S.timerElapsed;
+  primeAudio();
+  startTicking();
+  save();
+}
+function startTicking() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(tickTimer, 250);
+  tickTimer();
+}
+function timerPause() {
+  if (!S.timerRunning) return;
+  clearInterval(timerInterval);
+  S.timerRunning = false;
+  S.timerElapsed = Date.now() - S.timerStart;
+  renderTimer(); save();
+}
+function timerReset() {
+  clearInterval(timerInterval);
+  S.timerRunning = false; S.timerElapsed = 0; S.timerStart = null;
+  timeUpNotified = false;
+  renderTimer(); save();
+}
+function timerResetAsk() {
+  if (S.timerElapsed > 0 && !confirm('¿Reiniciar el reloj de la ronda?')) return;
+  timerReset();
+}
+function tickTimer() {
+  if (S.timerRunning) S.timerElapsed = Date.now() - S.timerStart;
+  renderTimer();
+}
+function renderTimer() {
+  const el = document.getElementById('round-timer');
+  const elapsed = Math.floor(S.timerElapsed / 1000);
+  const dur = roundSecs();
+  if (elapsed < dur) {
+    const rem = dur - elapsed;
+    el.textContent = `${String(Math.floor(rem / 60)).padStart(2, '0')}:${String(rem % 60).padStart(2, '0')}`;
+    el.style.color = rem <= 60 ? 'var(--red)' : rem <= 300 ? 'var(--yellow)' : 'var(--green)';
+  } else {
+    const extra = elapsed - dur;
+    el.textContent = `+${String(Math.floor(extra / 60)).padStart(2, '0')}:${String(extra % 60).padStart(2, '0')}`;
+    el.style.color = 'var(--red)';
+    if (S.timerRunning && !timeUpNotified) {
+      timeUpNotified = true; // una sola vez por ronda
+      notify('⏰ TIEMPO — INICIA EL PROCEDIMIENTO DE FIN DE RONDA');
+      alertSignal();
+    }
+  }
+}
+function timerDisplay() { return document.getElementById('round-timer').textContent; }
+
+// Sonido + vibración (si el dispositivo lo permite)
+let audioCtx = null;
+function primeAudio() { try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); } catch (_) {} }
+function alertSignal() {
+  try { navigator.vibrate && navigator.vibrate([300, 150, 300]); } catch (_) {}
+  try {
+    if (!audioCtx) return;
+    [0, 0.35].forEach(t => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.frequency.value = 880; o.connect(g); g.connect(audioCtx.destination);
+      g.gain.setValueAtTime(0.25, audioCtx.currentTime + t);
+      o.start(audioCtx.currentTime + t); o.stop(audioCtx.currentTime + t + 0.25);
+    });
+  } catch (_) {}
+}
+
+// ═══════════ MAPA TOP 8 ═══════════
+function top8MesasNow() { return TOP8_TABLES[top8RoundOf(S.currentRound)] || 1; }
+
+function renderTop8Map() {
+  const container = document.getElementById('top8-container');
+  container.innerHTML = '';
+  const t8 = top8RoundOf(S.currentRound);
+  const numMesas = top8MesasNow();
+  const roundLabel = TOP8_NAMES[t8] || `TOP 8 R${t8}`;
+  const mapDiv = document.createElement('div');
+  mapDiv.className = 'top8-map';
+
+  for (let m = 1; m <= numMesas; m++) {
+    const key = `top8-${m}`;
+    const assigned = S.assignments[key] || [];
+    const mesa = document.createElement('div');
+    mesa.className = 'top8-mesa';
+    const hdr = document.createElement('div');
+    hdr.className = 'top8-mesa-header';
+    hdr.innerHTML = `
+      <div class="top8-mesa-num">MESA ${m}</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+        <div class="top8-mesa-label">${esc(roundLabel)}</div>
+      </div>`;
+    mesa.appendChild(hdr);
+
+    const zone = document.createElement('div');
+    zone.className = 'top8-judges-zone';
+    zone.dataset.key = key;
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); dropTop8Judge(key); });
+    zone.addEventListener('click', () => { if (selectedJudge) dropTop8Judge(key); });
+    assigned.forEach(name => zone.appendChild(makeChip(name, () => removeTop8Judge(key, name), 'top8-judge-chip')));
+    mesa.appendChild(zone);
+
+    const count = document.createElement('div');
+    count.className = 'top8-count';
+    count.textContent = `${assigned.length} / ${TOP8_MAX_JUDGES} jueces`;
+    if (assigned.length >= TOP8_MAX_JUDGES) count.style.color = '#dc2626';
+    mesa.appendChild(count);
+    mapDiv.appendChild(mesa);
+  }
+  container.appendChild(mapDiv);
+}
+function dropTop8Judge(key) {
+  if ((S.assignments[key] || []).length >= TOP8_MAX_JUDGES) {
+    dragging = null; notify(`MÁXIMO ${TOP8_MAX_JUDGES} JUECES POR MESA`); return;
+  }
+  const name = takeAssignee();
+  if (!name) return;
+  if (!S.assignments[key]) S.assignments[key] = [];
+  if (!S.assignments[key].includes(name)) S.assignments[key].push(name);
+  save(); renderAll();
+}
+function removeTop8Judge(key, name) {
+  if (!S.assignments[key]) return;
+  S.assignments[key] = S.assignments[key].filter(n => n !== name);
+  save(); renderAll();
+}
+
+// ═══════════ GUARDAR RONDA ═══════════
+function snapshotRecord() {
+  return {
+    round: S.currentRound,
+    ts: new Date().toLocaleString('es-CO'),
+    elapsed: timerDisplay(),
+    assignments: clone(S.assignments),
+    judges: S.judges.map(j => ({name: j.name, ci: j.ci, status: j.status})),
+    notes: document.getElementById('round-notes').value.trim(),
+    columns: clone(S.columns),
+    numberingMode: S.numberingMode || 'column',
+    isTop8: isTop8Round(S.currentRound)
+  };
+}
+
+function saveRound() {
+  if (editingRound !== null) { saveRoundEdit(); return; }
+  if (S.finished) {
+    notify('EL TORNEO YA FINALIZÓ — usa DESHACER si necesitas corregir la Final');
+    openEndModal();
+    return;
+  }
+  timerPause();
+  const record = snapshotRecord();
+  S.rounds.push(record);
+  S.assignments = {};
+  S.notes = '';
+  document.getElementById('round-notes').value = '';
+  timerReset();
+  selectedJudge = null;
+
+  const label = getDayRoundLabel(record.round).label;
+
+  // Final del Top 8: el torneo termina, no se avanza de ronda
+  if (record.isTop8 && top8RoundOf(record.round) >= 3) {
+    S.finished = true;
+    save(); renderAll();
+    notify(`${label} GUARDADA`);
+    setTimeout(openEndModal, 400);
+    return;
+  }
+
+  S.currentRound++;
+  const d1 = S.roundsD1 || 0, d2 = S.roundsD2 || 0;
+  let transition = null;
+  if (!record.isTop8) {
+    if (d2 > 0 && record.round === d1) transition = 'day2';
+    else if (totalSwiss() > 0 && record.round === totalSwiss()) transition = 'top8';
+  }
+  save(); renderAll();
+  notify(`${label} GUARDADA`);
+  if (transition === 'day2') setTimeout(openDay2CutModal, 600);
+  else if (transition === 'top8') setTimeout(openTop8Modal, 800);
+  else setTimeout(() => openModal('recycle-modal'), 700);
+}
+
+// ─── Deshacer ───
+function undoLastRound() {
+  if (editGuard()) return;
+  if (!S.rounds.length) { notify('NO HAY RONDAS PARA DESHACER'); return; }
+  const last = S.rounds[S.rounds.length - 1];
+  const lbl = getDayRoundLabel(last.round).label;
+  if (!confirm(`¿Deshacer ${lbl}?\n\nSe restauran sus asignaciones y notas. Lo que tengas ahora en el mapa se reemplaza.`)) return;
+  S.rounds.pop();
+  S.currentRound = last.round;
+  S.assignments = clone(last.assignments || {});
+  // Restaurar estados del snapshot sin perder jueces agregados ni almuerzos en curso
+  const snap = Object.fromEntries((last.judges || []).map(j => [j.name, j]));
+  S.judges.forEach(j => {
+    const s = snap[j.name];
+    if (s && s.status !== j.status) { j.status = s.status; j.lunchEnd = null; j.lunchNotified = false; }
+  });
+  if (last.columns) S.columns = clone(last.columns);
+  if (last.numberingMode) S.numberingMode = last.numberingMode;
+  if (S.top8Start && last.round < S.top8Start) { S.isTop8 = false; S.top8Start = null; }
+  else S.isTop8 = isTop8Round(last.round);
+  S.finished = false;
+  timerReset();
+  S.notes = last.notes || '';
+  document.getElementById('round-notes').value = S.notes;
+  selectedJudge = null;
+  ['recycle-modal', 'end-modal', 'top8-modal', 'day2cut-modal'].forEach(id => document.getElementById(id).classList.remove('open'));
+  save(); renderAll();
+  notify(`${lbl} RESTAURADA`);
+}
+
+// ═══════════ EDITAR RONDA DEL HISTORIAL ═══════════
+function editGuard() {
+  if (editingRound !== null) { notify('PRIMERO CONFIRMA O CANCELA LA EDICIÓN DE RONDA'); return true; }
+  return false;
+}
+function openRoundEdit(idx) {
+  if (editGuard()) return;
+  const r = S.rounds[idx];
+  if (!r) return;
+  S._editBackup = clone({
+    assignments: S.assignments, judges: S.judges, columns: S.columns,
+    isTop8: S.isTop8, currentRound: S.currentRound, numberingMode: S.numberingMode,
+    notes: document.getElementById('round-notes').value
+  });
+  editingRound = idx;
+  S.assignments = clone(r.assignments || {});
+  S.judges = (r.judges || []).map(j => ({...j, lunchEnd: null, lunchNotified: false}));
+  if (r.columns) S.columns = clone(r.columns);
+  if (r.numberingMode) S.numberingMode = r.numberingMode;
+  S.isTop8 = recordIsTop8(r);
+  S.currentRound = r.round;
+  document.getElementById('round-notes').value = r.notes || '';
+  tableEditMode = false;
+  closeModal('hist-modal');
+  selectedJudge = null;
+  renderAll();
+  notify(`EDITANDO ${getDayRoundLabel(r.round).label} — CONFIRMA O CANCELA ABAJO`);
+}
+function restoreEditBackup() {
+  const b = S._editBackup;
+  S.assignments = b.assignments; S.judges = b.judges; S.columns = b.columns;
+  S.isTop8 = b.isTop8; S.currentRound = b.currentRound; S.numberingMode = b.numberingMode;
+  S.notes = b.notes;
+  document.getElementById('round-notes').value = b.notes || '';
+  S._editBackup = null;
+  editingRound = null;
+  selectedJudge = null;
+  tableEditMode = false;
+}
+function saveRoundEdit() {
+  if (editingRound === null) return;
+  const r = S.rounds[editingRound];
+  r.assignments = clone(S.assignments);
+  r.judges = S.judges.map(j => ({name: j.name, ci: j.ci, status: j.status}));
+  r.notes = document.getElementById('round-notes').value.trim();
+  r.columns = clone(S.columns);
+  const lbl = getDayRoundLabel(r.round).label;
+  restoreEditBackup();
+  save(); renderAll();
+  notify(`${lbl} ACTUALIZADA`);
+}
+function cancelRoundEdit() {
+  if (editingRound === null) return;
+  restoreEditBackup();
+  save(); renderAll();
+  notify('EDICIÓN CANCELADA');
+}
+function onNotesInput() {
+  if (editingRound !== null) return; // las notas de la ronda en edición se guardan al confirmar
+  S.notes = document.getElementById('round-notes').value;
+  save();
+}
+
+// ═══════════ HISTORIAL ═══════════
+function openHistory() {
+  const el = document.getElementById('hist-content');
+  if (!S.rounds.length) {
+    el.innerHTML = '<div style="font-family:Inter,sans-serif;font-size:0.85rem;color:var(--muted);padding:20px;text-align:center;">Sin rondas guardadas.</div>';
+  } else {
+    el.innerHTML = S.rounds.map((r, idx) => {
+      const zones = judgeZonesFor(r);
+      const rows = (r.judges || []).map(j => `<div class="hist-judge-row">
+          <div class="hist-j-dot" style="background:${COLORS[j.ci] || '#64748b'}"></div>
+          <span style="font-family:Inter,sans-serif;font-size:0.78rem;min-width:130px;">${STATUS_ICONS[j.status] || ''} ${esc(j.name)} <span style="color:var(--muted)">[${STATUS_LABELS[j.status] || j.status}]</span></span>
+          <span style="font-family:Inter,sans-serif;font-size:0.75rem;color:var(--muted);">${esc((zones[j.name] || []).join(', ')) || '—'}</span>
+        </div>`).join('');
+      return `<div class="hist-round">
+        <div class="hist-header">
+          <strong>${esc(getDayRoundLabel(r.round).label)}</strong>
+          <span style="display:flex;align-items:center;gap:8px;">
+            <span class="hist-meta">${esc(r.elapsed)} | ${esc(r.ts)}</span>
+            <button class="btn sm warn" data-edit="${idx}" ${editingRound !== null ? 'disabled' : ''}>EDITAR</button>
+          </span>
+        </div>
+        <div class="hist-assignments">${rows}</div>
+        ${r.notes ? `<div class="hist-notes">📝 ${esc(r.notes)}</div>` : ''}
+      </div>`;
+    }).join('');
+    el.querySelectorAll('button[data-edit]').forEach(b => b.addEventListener('click', () => openRoundEdit(+b.dataset.edit)));
+  }
+  openModal('hist-modal');
+}
+function clearHistory() {
+  if (editGuard()) return;
+  if (!confirm('¿Borrar todo el historial de rondas?\n\nTe recomendamos exportar un respaldo .json antes.')) return;
+  S.rounds = []; save(); openHistory(); renderAll();
+}
+
+function downloadFile(content, filename, type) {
+  const url = URL.createObjectURL(new Blob([content], {type}));
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+function safeFileName(s) {
+  return (s || 'evento').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'evento';
+}
+
+function exportTxt() {
+  let txt = `JUDGE FLOOR MANAGER\n${S.eventName}\nJugadores: ${S.players} | Exportado: ${new Date().toLocaleString('es-CO')}\n${'═'.repeat(55)}\n\n`;
+  S.rounds.forEach(r => {
+    txt += `${getDayRoundLabel(r.round).label} — ${r.ts} — Reloj: ${r.elapsed}\n${'─'.repeat(40)}\n`;
+    const zones = judgeZonesFor(r);
+    (r.judges || []).forEach(j => {
+      const st = `[${STATUS_LABELS[j.status] || j.status}]`;
+      txt += `  ${st.padEnd(11)} ${j.name.padEnd(18)} ${(zones[j.name] || []).join(', ') || '—'}\n`;
+    });
+    if (r.notes) txt += `  NOTAS: ${r.notes}\n`;
+    txt += '\n';
+  });
+  downloadFile(txt, `jueces-${safeFileName(S.eventName)}.txt`, 'text/plain;charset=utf-8');
+}
+
+// ─── Respaldo JSON ───
+function exportBackup() {
+  const data = { app: 'judge-floor-manager', version: 3, exported: new Date().toISOString(), state: persistable() };
+  const d = new Date();
+  const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}-${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
+  downloadFile(JSON.stringify(data, null, 1), `respaldo-${safeFileName(S.eventName)}-${stamp}.json`, 'application/json');
+  notify('RESPALDO DESCARGADO');
+}
+function importBackup(input) {
+  const file = input.files && input.files[0];
+  input.value = '';
+  if (!file) return;
+  if (editGuard()) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      const st = data.state || data;
+      if (!Array.isArray(st.columns) || !Array.isArray(st.judges)) throw new Error('formato');
+      const hasCurrent = S.columns.length && S.judges.length;
+      if (hasCurrent && !confirm(`¿Reemplazar el evento actual por el respaldo "${st.eventName || 'sin nombre'}"?`)) return;
+      clearInterval(timerInterval);
+      applyLoadedState(st);
+      selectedJudge = null; dragging = null; tableEditMode = false;
+      document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open'));
+      save();
+      showApp();
+      notify('RESPALDO CARGADO');
+    } catch (e) {
+      alert('No se pudo leer el archivo. ¿Es un respaldo .json de esta app?');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ═══════════ EDITAR VENUE ═══════════
+function openEditVenue() {
+  if (editGuard()) return;
+  if (S.isTop8) { notify('EL VENUE NO SE USA DURANTE EL TOP 8'); return; }
+  EC = clone(S.columns); // copia completa: conserva dirección, orientación y mesas desactivadas
+  renderEditCols();
+  openModal('edit-venue-modal');
+}
+function editAddColumn() {
+  EC.push({ name: colName(EC.length), dir: 'down', orient: 'v', groups: [{size:3, active:true, off:[]},{size:3, active:true, off:[]},{size:3, active:true, off:[]}] });
+  renderEditCols();
+}
+function renderEditCols() {
+  renderColumnEditor(document.getElementById('edit-cols-list'), EC, S.numberingMode || 'column', (action, ci, val) => {
+    if (action === 'groupcount') return editSetGroupCount(ci, val);
+    if (action === 'rmgrp') {
+      if (EC[ci].groups.length <= 1) { notify('UNA COLUMNA NECESITA AL MENOS UN GRUPO'); return; }
+      EC[ci].groups.splice(val, 1);
+    }
+    if (action === 'rmcol') EC.splice(ci, 1);
+    renderEditCols();
+  });
+}
+function editSetGroupCount(ci, n) {
+  n = Math.max(1, Math.min(30, parseInt(n) || 1));
+  const cur = EC[ci].groups.length;
+  if (n > cur) for (let i = cur; i < n; i++) EC[ci].groups.push({size:3, active:true, off:[]});
+  else EC[ci].groups = EC[ci].groups.slice(0, n);
+  renderEditCols();
+}
+function applyEditVenue() {
+  if (!EC.length) { alert('El venue necesita al menos una columna.'); return; }
+  const sameShape = EC.length === S.columns.length && EC.every((c, i) => c.groups.length === S.columns[i].groups.length);
+  const hasAssign = Object.entries(S.assignments).some(([k, v]) => k === 'patrol' ? Object.values(v || {}).some(a => a.length) : (v || []).length);
+  if (!sameShape && hasAssign &&
+      !confirm('Cambiaste el número de columnas o grupos.\nLas asignaciones de mesas de esta ronda se limpiarán (las de patrullaje se conservan). ¿Continuar?')) return;
+  S.columns = EC.map((c, ci) => ({
+    name: (c.name || '').trim() || colName(ci), dir: c.dir || 'down', orient: c.orient || 'v',
+    groups: c.groups.map(g => ({ size: g.size, active: g.active !== false, off: (g.off || []).filter(i => i < g.size) }))
+  }));
+  if (!sameShape) {
+    const patrol = S.assignments.patrol;
+    S.assignments = patrol ? { patrol } : {};
+  }
+  save(); closeModal('edit-venue-modal'); renderAll();
+  notify('✅ VENUE ACTUALIZADO');
+}
+
+// ═══════════ MODALES / UTILIDADES ═══════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  // Evita el "tap-through" en pantallas táctiles
+  const guard = document.createElement('div');
+  guard.className = 'tap-guard';
+  document.body.appendChild(guard);
+  setTimeout(() => guard.remove(), 200);
+}
+const notifyQueue = [];
+function notify(msg) {
+  const el = document.getElementById('notify');
+  const item = { msg };
+  notifyQueue.push(item);
+  if (notifyQueue.length > 4) notifyQueue.shift();
+  const paint = () => {
+    el.textContent = notifyQueue.map(x => x.msg).join('\n');
+    el.style.display = notifyQueue.length ? 'block' : 'none';
+  };
+  paint();
+  setTimeout(() => { const i = notifyQueue.indexOf(item); if (i >= 0) notifyQueue.splice(i, 1); paint(); }, 4000);
+}
+
+function hardReset() {
+  const typed = prompt('RESET COMPLETO\n\nSe borrará el evento actual y TODO el historial.\nEscribe RESET para confirmar:');
+  if (!typed || typed.trim().toUpperCase() !== 'RESET') { if (typed !== null) notify('RESET CANCELADO'); return; }
+  clearInterval(timerInterval);
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  S = defaultState();
+  editingRound = null; selectedJudge = null; dragging = null; tableEditMode = false;
+  document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open'));
+  SC = { columns: defaultSetupColumns(), judges: [], numberingMode: 'column' };
+  ['s-name', 's-players', 's-rounds-d1', 's-rounds-d2', 's-judge-inp'].forEach(id => {
+    const x = document.getElementById(id); x.value = ''; delete x.dataset.manual;
+  });
+  document.getElementById('s-round-min').value = 50;
+  document.getElementById('s-rounds-info').textContent = '';
+  document.getElementById('round-notes').value = '';
+  renderTimer();
+  setNumberingMode('column');
+  showSetup();
+}
+
+// ═══════════ EXPORTAR MAPA (PDF) ═══════════
+function exportMapPDF(mode) {
+  const roundsToExport = mode === 'current' ? [snapshotRecord()] : S.rounds;
+  if (!roundsToExport.length) { notify('SIN RONDAS PARA EXPORTAR'); return; }
+  const win = window.open('', '_blank');
+  if (!win) { notify('PERMITE VENTANAS EMERGENTES PARA EXPORTAR'); return; }
+  const pages = roundsToExport.map(buildMapPage).join('');
+  win.document.write(`<!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <title>Mapa - ${esc(S.eventName)}</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: Arial, sans-serif; background: #fff; color: #111; font-size: 11px; }
+      .page { padding: 12mm 10mm 8mm; break-after: page; page-break-after: always; }
+      .page:last-child { break-after: auto; page-break-after: auto; }
+      @media print { .no-print { display: none !important; } .page { padding: 10mm; } }
+      .page-header { background: #1a56a0; color: #fff; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px;
+        display: flex; justify-content: space-between; align-items: center;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .page-header .round-label { font-size: 15px; font-weight: 900; letter-spacing: 1px; }
+      .page-header .meta { font-size: 10px; opacity: 0.9; text-align: right; }
+      .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; padding: 6px 8px;
+        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 5px; }
+      .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; }
+      .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .legend-status { font-size: 9px; color: #555; font-weight: 400; }
+      .patrol { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 8px; font-size: 10px; }
+      .patrol b { color: #4f46e5; }
+      .floor-map { display: flex; gap: 8px; align-items: flex-start; }
+      .col-block { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+      .col-header { background: #1a56a0; color: #fff; text-align: center; padding: 5px 4px; border-radius: 4px 4px 0 0;
+        font-size: 11px; font-weight: 800; letter-spacing: 1px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .group { border: 1.5px solid #cbd5e1; border-radius: 5px; padding: 5px; background: #fff; break-inside: avoid;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .group.inactive { opacity: 0.35; }
+      .tables-v { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
+      .tables-v .mesa { border: 1px solid #94a3b8; border-radius: 3px; padding: 3px 6px; text-align: center;
+        font-size: 11px; font-weight: 700; color: #1e293b; background: #f8fafc; }
+      .tables-h { display: flex; gap: 0; margin-bottom: 4px; }
+      .tables-h .mesa { flex: 1; border: 1px solid #94a3b8; border-right: none; padding: 4px 2px; text-align: center;
+        font-size: 11px; font-weight: 700; color: #1e293b; background: #f8fafc; }
+      .tables-h .mesa:last-child { border-right: 1px solid #94a3b8; border-radius: 0 3px 3px 0; }
+      .tables-h .mesa:first-child { border-radius: 3px 0 0 3px; }
+      .mesa.off { text-decoration: line-through; color: #dc2626; background: #fef2f2; border-color: #fca5a5; }
+      .judge-zone { min-height: 18px; border-radius: 3px; padding: 3px 5px; font-size: 10px; font-weight: 700; text-align: center;
+        display: flex; flex-wrap: wrap; gap: 3px; align-items: center; justify-content: center; }
+      .judge-chip { border-radius: 10px; padding: 2px 7px; font-size: 9px; font-weight: 700; color: #fff; white-space: nowrap;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .no-judge { color: #64748b; font-size: 9px; font-weight: 400; font-style: italic; }
+      .t8 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .t8-mesa { border: 2px solid #1a56a0; border-radius: 8px; padding: 10px; }
+      .t8-mesa h3 { color: #1a56a0; font-size: 14px; margin-bottom: 6px; }
+      .notes-bar { margin-top: 10px; padding: 6px 10px; background: #f8fafc; border-left: 3px solid #1a56a0;
+        font-size: 10px; color: #444; border-radius: 0 4px 4px 0; white-space: pre-wrap; }
+      .print-btn { position: fixed; bottom: 20px; right: 20px; z-index: 999; background: #1a56a0; color: #fff; border: none;
+        border-radius: 8px; padding: 12px 24px; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    </style>
+  </head><body>
+    <button class="print-btn no-print" onclick="window.print()">IMPRIMIR / GUARDAR PDF</button>
+    ${pages}
+  </body></html>`);
+  win.document.close();
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function buildMapPage(record) {
+  const assignments = record.assignments || {};
+  const judges = record.judges || S.judges;
+  const cols = record.columns || S.columns;
+  const mode = record.numberingMode || S.numberingMode || 'column';
+  const judgeMap = {};
+  judges.forEach(j => judgeMap[j.name] = j);
+  const colorOf = name => { const j = judgeMap[name] || S.judges.find(x => x.name === name); return j ? (COLORS[j.ci] || '#1d4ed8') : '#64748b'; };
+  const chips = names => names.length
+    ? names.map(n => `<div class="judge-chip" style="background:${colorOf(n)}">${esc(n)}</div>`).join('')
+    : '<span class="no-judge">sin asignar</span>';
+  const dl = getDayRoundLabel(record.round);
+
+  let html = `<div class="page">
+    <div class="page-header">
+      <div class="round-label">${esc(dl.label)}</div>
+      <div class="meta">${esc(S.eventName)}<br>${esc(record.ts)} &nbsp;|&nbsp; ${esc(record.elapsed)}</div>
+    </div><div class="legend">`;
+  judges.filter(j => j.status !== 'off').forEach(j => {
+    html += `<div class="legend-item"><div class="legend-dot" style="background:${COLORS[j.ci] || '#1d4ed8'}"></div>
+      <span>${esc(j.name)}</span><span class="legend-status">[${STATUS_LABELS[j.status] || j.status}]</span></div>`;
+  });
+  html += `</div>`;
+
+  if (recordIsTop8(record)) {
+    const t8 = record.top8Round || top8RoundOf(record.round);
+    const n = TOP8_TABLES[t8] || Math.max(1, ...Object.keys(assignments).filter(k => k.startsWith('top8-')).map(k => +k.slice(5)));
+    html += `<div class="t8">`;
+    for (let m = 1; m <= n; m++) html += `<div class="t8-mesa"><h3>MESA ${m}</h3><div class="judge-zone">${chips(assignments[`top8-${m}`] || [])}</div></div>`;
+    html += `</div>`;
+  } else {
+    const patrol = assignments.patrol || {};
+    const pz = PATROL_ZONES.filter(z => (patrol[z] || []).length);
+    if (pz.length) html += `<div class="patrol">${pz.map(z => `<span><b>Patrulla ${z}:</b> ${esc(patrol[z].join(', '))}</span>`).join('')}</div>`;
+    const nums = numberingFor(cols, mode);
+    html += `<div class="floor-map">`;
+    cols.forEach((col, ci) => {
+      const isH = (col.orient || 'v') === 'h';
+      const tag = mode === 'row' ? 'FILA' : `${col.dir === 'up' ? '↑' : '↓'} ${isH ? 'HORIZ' : 'VERT'}`;
+      html += `<div class="col-block"><div class="col-header">${esc(col.name)} ${tag}</div>`;
+      displayGroups(col, mode).forEach(({grp, gi}) => {
+        const key = `${ci}-${gi}`;
+        const assigned = assignments[key] || [];
+        const asc = nums[key] || [];
+        const c0 = assigned.length ? colorOf(assigned[0]) : null;
+        html += `<div class="group${grp.active ? '' : ' inactive'}" style="border-color:${c0 || '#cbd5e1'};background:${c0 ? hexToRgba(c0, 0.08) : '#fff'}">`;
+        html += `<div class="${isH ? 'tables-h' : 'tables-v'}">`;
+        displayNums(asc, col, gi, mode).forEach(t => {
+          const off = !grp.active || (grp.off || []).includes(asc.indexOf(t));
+          html += `<div class="mesa${off ? ' off' : ''}">${t}</div>`;
+        });
+        html += `</div><div class="judge-zone">${chips(assigned)}</div></div>`;
+      });
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
+  if (record.notes) html += `<div class="notes-bar">Notas: ${esc(record.notes)}</div>`;
+  return html + `</div>`;
+}
+
+// ═══════════ DÍA 2 ═══════════
+function getAdvanceInfo(players) {
+  // Referencia: verificar contra la política vigente de Konami
+  if (players <= 256)  return { count: 'Top 64', n: 64, pts: 15 };
+  if (players <= 512)  return { count: 'Top 64', n: 64, pts: 18 };
+  if (players <= 1024) return { count: 'Top 128', n: 128, pts: 18 };
+  return                      { count: 'Top 256', n: 256, pts: 21 };
+}
+
+function renderJudgePicker(listId) {
+  const jList = document.getElementById(listId);
+  jList.innerHTML = S.judges.map((j, i) => {
+    const sel = top8SelectedJudges.has(j.name);
+    return `<div data-idx="${i}" role="button" tabindex="0" aria-pressed="${sel}"
+      style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:20px;
+        border:2px solid ${sel ? '#1a56a0' : '#ccc'};background:${sel ? '#e8f0fc' : '#f8fafc'};
+        cursor:pointer;font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:600;transition:all 0.15s;">
+      <div style="width:8px;height:8px;border-radius:50%;background:${COLORS[j.ci]};flex-shrink:0;"></div>
+      ${esc(j.name)}
+    </div>`;
+  }).join('');
+  jList.querySelectorAll('[data-idx]').forEach(el => {
+    const toggle = () => toggleTop8Judge(S.judges[+el.dataset.idx].name, el);
+    el.addEventListener('click', toggle);
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+  });
+}
+function toggleTop8Judge(name, el) {
+  const on = !top8SelectedJudges.has(name);
+  if (on) top8SelectedJudges.add(name); else top8SelectedJudges.delete(name);
+  el.style.borderColor = on ? '#1a56a0' : '#ccc';
+  el.style.background = on ? '#e8f0fc' : '#f8fafc';
+  el.setAttribute('aria-pressed', on);
+}
+
+function openDay2CutModal() {
+  const info = getAdvanceInfo(S.players);
+  const el = document.getElementById('day2cut-info');
+  el.innerHTML = S.players > 0
+    ? `<b>${info.count}</b> jugadores &nbsp;—&nbsp; o &nbsp;—&nbsp; mínimo <b>${info.pts} puntos</b><br><span style="font-size:0.74rem;color:#1e40af;">(el criterio que resulte en mayor número de jugadores — verifica con la política vigente)</span>`
+    : 'Consulta la política de Konami según el número de participantes.';
+  const playersEl = document.getElementById('day2-real-players');
+  playersEl.value = S.players > 0 ? info.n : '';
+  const tablesEl = document.getElementById('day2-tables');
+  delete tablesEl.dataset.manual;
+  tablesEl.value = S.players > 0 ? Math.ceil(info.n / 2) : '';
+  top8SelectedJudges = new Set(S.judges.filter(j => j.status !== 'off').map(j => j.name));
+  renderJudgePicker('day2-judges-list');
+  updateDay2MesasCalc();
+  openModal('day2cut-modal');
+}
+function updateDay2MesasCalc() {
+  const p = parseInt(document.getElementById('day2-real-players').value) || 0;
+  const calc = document.getElementById('day2-mesas-calc');
+  const tablesEl = document.getElementById('day2-tables');
+  if (p > 0) {
+    const mesas = Math.ceil(p / 2);
+    calc.textContent = `→ ${mesas} mesas requeridas (${p} jugadores ÷ 2)`;
+    if (!tablesEl.dataset.manual) tablesEl.value = mesas;
+  } else calc.textContent = '';
+}
+function confirmDay2() {
+  const realPlayers = parseInt(document.getElementById('day2-real-players').value) || 0;
+  if (!realPlayers) { alert('Ingresa el número de jugadores que avanzan a Día 2.'); return; }
+  const tables = parseInt(document.getElementById('day2-tables').value) || Math.ceil(realPlayers / 2);
+  if (!top8SelectedJudges.size) { alert('Selecciona al menos un juez para el Día 2.'); return; }
+  let venue = 0; S.columns.forEach(c => c.groups.forEach(g => venue += g.size));
+  S.judges.forEach(j => {
+    if (!top8SelectedJudges.has(j.name)) j.status = 'off';
+    else { if (j.status === 'off') j.status = 'active'; j.lunchEnd = null; j.lunchNotified = false; }
+  });
+  setActiveTableCount(tables);
+  S.players = realPlayers;
+  S.assignments = {};
+  selectedJudge = null;
+  closeModal('day2cut-modal');
+  save(); renderAll();
+  notify(`DÍA 2 CONFIGURADO — ${realPlayers} jugadores, ${Math.min(tables, venue)} mesas`);
+  if (tables > venue) notify(`⚠ EL VENUE SOLO TIENE ${venue} MESAS`);
+  setTimeout(() => openModal('recycle-modal'), 500);
+}
+
+// ═══════════ TOP 8 ═══════════
+function openTop8Modal() {
+  if (editGuard()) return;
+  if (S.isTop8) { notify('EL TOP 8 YA ESTÁ EN CURSO'); return; }
+  const played = S.currentRound - 1;
+  const pending = totalSwiss() - played;
+  const head = document.getElementById('top8-headline');
+  if (pending > 0) {
+    head.textContent = `⚠ Aún faltan ${pending} ronda${pending > 1 ? 's' : ''} suizas de ${totalSwiss()}. Si inicias el Top 8 ahora, la ronda actual será Cuartos.`;
+  } else head.textContent = 'Swiss completado — 8 jugadores al playoff';
+  top8SelectedJudges = new Set(S.judges.filter(j => j.status !== 'off').map(j => j.name));
+  renderJudgePicker('top8-judges-list');
+  openModal('top8-modal');
+}
+function confirmTop8() {
+  if (!top8SelectedJudges.size) { alert('Selecciona al menos un juez para el Top 8.'); return; }
+  S.isTop8 = true;
+  S.top8Start = S.currentRound;
+  S.judges.forEach(j => {
+    if (!top8SelectedJudges.has(j.name)) j.status = 'off';
+    else { j.status = 'active'; j.lunchEnd = null; j.lunchNotified = false; }
+  });
+  S.assignments = {};
+  selectedJudge = null;
+  tableEditMode = false;
+  closeModal('top8-modal');
+  save(); renderAll();
+  notify('TOP 8 INICIADO — CUARTOS DE FINAL');
+}
+
+// ═══════════ RECICLAR / APLICAR RONDA ANTERIOR ═══════════
+// Copia asignaciones válidas: solo jueces en PISO o BREAK, grupos activos y mesas que existan en la ronda actual
+function copyAssignmentsFrom(src) {
+  const ok = new Set(S.judges.filter(j => j.status === 'active' || j.status === 'break').map(j => j.name));
+  const out = {};
+  let skipped = 0;
+  Object.entries(src || {}).forEach(([key, names]) => {
+    if (key === 'patrol' || !Array.isArray(names)) return;
+    let valid = true;
+    if (key.startsWith('top8-')) valid = S.isTop8 && +key.slice(5) <= top8MesasNow();
+    else {
+      if (S.isTop8) valid = false;
+      const [ci, gi] = key.split('-').map(Number);
+      const g = S.columns[ci] && S.columns[ci].groups[gi];
+      if (!g || !groupHasActiveTables(g)) valid = false;
+    }
+    const keep = names.filter(n => ok.has(n));
+    if (!valid) { skipped += keep.length; return; }
+    skipped += names.length - keep.length;
+    if (keep.length) out[key] = keep;
+  });
+  if (!S.isTop8 && src && src.patrol) {
+    out.patrol = {};
+    Object.entries(src.patrol).forEach(([z, ns]) => {
+      const keep = (ns || []).filter(n => ok.has(n));
+      skipped += (ns || []).length - keep.length;
+      if (keep.length) out.patrol[z] = keep;
+    });
+  }
+  return { assignments: out, skipped };
+}
+function recycleAssignments() {
+  if (!S.rounds.length) { closeModal('recycle-modal'); return; }
+  const last = S.rounds[S.rounds.length - 1];
+  const src = {...(last.assignments || {})};
+  if (!src.patrol && last.patrol) src.patrol = last.patrol;
+  const { assignments, skipped } = copyAssignmentsFrom(src);
+  S.assignments = assignments;
+  closeModal('recycle-modal');
+  selectedJudge = null;
+  save();
+  setTimeout(() => {
+    renderAll();
+    notify(skipped ? `ASIGNACIONES RECICLADAS (${skipped} omitidas: jueces no disponibles o mesas inexistentes)` : 'ASIGNACIONES RECICLADAS');
+  }, 150);
+}
+
+function openPrevRoundModal() {
+  if (editGuard()) return;
+  if (!S.rounds.length) { notify('SIN RONDAS GUARDADAS AÚN'); return; }
+  prevRoundIdx = S.rounds.length - 1;
+  renderPrevRound();
+  openModal('prev-round-modal');
+}
+function closePrevRoundModal() { closeModal('prev-round-modal'); }
+function prevRoundNav(dir) {
+  prevRoundIdx = Math.max(0, Math.min(S.rounds.length - 1, prevRoundIdx + dir));
+  renderPrevRound();
+}
+function roundRowsHTML(r, markUnavailable) {
+  const zones = judgeZonesFor(r);
+  const activeNow = new Set(S.judges.filter(j => j.status !== 'off').map(j => j.name));
+  return (r.judges || []).map(j => {
+    const still = !markUnavailable || activeNow.has(j.name);
+    const z = zones[j.name] || [];
+    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:6px;
+      background:${still ? '#f8fafc' : '#f3f4f6'};border:1.5px solid ${still ? '#e2e8f0' : '#d1d5db'};margin-bottom:6px;opacity:${still ? '1' : '0.55'};">
+      <div style="width:10px;height:10px;border-radius:50%;background:${COLORS[j.ci] || '#1d4ed8'};margin-top:3px;flex-shrink:0;"></div>
+      <div style="flex:1;">
+        <div style="font-family:'Inter',sans-serif;font-size:0.88rem;font-weight:700;color:#111;">${esc(j.name)}
+          <span style="font-size:0.72rem;font-weight:500;color:#555;margin-left:6px;">[${STATUS_LABELS[j.status] || j.status}]</span>
+          ${!still ? '<span style="font-size:0.7rem;color:#dc2626;margin-left:4px;">NO DISPONIBLE</span>' : ''}
+        </div>
+        <div style="font-family:'Inter',sans-serif;font-size:0.8rem;color:#1a56a0;margin-top:2px;">
+          ${z.length ? esc(z.join(', ')) : '<span style="color:#64748b;font-style:italic;">Sin zona</span>'}
+        </div>
+      </div>
+    </div>`;
+  }).join('') || '<div style="text-align:center;color:#666;padding:20px;font-family:Inter,sans-serif;font-size:0.82rem;">Sin datos</div>';
+}
+function renderPrevRound() {
+  const r = S.rounds[prevRoundIdx];
+  if (!r) return;
+  const dl = getDayRoundLabel(r.round);
+  document.getElementById('prev-round-title').textContent = dl.label;
+  document.getElementById('prev-round-counter').textContent = `${prevRoundIdx + 1} / ${S.rounds.length}`;
+  document.getElementById('prev-round-meta').textContent = `Reloj: ${r.elapsed}  |  ${r.ts}${r.notes ? '  |  ' + r.notes : ''}`;
+  document.getElementById('apply-prev-btn').textContent = `APLICAR ${dl.label}`;
+  document.getElementById('prev-round-content').innerHTML = roundRowsHTML(r, true);
+}
+function applyPrevRound() {
+  const r = S.rounds[prevRoundIdx];
+  if (!r) return;
+  const hasAssign = Object.entries(S.assignments).some(([k, v]) => k === 'patrol' ? Object.values(v || {}).some(a => a.length) : (v || []).length);
+  if (hasAssign && !confirm('Esto reemplaza las asignaciones actuales del mapa. ¿Continuar?')) return;
+  const src = {...(r.assignments || {})};
+  if (!src.patrol && r.patrol) src.patrol = r.patrol;
+  const { assignments, skipped } = copyAssignmentsFrom(src);
+  S.assignments = assignments;
+  closePrevRoundModal();
+  save(); renderAll();
+  notify(`ASIGNACIONES DE ${getDayRoundLabel(r.round).label} APLICADAS${skipped ? ` (${skipped} omitidas)` : ''}`);
+}
+
+// ═══════════ FIN DEL TORNEO ═══════════
+function openEndModal() {
+  const info = document.getElementById('end-winner-info');
+  const d1 = S.roundsD1 || 0, d2 = S.roundsD2 || 0;
+  info.innerHTML = `
+    <div style="font-size:1rem;font-weight:800;margin-bottom:6px;">${esc(S.eventName)}</div>
+    <div style="font-size:0.82rem;">
+      ${d1 > 0 ? `Día 1: ${d1} rondas` : ''}${d2 > 0 ? ` &nbsp;|&nbsp; Día 2: ${d2} rondas` : ''} &nbsp;|&nbsp; Top 8 completado
+    </div>
+    <div style="font-size:0.78rem;margin-top:4px;color:#444;">
+      Total: ${S.rounds.length} rondas registradas &nbsp;|&nbsp; ${S.players} jugadores
+    </div>`;
+  openModal('end-modal');
+}
+function openRoundReview() {
+  reviewIdx = 0;
+  closeModal('end-modal');
+  renderReview();
+  openModal('review-modal');
+}
+function reviewNav(dir) {
+  reviewIdx = Math.max(0, Math.min(S.rounds.length - 1, reviewIdx + dir));
+  renderReview();
+}
+function renderReview() {
+  const r = S.rounds[reviewIdx];
+  if (!r) return;
+  document.getElementById('review-title').textContent = getDayRoundLabel(r.round).label;
+  document.getElementById('review-counter').textContent = `${reviewIdx + 1} / ${S.rounds.length}`;
+  document.getElementById('review-meta').textContent = `Reloj: ${r.elapsed}  |  ${r.ts}${r.notes ? '  |  Notas: ' + r.notes : ''}`;
+  document.getElementById('review-content').innerHTML = roundRowsHTML(r, false);
+}
+
+// ═══════════ TECLADO Y MODALES ═══════════
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const open = [...document.querySelectorAll('.modal-backdrop.open')];
+  if (open.length) { closeModal(open[open.length - 1].id); return; }
+  if (selectedJudge) { selectedJudge = null; renderJudges(); }
+});
+document.querySelectorAll('.modal-backdrop').forEach(b => {
+  b.addEventListener('click', e => { if (e.target === b) closeModal(b.id); });
+  const m = b.querySelector('.modal');
+  if (m) { m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); }
+});
+document.querySelectorAll('.close-x').forEach(x => { if (!x.getAttribute('aria-label')) x.setAttribute('aria-label', 'Cerrar'); });
+document.getElementById('lunch-minutes').addEventListener('keydown', e => { if (e.key === 'Enter') confirmLunch(); });
+
+// ═══════════ INICIO ═══════════
+try { load(); } catch (e) { console.error('CRASH in load():', e); }
+startLunchWatcher();
+SC = { columns: defaultSetupColumns(), judges: [], numberingMode: 'column' };
+if (S.columns.length && S.judges.length) {
+  showApp();
+} else {
+  renderSetupCols();
+  renderSetupJudges();
+}
+</script>
+</body>
+</html>
